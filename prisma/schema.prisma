@@ -1,0 +1,699 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  DENTIST
+  ASSISTANT
+  SECRETARY
+  PLATFORM_ADMIN
+}
+
+enum Plan {
+  FREE
+  ESSENTIEL
+  PRO
+  PREMIUM
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  CANCELLED
+  NO_SHOW
+  COMPLETED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  ISSUED
+  PAID
+  OVERDUE
+  CREDIT_NOTE
+}
+
+enum QuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+  CHEQUE
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum JobOfferStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+enum ApplicationStatus {
+  PENDING
+  REVIEWING
+  ACCEPTED
+  REJECTED
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  EXPORT
+  VIEW
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+}
+
+model Clinic {
+  id                   String                @id @default(cuid())
+  name                 String
+  slug                 String                @unique
+  email                String
+  phone                String?
+  address              String?
+  city                 String?
+  wilaya               String?
+  plan                 Plan                  @default(FREE)
+  isActive             Boolean               @default(true)
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  deletedAt            DateTime?
+
+  users                User[]
+  patients             Patient[]
+  procedures           Procedure[]
+  treatmentPlans       TreatmentPlan[]
+  treatmentItems       TreatmentItem[]
+  attachments          Attachment[]
+  appointments         Appointment[]
+  reminderLogs         ReminderLog[]
+  waitlistEntries      WaitlistEntry[]
+  quotes               Quote[]
+  quoteItems           QuoteItem[]
+  invoices             Invoice[]
+  invoiceItems         InvoiceItem[]
+  payments             Payment[]
+  jobOffers            JobOffer[]
+  jobApplications      JobApplication[]
+  applicationMessages  ApplicationMessage[]
+  auditLogs            AuditLog[]
+  notifications        Notification[]
+  planDefinitions      PlanDefinition[]
+  subscriptionPayments SubscriptionPayment[]
+  medicalNotes         MedicalNote[]
+  toothStatuses        ToothStatus[]
+  toothStatusEvents    ToothStatusEvent[]
+}
+
+model User {
+  id                   String                @id @default(cuid())
+  clinicId             String?
+  clinic               Clinic?               @relation(fields: [clinicId], references: [id])
+  email                String                @unique
+  passwordHash         String
+  firstName            String
+  lastName             String
+  role                 Role                  @default(SECRETARY)
+  emailVerified        DateTime?
+  isActive             Boolean               @default(true)
+  lastLoginAt          DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  deletedAt            DateTime?
+
+  passwordResetTokens  PasswordResetToken[]
+  medicalNotes         MedicalNote[]
+  toothStatusEvents    ToothStatusEvent[]
+  treatmentPlans       TreatmentPlan[]
+  treatmentItems       TreatmentItem[]
+  attachments          Attachment[]
+  appointmentsCreated  Appointment[]         @relation("CreatedBy")
+  appointmentsDentist  Appointment[]         @relation("Dentist")
+  reminderLogs         ReminderLog[]
+  quotes               Quote[]
+  invoices             Invoice[]
+  payments             Payment[]
+  jobApplications      JobApplication[]
+  applicationMessages  ApplicationMessage[]
+  notifications        Notification[]
+  auditLogs            AuditLog[]
+
+  @@index([clinicId])
+  @@index([email])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([tokenHash])
+}
+
+model Patient {
+  id              String            @id @default(cuid())
+  clinicId        String
+  clinic          Clinic            @relation(fields: [clinicId], references: [id])
+  number          String
+  firstName       String
+  lastName        String
+  dateOfBirth     DateTime?
+  phone           String?
+  email           String?
+  address         String?
+  city            String?
+  wilaya          String?
+  notes           String?
+  isActive        Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  deletedAt       DateTime?
+
+  medicalNotes    MedicalNote[]
+  toothStatuses   ToothStatus[]
+  toothStatusEvents ToothStatusEvent[]
+  treatmentPlans  TreatmentPlan[]
+  attachments     Attachment[]
+  appointments    Appointment[]
+  quotes          Quote[]
+  invoices        Invoice[]
+  payments        Payment[]
+  reminderLogs    ReminderLog[]
+  waitlistEntries WaitlistEntry[]
+
+  @@unique([clinicId, number])
+  @@index([clinicId])
+  @@index([clinicId, lastName])
+}
+
+model MedicalNote {
+  id          String   @id @default(cuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  content     String
+  createdAt   DateTime @default(now())
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([createdById])
+  @@index([clinicId, patientId])
+}
+
+model ToothStatus {
+  id        String   @id @default(cuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  patientId String
+  patient   Patient  @relation(fields: [patientId], references: [id])
+  tooth     Int
+  status    String
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  events ToothStatusEvent[]
+
+  @@unique([clinicId, patientId, tooth])
+  @@index([clinicId])
+  @@index([patientId])
+}
+
+model ToothStatusEvent {
+  id            String      @id @default(cuid())
+  clinicId      String
+  clinic        Clinic      @relation(fields: [clinicId], references: [id])
+  toothStatusId String
+  toothStatus   ToothStatus @relation(fields: [toothStatusId], references: [id])
+  patientId     String
+  patient       Patient     @relation(fields: [patientId], references: [id])
+  createdById   String
+  createdBy     User        @relation(fields: [createdById], references: [id])
+  oldStatus     String?
+  newStatus     String
+  notes         String?
+  createdAt     DateTime    @default(now())
+
+  @@index([clinicId])
+  @@index([toothStatusId])
+  @@index([patientId])
+  @@index([createdById])
+}
+
+model Procedure {
+  id          String   @id @default(cuid())
+  clinicId    String?
+  clinic      Clinic?  @relation(fields: [clinicId], references: [id])
+  code        String
+  name        String
+  description String?
+  priceCents  Int      @default(0)
+  color       String?
+  isActive    Boolean  @default(true)
+  isReference Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  treatmentItems TreatmentItem[]
+  quoteItems     QuoteItem[]
+  invoiceItems   InvoiceItem[]
+
+  @@unique([clinicId, code])
+  @@index([clinicId])
+}
+
+model TreatmentPlan {
+  id          String   @id @default(cuid())
+  clinicId    String
+  clinic      Clinic   @relation(fields: [clinicId], references: [id])
+  patientId   String
+  patient     Patient  @relation(fields: [patientId], references: [id])
+  createdById String
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  title       String
+  status      String   @default("draft")
+  totalCents  Int      @default(0)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  items TreatmentItem[]
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([createdById])
+}
+
+model TreatmentItem {
+  id              String        @id @default(cuid())
+  clinicId        String
+  clinic          Clinic        @relation(fields: [clinicId], references: [id])
+  treatmentPlanId String
+  treatmentPlan   TreatmentPlan @relation(fields: [treatmentPlanId], references: [id])
+  procedureId     String
+  procedure       Procedure     @relation(fields: [procedureId], references: [id])
+  tooth           Int?
+  quantity        Int           @default(1)
+  priceCents      Int
+  notes           String?
+  createdById     String
+  createdBy       User          @relation(fields: [createdById], references: [id])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([clinicId])
+  @@index([treatmentPlanId])
+  @@index([procedureId])
+  @@index([createdById])
+}
+
+model Attachment {
+  id                 String   @id @default(cuid())
+  clinicId           String
+  clinic             Clinic   @relation(fields: [clinicId], references: [id])
+  patientId          String?
+  patient            Patient? @relation(fields: [patientId], references: [id])
+  uploadedById       String
+  uploadedBy         User     @relation(fields: [uploadedById], references: [id])
+  name               String
+  mimeType           String
+  size               Int
+  cloudinaryPublicId String
+  url                String
+  expiresAt          DateTime?
+  createdAt            DateTime @default(now())
+  deletedAt            DateTime?
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([uploadedById])
+}
+
+model Appointment {
+  id          String            @id @default(cuid())
+  clinicId    String
+  clinic      Clinic            @relation(fields: [clinicId], references: [id])
+  patientId   String
+  patient     Patient           @relation(fields: [patientId], references: [id])
+  dentistId   String
+  dentist     User              @relation(fields: [dentistId], references: [id], name: "Dentist")
+  createdById String
+  createdBy   User              @relation(fields: [createdById], references: [id], name: "CreatedBy")
+  startAt     DateTime
+  endAt       DateTime
+  status      AppointmentStatus @default(SCHEDULED)
+  notes       String?
+  reason      String?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  deletedAt   DateTime?
+
+  reminderLogs ReminderLog[]
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([dentistId])
+  @@index([createdById])
+  @@index([clinicId, startAt])
+}
+
+model ReminderLog {
+  id            String        @id @default(cuid())
+  clinicId      String
+  clinic        Clinic        @relation(fields: [clinicId], references: [id])
+  appointmentId String?
+  appointment   Appointment?  @relation(fields: [appointmentId], references: [id])
+  patientId     String?
+  patient       Patient?      @relation(fields: [patientId], references: [id])
+  sentById      String
+  sentBy        User          @relation(fields: [sentById], references: [id])
+  channel       String        @default("sms")
+  content       String
+  status        String
+  error         String?
+  sentAt        DateTime      @default(now())
+
+  @@index([clinicId])
+  @@index([appointmentId])
+  @@index([patientId])
+  @@index([sentById])
+}
+
+model WaitlistEntry {
+  id                  String    @id @default(cuid())
+  clinicId            String
+  clinic              Clinic    @relation(fields: [clinicId], references: [id])
+  patientId           String
+  patient             Patient   @relation(fields: [patientId], references: [id])
+  preferredDays       String[]
+  preferredTimeStart  DateTime?
+  preferredTimeEnd    DateTime?
+  notes               String?
+  isActive            Boolean   @default(true)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([clinicId])
+  @@index([patientId])
+}
+
+model Quote {
+  id          String      @id @default(cuid())
+  clinicId    String
+  clinic      Clinic      @relation(fields: [clinicId], references: [id])
+  patientId   String
+  patient     Patient     @relation(fields: [patientId], references: [id])
+  createdById String
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  number      String
+  status      QuoteStatus @default(DRAFT)
+  totalCents  Int         @default(0)
+  validUntil  DateTime?
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  deletedAt   DateTime?
+
+  items    QuoteItem[]
+  invoices Invoice[]
+
+  @@unique([clinicId, number])
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([createdById])
+}
+
+model QuoteItem {
+  id             String    @id @default(cuid())
+  clinicId       String
+  clinic         Clinic    @relation(fields: [clinicId], references: [id])
+  quoteId        String
+  quote          Quote     @relation(fields: [quoteId], references: [id])
+  procedureId    String
+  procedure      Procedure @relation(fields: [procedureId], references: [id])
+  tooth          Int?
+  quantity       Int       @default(1)
+  unitPriceCents Int
+  totalCents     Int
+
+  @@index([clinicId])
+  @@index([quoteId])
+  @@index([procedureId])
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  clinicId    String
+  clinic      Clinic        @relation(fields: [clinicId], references: [id])
+  patientId   String
+  patient     Patient       @relation(fields: [patientId], references: [id])
+  createdById String
+  createdBy   User          @relation(fields: [createdById], references: [id])
+  quoteId     String?
+  quote       Quote?        @relation(fields: [quoteId], references: [id])
+  number      String
+  status      InvoiceStatus @default(DRAFT)
+  totalCents  Int           @default(0)
+  paidCents   Int           @default(0)
+  dueDate     DateTime?
+  notes       String?
+  issuedAt    DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+
+  items    InvoiceItem[]
+  payments Payment[]
+
+  @@unique([clinicId, number])
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([createdById])
+  @@index([quoteId])
+}
+
+model InvoiceItem {
+  id             String    @id @default(cuid())
+  clinicId       String
+  clinic         Clinic    @relation(fields: [clinicId], references: [id])
+  invoiceId      String
+  invoice        Invoice   @relation(fields: [invoiceId], references: [id])
+  procedureId    String
+  procedure      Procedure @relation(fields: [procedureId], references: [id])
+  tooth          Int?
+  quantity       Int       @default(1)
+  unitPriceCents Int
+  totalCents     Int
+
+  @@index([clinicId])
+  @@index([invoiceId])
+  @@index([procedureId])
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  clinicId     String
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  patientId    String
+  patient      Patient       @relation(fields: [patientId], references: [id])
+  invoiceId    String?
+  invoice      Invoice?      @relation(fields: [invoiceId], references: [id])
+  receivedById String
+  receivedBy   User          @relation(fields: [receivedById], references: [id])
+  amountCents  Int
+  method       PaymentMethod @default(CASH)
+  status       PaymentStatus @default(COMPLETED)
+  reference    String?
+  paidAt       DateTime      @default(now())
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([invoiceId])
+  @@index([receivedById])
+}
+
+model JobOffer {
+  id           String         @id @default(cuid())
+  clinicId     String
+  clinic       Clinic         @relation(fields: [clinicId], references: [id])
+  title        String
+  description  String
+  location     String?
+  requirements String?
+  status       JobOfferStatus @default(DRAFT)
+  publishedAt  DateTime?
+  closesAt     DateTime?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  deletedAt    DateTime?
+
+  applications JobApplication[]
+
+  @@index([clinicId])
+  @@index([status])
+}
+
+model CandidateProfile {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  firstName    String
+  lastName     String
+  phone        String?
+  cvUrl        String?
+  coverLetter  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  applications JobApplication[]
+}
+
+model JobApplication {
+  id                 String            @id @default(cuid())
+  clinicId           String
+  clinic             Clinic            @relation(fields: [clinicId], references: [id])
+  jobOfferId         String
+  jobOffer           JobOffer          @relation(fields: [jobOfferId], references: [id])
+  candidateProfileId String
+  candidateProfile   CandidateProfile  @relation(fields: [candidateProfileId], references: [id])
+  reviewedById       String?
+  reviewedBy         User?             @relation(fields: [reviewedById], references: [id])
+  status             ApplicationStatus @default(PENDING)
+  notes              String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  messages ApplicationMessage[]
+
+  @@index([clinicId])
+  @@index([jobOfferId])
+  @@index([candidateProfileId])
+  @@index([reviewedById])
+}
+
+model ApplicationMessage {
+  id               String         @id @default(cuid())
+  clinicId         String
+  clinic           Clinic         @relation(fields: [clinicId], references: [id])
+  jobApplicationId String
+  jobApplication   JobApplication @relation(fields: [jobApplicationId], references: [id])
+  senderId         String?
+  sender           User?          @relation(fields: [senderId], references: [id])
+  content          String
+  isInternal       Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+
+  @@index([clinicId])
+  @@index([jobApplicationId])
+  @@index([senderId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  clinicId  String
+  clinic    Clinic   @relation(fields: [clinicId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  title     String
+  content   String
+  isRead    Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+
+  @@index([clinicId])
+  @@index([userId])
+  @@index([clinicId, userId])
+}
+
+model AuditLog {
+  id         String      @id @default(cuid())
+  clinicId   String?
+  clinic     Clinic?     @relation(fields: [clinicId], references: [id])
+  userId     String?
+  user       User?       @relation(fields: [userId], references: [id])
+  action     AuditAction
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime    @default(now())
+
+  @@index([clinicId])
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([createdAt])
+}
+
+model PlanDefinition {
+  id               String   @id @default(cuid())
+  clinicId         String?
+  clinic           Clinic?  @relation(fields: [clinicId], references: [id])
+  plan             Plan     @unique
+  name             String
+  description      String?
+  monthlyPriceCents Int     @default(0)
+  yearlyPriceCents  Int     @default(0)
+  features         Json?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([clinicId])
+}
+
+model SubscriptionPayment {
+  id          String             @id @default(cuid())
+  clinicId    String
+  clinic      Clinic             @relation(fields: [clinicId], references: [id])
+  plan        Plan
+  amountCents Int
+  status      SubscriptionStatus @default(ACTIVE)
+  startedAt   DateTime
+  expiresAt   DateTime
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([clinicId])
+  @@index([status])
+  @@index([expiresAt])
+}
