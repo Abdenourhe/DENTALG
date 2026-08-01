@@ -4,17 +4,23 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { requireClinicContext, withClinic } from "@/lib/tenant";
-import { patientSchema, patientUpdateSchema, medicalNoteSchema, toothStatusSchema } from "@/lib/validations/patient";
+import {
+  patientSchema,
+  patientUpdateSchema,
+  medicalNoteSchema,
+  toothStatusSchema,
+} from "@/lib/validations/patient";
 import { revalidatePath } from "next/cache";
+import { notFound } from "next/navigation";
+import { nextNumber } from "@/lib/billing/numbering";
+import { logAudit } from "@/lib/audit";
+import { AuditAction } from "@prisma/client";
 
-async function nextPatientNumber(clinicId: string): Promise<string> {
-  const latest = await prisma.patient.findFirst({
-    where: { clinicId, deletedAt: null },
-    orderBy: { createdAt: "desc" },
-    select: { number: true },
-  });
-  const seq = latest ? parseInt(latest.number, 10) + 1 : 1;
-  return String(seq).padStart(4, "0");
+function prismaError(errors: Record<string, string[]>): {
+  ok: false;
+  errors: Record<string, string[]>;
+} {
+  return { ok: false, errors } as const;
 }
 
 export async function createPatient(data: unknown) {
@@ -26,16 +32,33 @@ export async function createPatient(data: unknown) {
     return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
   }
 
-  const number = await nextPatientNumber(ctx.clinicId);
-  const payload = withClinic(ctx, {
-    ...parsed.data,
-    number,
-    dateOfBirth: parsed.data.dateOfBirth ? new Date(parsed.data.dateOfBirth) : null,
-  });
+  try {
+    const number = await nextNumber(ctx.clinicId, "PATIENT", { pad: 4 });
+    const payload = withClinic(ctx, {
+      ...parsed.data,
+      number,
+      dateOfBirth: parsed.data.dateOfBirth
+        ? new Date(parsed.data.dateOfBirth)
+        : null,
+    });
 
-  const patient = await prisma.patient.create({ data: payload });
-  revalidatePath("/patients");
-  return { ok: true, patient } as const;
+    const patient = await prisma.patient.create({ data: payload });
+
+    await logAudit({
+      action: AuditAction.CREATE,
+      entityType: "Patient",
+      entityId: patient.id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+    });
+
+    revalidatePath("/patients");
+    return { ok: true, patient } as const;
+  } catch {
+    return prismaError({
+      global: ["Une erreur est survenue lors de la création du patient."],
+    });
+  }
 }
 
 export async function updatePatient(id: string, data: unknown) {
@@ -47,40 +70,72 @@ export async function updatePatient(id: string, data: unknown) {
     return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
   }
 
-  const existing = await prisma.patient.findFirst({
-    where: { id, clinicId: ctx.clinicId, deletedAt: null },
-  });
-  if (!existing) return { ok: false, errors: { global: ["Patient introuvable."] } } as const;
+  try {
+    const existing = await prisma.patient.findFirst({
+      where: { id, clinicId: ctx.clinicId, deletedAt: null },
+    });
+    if (!existing) return prismaError({ global: ["Patient introuvable."] });
 
-  const updateData = {
-    ...parsed.data,
-    dateOfBirth: parsed.data.dateOfBirth ? new Date(parsed.data.dateOfBirth) : null,
-  };
+    const updateData = {
+      ...parsed.data,
+      dateOfBirth: parsed.data.dateOfBirth
+        ? new Date(parsed.data.dateOfBirth)
+        : null,
+    };
 
-  const patient = await prisma.patient.update({
-    where: { id },
-    data: updateData,
-  });
-  revalidatePath("/patients");
-  revalidatePath(`/patients/${id}`);
-  return { ok: true, patient } as const;
+    const patient = await prisma.patient.update({
+      where: { id },
+      data: updateData,
+    });
+
+    await logAudit({
+      action: AuditAction.UPDATE,
+      entityType: "Patient",
+      entityId: id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+    });
+
+    revalidatePath("/patients");
+    revalidatePath(`/patients/${id}`);
+    return { ok: true, patient } as const;
+  } catch {
+    return prismaError({
+      global: ["Une erreur est survenue lors de la mise à jour du patient."],
+    });
+  }
 }
 
 export async function deletePatient(id: string) {
   await requireRole("patients:write");
   const ctx = await requireClinicContext();
 
-  const existing = await prisma.patient.findFirst({
-    where: { id, clinicId: ctx.clinicId, deletedAt: null },
-  });
-  if (!existing) return { ok: false, errors: { global: ["Patient introuvable."] } } as const;
+  try {
+    const existing = await prisma.patient.findFirst({
+      where: { id, clinicId: ctx.clinicId, deletedAt: null },
+    });
+    if (!existing) return prismaError({ global: ["Patient introuvable."] });
 
-  await prisma.patient.update({
-    where: { id },
-    data: { deletedAt: new Date() },
-  });
-  revalidatePath("/patients");
-  return { ok: true } as const;
+    await prisma.patient.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    await logAudit({
+      action: AuditAction.DELETE,
+      entityType: "Patient",
+      entityId: id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+    });
+
+    revalidatePath("/patients");
+    return { ok: true } as const;
+  } catch {
+    return prismaError({
+      global: ["Une erreur est survenue lors de la suppression du patient."],
+    });
+  }
 }
 
 export async function listPatients(search?: string) {
@@ -140,6 +195,7 @@ export async function getPatient(id: string) {
     },
   });
 
+  if (!patient) notFound();
   return patient;
 }
 
@@ -152,14 +208,29 @@ export async function createMedicalNote(data: unknown) {
     return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
   }
 
-  const note = await prisma.medicalNote.create({
-    data: withClinic(ctx, {
-      ...parsed.data,
-      createdById: ctx.userId,
-    }),
-  });
-  revalidatePath(`/patients/${parsed.data.patientId}`);
-  return { ok: true, note } as const;
+  try {
+    const note = await prisma.medicalNote.create({
+      data: withClinic(ctx, {
+        ...parsed.data,
+        createdById: ctx.userId,
+      }),
+    });
+
+    await logAudit({
+      action: AuditAction.CREATE,
+      entityType: "MedicalNote",
+      entityId: note.id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+    });
+
+    revalidatePath(`/patients/${parsed.data.patientId}`);
+    return { ok: true, note } as const;
+  } catch {
+    return prismaError({
+      global: ["Une erreur est survenue lors de la création de la note."],
+    });
+  }
 }
 
 export async function upsertToothStatus(data: unknown) {
@@ -171,42 +242,61 @@ export async function upsertToothStatus(data: unknown) {
     return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
   }
 
-  const { patientId, tooth, status, notes } = parsed.data;
+  try {
+    const { patientId, tooth, status, notes } = parsed.data;
 
-  const existing = await prisma.toothStatus.findUnique({
-    where: { clinicId_patientId_tooth: { clinicId: ctx.clinicId, patientId, tooth } },
-  });
+    const existing = await prisma.toothStatus.findUnique({
+      where: {
+        clinicId_patientId_tooth: { clinicId: ctx.clinicId, patientId, tooth },
+      },
+    });
 
-  if (existing) {
-    await prisma.toothStatus.update({
-      where: { id: existing.id },
-      data: { status, notes, updatedAt: new Date() },
+    if (existing) {
+      await prisma.toothStatus.update({
+        where: { id: existing.id },
+        data: { status, notes, updatedAt: new Date() },
+      });
+      await prisma.toothStatusEvent.create({
+        data: withClinic(ctx, {
+          toothStatusId: existing.id,
+          patientId,
+          createdById: ctx.userId,
+          oldStatus: existing.status,
+          newStatus: status,
+          notes,
+        }),
+      });
+    } else {
+      const created = await prisma.toothStatus.create({
+        data: withClinic(ctx, { patientId, tooth, status, notes }),
+      });
+      await prisma.toothStatusEvent.create({
+        data: withClinic(ctx, {
+          toothStatusId: created.id,
+          patientId,
+          createdById: ctx.userId,
+          newStatus: status,
+          notes,
+        }),
+      });
+    }
+
+    await logAudit({
+      action: AuditAction.UPDATE,
+      entityType: "ToothStatus",
+      entityId: `${patientId}-${tooth}`,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+      metadata: { status },
     });
-    await prisma.toothStatusEvent.create({
-      data: withClinic(ctx, {
-        toothStatusId: existing.id,
-        patientId,
-        createdById: ctx.userId,
-        oldStatus: existing.status,
-        newStatus: status,
-        notes,
-      }),
-    });
-  } else {
-    const created = await prisma.toothStatus.create({
-      data: withClinic(ctx, { patientId, tooth, status, notes }),
-    });
-    await prisma.toothStatusEvent.create({
-      data: withClinic(ctx, {
-        toothStatusId: created.id,
-        patientId,
-        createdById: ctx.userId,
-        newStatus: status,
-        notes,
-      }),
+
+    revalidatePath(`/patients/${patientId}`);
+    return { ok: true } as const;
+  } catch {
+    return prismaError({
+      global: [
+        "Une erreur est survenue lors de la mise à jour du statut dentaire.",
+      ],
     });
   }
-
-  revalidatePath(`/patients/${patientId}`);
-  return { ok: true } as const;
 }

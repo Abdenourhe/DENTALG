@@ -4,8 +4,40 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { requireClinicContext, withClinic } from "@/lib/tenant";
-import { appointmentSchema, appointmentUpdateSchema, waitlistSchema } from "@/lib/validations/appointment";
+import {
+  appointmentSchema,
+  appointmentUpdateSchema,
+} from "@/lib/validations/appointment";
 import { revalidatePath } from "next/cache";
+import { logAudit } from "@/lib/audit";
+import { AuditAction } from "@prisma/client";
+
+function prismaError(errors: Record<string, string[]>): {
+  ok: false;
+  errors: Record<string, string[]>;
+} {
+  return { ok: false, errors } as const;
+}
+
+async function hasConflict(
+  clinicId: string,
+  dentistId: string,
+  startAt: Date,
+  endAt: Date,
+  excludeId?: string,
+): Promise<boolean> {
+  const conflict = await prisma.appointment.findFirst({
+    where: {
+      clinicId,
+      dentistId,
+      deletedAt: null,
+      status: { notIn: ["CANCELLED", "NO_SHOW"] },
+      id: excludeId ? { not: excludeId } : undefined,
+      AND: [{ startAt: { lt: endAt } }, { endAt: { gt: startAt } }],
+    },
+  });
+  return !!conflict;
+}
 
 export async function createAppointment(data: unknown) {
   await requireRole("appointments:write");
@@ -16,18 +48,41 @@ export async function createAppointment(data: unknown) {
     return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
   }
 
-  const { startAt, endAt, ...rest } = parsed.data;
-  const appointment = await prisma.appointment.create({
-    data: withClinic(ctx, {
-      ...rest,
-      startAt: new Date(startAt),
-      endAt: new Date(endAt),
-      createdById: ctx.userId,
-    }),
-  });
+  try {
+    const { startAt, endAt, ...rest } = parsed.data;
+    const startDate = new Date(startAt);
+    const endDate = new Date(endAt);
 
-  revalidatePath("/appointments");
-  return { ok: true, appointment } as const;
+    if (await hasConflict(ctx.clinicId, rest.dentistId, startDate, endDate)) {
+      return prismaError({
+        global: ["Ce créneau est déjà occupé pour ce dentiste."],
+      });
+    }
+
+    const appointment = await prisma.appointment.create({
+      data: withClinic(ctx, {
+        ...rest,
+        startAt: startDate,
+        endAt: endDate,
+        createdById: ctx.userId,
+      }),
+    });
+
+    await logAudit({
+      action: AuditAction.CREATE,
+      entityType: "Appointment",
+      entityId: appointment.id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+    });
+
+    revalidatePath("/appointments");
+    return { ok: true, appointment } as const;
+  } catch {
+    return prismaError({
+      global: ["Une erreur est survenue lors de la création du rendez-vous."],
+    });
+  }
 }
 
 export async function updateAppointment(id: string, data: unknown) {
@@ -39,36 +94,86 @@ export async function updateAppointment(id: string, data: unknown) {
     return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
   }
 
-  const existing = await prisma.appointment.findFirst({
-    where: { id, clinicId: ctx.clinicId, deletedAt: null },
-  });
-  if (!existing) return { ok: false, errors: { global: ["Rendez-vous introuvable."] } } as const;
+  try {
+    const existing = await prisma.appointment.findFirst({
+      where: { id, clinicId: ctx.clinicId, deletedAt: null },
+    });
+    if (!existing) return prismaError({ global: ["Rendez-vous introuvable."] });
 
-  const updateData: Record<string, unknown> = { ...parsed.data };
-  if (parsed.data.startAt) updateData.startAt = new Date(parsed.data.startAt);
-  if (parsed.data.endAt) updateData.endAt = new Date(parsed.data.endAt);
+    const startDate = parsed.data.startAt
+      ? new Date(parsed.data.startAt)
+      : existing.startAt;
+    const endDate = parsed.data.endAt
+      ? new Date(parsed.data.endAt)
+      : existing.endAt;
+    const dentistId = parsed.data.dentistId ?? existing.dentistId;
 
-  const appointment = await prisma.appointment.update({
-    where: { id },
-    data: updateData,
-  });
+    if (await hasConflict(ctx.clinicId, dentistId, startDate, endDate, id)) {
+      return prismaError({
+        global: ["Ce créneau est déjà occupé pour ce dentiste."],
+      });
+    }
 
-  revalidatePath("/appointments");
-  return { ok: true, appointment } as const;
+    const updateData: Record<string, unknown> = { ...parsed.data };
+    if (parsed.data.startAt) updateData.startAt = startDate;
+    if (parsed.data.endAt) updateData.endAt = endDate;
+
+    const appointment = await prisma.appointment.update({
+      where: { id },
+      data: updateData,
+    });
+
+    await logAudit({
+      action: AuditAction.UPDATE,
+      entityType: "Appointment",
+      entityId: id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+    });
+
+    revalidatePath("/appointments");
+    return { ok: true, appointment } as const;
+  } catch {
+    return prismaError({
+      global: [
+        "Une erreur est survenue lors de la mise à jour du rendez-vous.",
+      ],
+    });
+  }
 }
 
 export async function deleteAppointment(id: string) {
   await requireRole("appointments:write");
   const ctx = await requireClinicContext();
 
-  const existing = await prisma.appointment.findFirst({
-    where: { id, clinicId: ctx.clinicId, deletedAt: null },
-  });
-  if (!existing) return { ok: false, errors: { global: ["Rendez-vous introuvable."] } } as const;
+  try {
+    const existing = await prisma.appointment.findFirst({
+      where: { id, clinicId: ctx.clinicId, deletedAt: null },
+    });
+    if (!existing) return prismaError({ global: ["Rendez-vous introuvable."] });
 
-  await prisma.appointment.update({ where: { id }, data: { deletedAt: new Date() } });
-  revalidatePath("/appointments");
-  return { ok: true } as const;
+    await prisma.appointment.update({
+      where: { id },
+      data: { deletedAt: new Date() },
+    });
+
+    await logAudit({
+      action: AuditAction.DELETE,
+      entityType: "Appointment",
+      entityId: id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+    });
+
+    revalidatePath("/appointments");
+    return { ok: true } as const;
+  } catch {
+    return prismaError({
+      global: [
+        "Une erreur est survenue lors de la suppression du rendez-vous.",
+      ],
+    });
+  }
 }
 
 export async function listAppointments(date?: string) {
@@ -88,7 +193,9 @@ export async function listAppointments(date?: string) {
     },
     orderBy: { startAt: "asc" },
     include: {
-      patient: { select: { id: true, firstName: true, lastName: true, phone: true } },
+      patient: {
+        select: { id: true, firstName: true, lastName: true, phone: true },
+      },
       dentist: { select: { id: true, firstName: true, lastName: true } },
     },
   });

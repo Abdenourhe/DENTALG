@@ -4,17 +4,21 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { requireClinicContext, withClinic } from "@/lib/tenant";
-import { invoiceSchema, paymentSchema, procedureSchema } from "@/lib/validations/billing";
+import {
+  invoiceSchema,
+  paymentSchema,
+  procedureSchema,
+} from "@/lib/validations/billing";
 import { revalidatePath } from "next/cache";
+import { nextNumber } from "@/lib/billing/numbering";
+import { logAudit } from "@/lib/audit";
+import { AuditAction } from "@prisma/client";
 
-async function nextInvoiceNumber(clinicId: string): Promise<string> {
-  const latest = await prisma.invoice.findFirst({
-    where: { clinicId, deletedAt: null },
-    orderBy: { createdAt: "desc" },
-    select: { number: true },
-  });
-  const seq = latest ? parseInt(latest.number.replace(/\D/g, ""), 10) + 1 : 1;
-  return `F-${String(seq).padStart(5, "0")}`;
+function prismaError(errors: Record<string, string[]>): {
+  ok: false;
+  errors: Record<string, string[]>;
+} {
+  return { ok: false, errors } as const;
 }
 
 export async function listInvoices() {
@@ -41,19 +45,36 @@ export async function createInvoice(data: unknown) {
     return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
   }
 
-  const number = await nextInvoiceNumber(ctx.clinicId);
-  const invoice = await prisma.invoice.create({
-    data: withClinic(ctx, {
-      ...parsed.data,
-      number,
-      dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
-      createdById: ctx.userId,
-      issuedAt: new Date(),
-    }),
-  });
+  try {
+    const number = await nextNumber(ctx.clinicId, "INVOICE", {
+      prefix: "F-",
+      pad: 5,
+    });
+    const invoice = await prisma.invoice.create({
+      data: withClinic(ctx, {
+        ...parsed.data,
+        number,
+        dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+        createdById: ctx.userId,
+        issuedAt: new Date(),
+      }),
+    });
 
-  revalidatePath("/billing");
-  return { ok: true, invoice } as const;
+    await logAudit({
+      action: AuditAction.CREATE,
+      entityType: "Invoice",
+      entityId: invoice.id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+    });
+
+    revalidatePath("/billing");
+    return { ok: true, invoice } as const;
+  } catch {
+    return prismaError({
+      global: ["Une erreur est survenue lors de la création de la facture."],
+    });
+  }
 }
 
 export async function recordPayment(data: unknown) {
@@ -65,30 +86,48 @@ export async function recordPayment(data: unknown) {
     return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
   }
 
-  const payment = await prisma.payment.create({
-    data: withClinic(ctx, {
-      ...parsed.data,
-      receivedById: ctx.userId,
-    }),
-  });
+  try {
+    const { invoiceId } = parsed.data;
 
-  // Update invoice paidCents
-  if (parsed.data.invoiceId) {
-    const invoice = await prisma.invoice.findFirst({
-      where: { id: parsed.data.invoiceId, clinicId: ctx.clinicId },
-      include: { payments: true },
-    });
-    if (invoice) {
-      const totalPaid = invoice.payments.reduce((sum, p) => sum + p.amountCents, 0);
-      await prisma.invoice.update({
-        where: { id: invoice.id },
-        data: { paidCents: totalPaid },
+    const payment = await prisma.$transaction(async (tx) => {
+      const created = await tx.payment.create({
+        data: withClinic(ctx, {
+          ...parsed.data,
+          receivedById: ctx.userId,
+        }),
       });
-    }
-  }
 
-  revalidatePath("/billing");
-  return { ok: true, payment } as const;
+      if (invoiceId) {
+        const payments = await tx.payment.findMany({
+          where: { invoiceId, clinicId: ctx.clinicId },
+          select: { amountCents: true },
+        });
+        const totalPaid = payments.reduce((sum, p) => sum + p.amountCents, 0);
+        await tx.invoice.update({
+          where: { id: invoiceId },
+          data: { paidCents: totalPaid },
+        });
+      }
+
+      return created;
+    });
+
+    await logAudit({
+      action: AuditAction.CREATE,
+      entityType: "Payment",
+      entityId: payment.id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+      metadata: { amountCents: payment.amountCents, invoiceId },
+    });
+
+    revalidatePath("/billing");
+    return { ok: true, payment } as const;
+  } catch {
+    return prismaError({
+      global: ["Une erreur est survenue lors de l'enregistrement du paiement."],
+    });
+  }
 }
 
 export async function listProcedures() {
@@ -110,10 +149,24 @@ export async function createProcedure(data: unknown) {
     return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
   }
 
-  const procedure = await prisma.procedure.create({
-    data: withClinic(ctx, parsed.data),
-  });
+  try {
+    const procedure = await prisma.procedure.create({
+      data: withClinic(ctx, parsed.data),
+    });
 
-  revalidatePath("/procedures");
-  return { ok: true, procedure } as const;
+    await logAudit({
+      action: AuditAction.CREATE,
+      entityType: "Procedure",
+      entityId: procedure.id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+    });
+
+    revalidatePath("/procedures");
+    return { ok: true, procedure } as const;
+  } catch {
+    return prismaError({
+      global: ["Une erreur est survenue lors de la création de l'acte."],
+    });
+  }
 }

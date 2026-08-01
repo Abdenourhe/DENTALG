@@ -3,6 +3,13 @@ import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 import bcrypt from "bcrypt";
 import { prisma } from "@/lib/prisma";
+import {
+  isLocked,
+  recordFailedAttempt,
+  resetAttempts,
+} from "@/lib/auth-lockout";
+
+import { Role } from "@prisma/client";
 
 const credentialsSchema = z.object({
   email: z.string().email(),
@@ -12,7 +19,9 @@ const credentialsSchema = z.object({
 
 const authSecret = process.env.AUTH_SECRET;
 if (!authSecret && process.env.NODE_ENV === "production") {
-  throw new Error("AUTH_SECRET est manquant. Définissez-le dans les variables d'environnement Vercel.");
+  throw new Error(
+    "AUTH_SECRET est manquant. Définissez-le dans les variables d'environnement Vercel.",
+  );
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -29,14 +38,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { email, password, provider } = parsed.data;
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user || !user.isActive) return null;
+        const lockKey = `${provider}:${email}`;
 
-        if (provider === "platform" && user.role !== "PLATFORM_ADMIN") return null;
-        if (provider === "clinic" && user.role === "PLATFORM_ADMIN") return null;
+        if (isLocked(lockKey)) {
+          return null;
+        }
+
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user || !user.isActive) {
+          recordFailedAttempt(lockKey);
+          return null;
+        }
+
+        if (provider === "platform" && user.role !== "PLATFORM_ADMIN") {
+          recordFailedAttempt(lockKey);
+          return null;
+        }
+        if (provider === "clinic" && user.role === "PLATFORM_ADMIN") {
+          recordFailedAttempt(lockKey);
+          return null;
+        }
 
         const valid = await bcrypt.compare(password, user.passwordHash);
-        if (!valid) return null;
+        if (!valid) {
+          recordFailedAttempt(lockKey);
+          return null;
+        }
+
+        resetAttempts(lockKey);
 
         await prisma.user.update({
           where: { id: user.id },
@@ -68,8 +97,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     session: async ({ session, token }) => {
       session.user.id = token.id as string;
-      session.user.role = token.role as string;
-      session.user.clinicId = token.clinicId as string | null;
+      session.user.role = token.role as Role;
+      session.user.clinicId = (token.clinicId as string | null) ?? null;
       return session;
     },
   },

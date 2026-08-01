@@ -1,6 +1,12 @@
 import { z } from "zod";
 
-export const appointmentSchema = z.object({
+function parseDate(val: string): Date {
+  const d = new Date(val);
+  if (isNaN(d.getTime())) throw new Error("Date invalide.");
+  return d;
+}
+
+const baseAppointmentSchema = z.object({
   patientId: z.string().min(1, "Patient requis."),
   dentistId: z.string().min(1, "Dentiste requis."),
   startAt: z.string().min(1, "Date et heure requises."),
@@ -12,7 +18,38 @@ export const appointmentSchema = z.object({
   reason: z.string().optional().or(z.literal("")),
 });
 
-export const appointmentUpdateSchema = appointmentSchema.partial();
+export const appointmentSchema = baseAppointmentSchema.refine(
+  (data) => {
+    try {
+      const start = parseDate(data.startAt);
+      const end = parseDate(data.endAt);
+      return end > start;
+    } catch {
+      return true; // let the string validation catch bad dates
+    }
+  },
+  {
+    message: "La date de fin doit être après la date de début.",
+    path: ["endAt"],
+  },
+);
+
+export const appointmentUpdateSchema = baseAppointmentSchema.partial().refine(
+  (data) => {
+    if (!data.startAt || !data.endAt) return true;
+    try {
+      const start = parseDate(data.startAt);
+      const end = parseDate(data.endAt);
+      return end > start;
+    } catch {
+      return true;
+    }
+  },
+  {
+    message: "La date de fin doit être après la date de début.",
+    path: ["endAt"],
+  },
+);
 
 export const waitlistSchema = z.object({
   patientId: z.string().min(1),

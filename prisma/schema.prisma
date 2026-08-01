@@ -130,6 +130,7 @@ model Clinic {
   medicalNotes         MedicalNote[]
   toothStatuses        ToothStatus[]
   toothStatusEvents    ToothStatusEvent[]
+  counters             Counter[]
 }
 
 model User {
@@ -358,8 +359,8 @@ model Attachment {
   cloudinaryPublicId String
   url                String
   expiresAt          DateTime?
-  createdAt            DateTime @default(now())
-  deletedAt            DateTime?
+  createdAt          DateTime @default(now())
+  deletedAt          DateTime?
 
   @@index([clinicId])
   @@index([patientId])
@@ -665,18 +666,18 @@ model AuditLog {
 }
 
 model PlanDefinition {
-  id               String   @id @default(cuid())
-  clinicId         String?
-  clinic           Clinic?  @relation(fields: [clinicId], references: [id])
-  plan             Plan     @unique
-  name             String
-  description      String?
-  monthlyPriceCents Int     @default(0)
-  yearlyPriceCents  Int     @default(0)
-  features         Json?
-  isActive         Boolean  @default(true)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                String   @id @default(cuid())
+  clinicId          String?
+  clinic            Clinic?  @relation(fields: [clinicId], references: [id])
+  plan              Plan     @unique
+  name              String
+  description       String?
+  monthlyPriceCents Int      @default(0)
+  yearlyPriceCents  Int      @default(0)
+  features          Json?
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@index([clinicId])
 }
@@ -696,4 +697,18 @@ model SubscriptionPayment {
   @@index([clinicId])
   @@index([status])
   @@index([expiresAt])
+}
+
+model Counter {
+  id        String   @id @default(cuid())
+  clinicId  String
+  type      String   // PATIENT | INVOICE | QUOTE
+  value     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clinic Clinic @relation(fields: [clinicId], references: [id])
+
+  @@unique([clinicId, type])
+  @@index([clinicId])
 }
