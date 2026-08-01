@@ -20,6 +20,7 @@ export default async function NewAppointmentPage({ searchParams }: Props) {
         firstName: p.firstName,
         lastName: p.lastName,
         number: p.number,
+        phone: p.phone,
       }))}
       dentists={dentists}
       defaultPatientId={patientId}
