@@ -77,23 +77,22 @@ async function main() {
   }
 
   for (const proc of REFERENCE_PROCEDURES) {
-    await prisma.procedure.upsert({
-      where: {
-        clinicId_code: {
-          clinicId: null as unknown as string,
-          code: proc.code,
-        },
-      },
-      update: {},
-      create: {
-        clinicId: null,
-        code: proc.code,
-        name: proc.name,
-        description: proc.description,
-        priceCents: proc.priceCents,
-        isReference: true,
-      },
+    const existing = await prisma.procedure.findFirst({
+      where: { clinicId: null, code: proc.code },
     });
+
+    if (!existing) {
+      await prisma.procedure.create({
+        data: {
+          clinicId: null,
+          code: proc.code,
+          name: proc.name,
+          description: proc.description,
+          priceCents: proc.priceCents,
+          isReference: true,
+        },
+      });
+    }
   }
 
   const adminEmail = requireEnv("PLATFORM_ADMIN_EMAIL");
