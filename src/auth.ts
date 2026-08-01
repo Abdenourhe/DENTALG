@@ -10,7 +10,13 @@ const credentialsSchema = z.object({
   provider: z.enum(["clinic", "platform"]).default("clinic"),
 });
 
+const authSecret = process.env.AUTH_SECRET;
+if (!authSecret && process.env.NODE_ENV === "production") {
+  throw new Error("AUTH_SECRET est manquant. Définissez-le dans les variables d'environnement Vercel.");
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   providers: [
     Credentials({
       credentials: {
