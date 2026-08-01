@@ -31,9 +31,7 @@ export default async function PatientDetailPage({ params }: Props) {
   const patient = await getPatient(id);
   if (!patient) notFound();
 
-  const toothMap = new Map(
-    patient.toothStatuses.map((t) => [t.tooth, t])
-  );
+  const toothMap = new Map(patient.toothStatuses.map((t) => [t.tooth, t]));
 
   return (
     <div className="space-y-6">
@@ -60,10 +58,23 @@ export default async function PatientDetailPage({ params }: Props) {
             <CardTitle>Coordonnées</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p><span className="text-slate-500">Téléphone :</span> {patient.phone ?? "—"}</p>
-            <p><span className="text-slate-500">Email :</span> {patient.email ?? "—"}</p>
-            <p><span className="text-slate-500">Adresse :</span> {patient.address ?? "—"}</p>
-            <p><span className="text-slate-500">Ville :</span> {patient.city ?? "—"} {patient.wilaya ? `(${patient.wilaya})` : ""}</p>
+            <p>
+              <span className="text-slate-500">Téléphone :</span>{" "}
+              {patient.phone ?? "—"}
+            </p>
+            <p>
+              <span className="text-slate-500">Email :</span>{" "}
+              {patient.email ?? "—"}
+            </p>
+            <p>
+              <span className="text-slate-500">Adresse :</span>{" "}
+              {patient.address ?? "—"}
+            </p>
+            <p>
+              <span className="text-slate-500">Ville :</span>{" "}
+              {patient.city ?? "—"}{" "}
+              {patient.wilaya ? `(${patient.wilaya})` : ""}
+            </p>
           </CardContent>
         </Card>
 
@@ -83,9 +94,18 @@ export default async function PatientDetailPage({ params }: Props) {
             <CardTitle>Statistiques</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <p><span className="text-slate-500">RDV :</span> {patient.appointments.length}</p>
-            <p><span className="text-slate-500">Factures :</span> {patient.invoices.length}</p>
-            <p><span className="text-slate-500">Plans de traitement :</span> {patient.treatmentPlans.length}</p>
+            <p>
+              <span className="text-slate-500">RDV :</span>{" "}
+              {patient.appointments.length}
+            </p>
+            <p>
+              <span className="text-slate-500">Factures :</span>{" "}
+              {patient.invoices.length}
+            </p>
+            <p>
+              <span className="text-slate-500">Plans de traitement :</span>{" "}
+              {patient.treatmentPlans.length}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -133,7 +153,9 @@ export default async function PatientDetailPage({ params }: Props) {
           <div className="mt-4 flex flex-wrap gap-3 text-xs">
             {Object.entries(TOOTH_COLORS).map(([status, color]) => (
               <span key={status} className="flex items-center gap-1">
-                <span className={`inline-block h-3 w-3 rounded-full ${color}`} />
+                <span
+                  className={`inline-block h-3 w-3 rounded-full ${color}`}
+                />
                 {status}
               </span>
             ))}
@@ -162,10 +184,10 @@ export default async function PatientDetailPage({ params }: Props) {
                           a.status === "COMPLETED"
                             ? "success"
                             : a.status === "CANCELLED"
-                            ? "danger"
-                            : a.status === "CONFIRMED"
-                            ? "info"
-                            : "default"
+                              ? "danger"
+                              : a.status === "CONFIRMED"
+                                ? "info"
+                                : "default"
                         }
                       >
                         {a.status}
@@ -194,17 +216,19 @@ export default async function PatientDetailPage({ params }: Props) {
                   <tr key={inv.id}>
                     <td className="py-2">{inv.number}</td>
                     <td className="py-2">{formatDate(inv.issuedAt)}</td>
-                    <td className="py-2 font-medium">{formatDA(inv.totalCents)}</td>
+                    <td className="py-2 font-medium">
+                      {formatDA(inv.totalCents)}
+                    </td>
                     <td className="py-2">
                       <Badge
                         variant={
                           inv.status === "PAID"
                             ? "success"
                             : inv.status === "OVERDUE"
-                            ? "danger"
-                            : inv.status === "ISSUED"
-                            ? "warning"
-                            : "default"
+                              ? "danger"
+                              : inv.status === "ISSUED"
+                                ? "warning"
+                                : "default"
                         }
                       >
                         {inv.status}
@@ -215,6 +239,53 @@ export default async function PatientDetailPage({ params }: Props) {
               </tbody>
             </table>
           )}
+        </CardContent>
+      </Card>
+
+      {/* Ordonnances */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Dernières ordonnances</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {patient.prescriptions.length === 0 ? (
+            <p className="text-sm text-slate-500">Aucune ordonnance.</p>
+          ) : (
+            <table className="w-full text-sm">
+              <tbody className="divide-y divide-slate-100">
+                {patient.prescriptions.map((pres) => (
+                  <tr key={pres.id}>
+                    <td className="py-2">{pres.number}</td>
+                    <td className="py-2">{formatDate(pres.issuedAt)}</td>
+                    <td className="py-2">
+                      {pres.items.length} médicament
+                      {pres.items.length > 1 ? "s" : ""}
+                    </td>
+                    <td className="py-2 text-right">
+                      <Link
+                        href={`/patients/${id}/prescriptions/${pres.id}`}
+                        className="text-sm font-medium text-slate-900 hover:underline"
+                      >
+                        Ouvrir
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          <div className="mt-4">
+            <Link href={`/patients/${id}/prescriptions/new`}>
+              <Button variant="secondary" size="sm">
+                + Nouvelle ordonnance
+              </Button>
+            </Link>
+            <Link href={`/patients/${id}/prescriptions`} className="ml-2">
+              <Button variant="ghost" size="sm">
+                Voir tout
+              </Button>
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>

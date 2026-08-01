@@ -91,6 +91,11 @@ enum SubscriptionStatus {
   EXPIRED
 }
 
+enum PrescriptionStatus {
+  DRAFT
+  ISSUED
+}
+
 model Clinic {
   id                   String                @id @default(cuid())
   name                 String
@@ -130,6 +135,8 @@ model Clinic {
   medicalNotes         MedicalNote[]
   toothStatuses        ToothStatus[]
   toothStatusEvents    ToothStatusEvent[]
+  prescriptions        Prescription[]
+  prescriptionItems    PrescriptionItem[]
   counters             Counter[]
 }
 
@@ -165,6 +172,7 @@ model User {
   applicationMessages  ApplicationMessage[]
   notifications        Notification[]
   auditLogs            AuditLog[]
+  prescriptions        Prescription[]
 
   @@index([clinicId])
   @@index([email])
@@ -213,6 +221,7 @@ model Patient {
   payments        Payment[]
   reminderLogs    ReminderLog[]
   waitlistEntries WaitlistEntry[]
+  prescriptions   Prescription[]
 
   @@unique([clinicId, number])
   @@index([clinicId])
@@ -699,10 +708,53 @@ model SubscriptionPayment {
   @@index([expiresAt])
 }
 
+model Prescription {
+  id          String              @id @default(cuid())
+  clinicId    String
+  clinic      Clinic              @relation(fields: [clinicId], references: [id])
+  patientId   String
+  patient     Patient             @relation(fields: [patientId], references: [id])
+  createdById String
+  createdBy   User                @relation(fields: [createdById], references: [id])
+  number      String
+  status      PrescriptionStatus  @default(DRAFT)
+  notes       String?
+  issuedAt    DateTime            @default(now())
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+  deletedAt   DateTime?
+
+  items PrescriptionItem[]
+
+  @@unique([clinicId, number])
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([createdById])
+  @@index([clinicId, issuedAt])
+}
+
+model PrescriptionItem {
+  id             String       @id @default(cuid())
+  clinicId       String
+  clinic         Clinic       @relation(fields: [clinicId], references: [id])
+  prescriptionId String
+  prescription   Prescription @relation(fields: [prescriptionId], references: [id], onDelete: Cascade)
+  name           String
+  dosage         String?
+  duration       String?
+  instructions   String?
+  position       Int          @default(0)
+  createdAt      DateTime     @default(now())
+
+  @@index([clinicId])
+  @@index([prescriptionId])
+  @@index([clinicId, position])
+}
+
 model Counter {
   id        String   @id @default(cuid())
   clinicId  String
-  type      String   // PATIENT | INVOICE | QUOTE
+  type      String   // PATIENT | INVOICE | QUOTE | PRESCRIPTION
   value     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

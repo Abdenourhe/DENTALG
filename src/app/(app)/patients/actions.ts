@@ -1,6 +1,5 @@
 "use server";
 
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { requireClinicContext, withClinic } from "@/lib/tenant";
@@ -191,6 +190,12 @@ export async function getPatient(id: string) {
         where: { deletedAt: null },
         orderBy: { createdAt: "desc" },
         take: 10,
+      },
+      prescriptions: {
+        where: { deletedAt: null },
+        orderBy: { issuedAt: "desc" },
+        take: 5,
+        include: { items: { orderBy: { position: "asc" } } },
       },
     },
   });

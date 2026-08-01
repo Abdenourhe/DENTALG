@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
-export type CounterType = "PATIENT" | "INVOICE" | "QUOTE";
+export type CounterType = "PATIENT" | "INVOICE" | "QUOTE" | "PRESCRIPTION";
 
 /**
  * Returns the next sequential number atomically using an upsert counter.
