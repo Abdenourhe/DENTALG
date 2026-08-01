@@ -1,6 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPatient, upsertToothStatus } from "../actions";
+import {
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Calendar,
+  Stethoscope,
+  CreditCard,
+  FileText,
+  Pill,
+  ChevronRight,
+  Plus,
+} from "lucide-react";
+import { getPatient } from "../actions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,268 +39,427 @@ const TOOTH_COLORS: Record<string, string> = {
 const UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
 const LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 
+function capitalize(value: string): string {
+  return value
+    .split(" ")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
 export default async function PatientDetailPage({ params }: Props) {
   const { id } = await params;
   const patient = await getPatient(id);
   if (!patient) notFound();
 
   const toothMap = new Map(patient.toothStatuses.map((t) => [t.tooth, t]));
+  const fullName = `${capitalize(patient.lastName)} ${capitalize(
+    patient.firstName,
+  )}`;
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">
-            {patient.lastName} {patient.firstName}
-          </h2>
-          <p className="text-sm text-slate-500">
-            N° {patient.number} — {formatDate(patient.dateOfBirth)}
-          </p>
+      {/* Header */}
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-900 text-white">
+            <User className="h-8 w-8" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">{fullName}</h1>
+            <p className="text-sm text-slate-600">
+              Dossier n° {patient.number} — Né(e) le{" "}
+              {formatDate(patient.dateOfBirth)}
+            </p>
+            {patient.phone && (
+              <p className="mt-1 flex items-center gap-1 text-sm text-slate-600">
+                <Phone className="h-3.5 w-3.5" />
+                {patient.phone}
+              </p>
+            )}
+          </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href={`/patients/${id}/edit`}>
             <Button variant="secondary">Modifier</Button>
+          </Link>
+          <Link href={`/appointments/new?patientId=${id}`}>
+            <Button variant="secondary">Nouveau RDV</Button>
+          </Link>
+          <Link href={`/billing/new?patientId=${id}`}>
+            <Button variant="secondary">Nouvelle facture</Button>
+          </Link>
+          <Link href={`/patients/${id}/prescriptions/new`}>
+            <Button>Ordonnance</Button>
           </Link>
         </div>
       </div>
 
-      {/* Informations */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+      {/* Info cards */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <Card>
-          <CardHeader>
-            <CardTitle>Coordonnées</CardTitle>
+          <CardHeader className="border-b border-slate-100 pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <MapPin className="h-4 w-4 text-slate-500" />
+              Coordonnées
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <span className="text-slate-500">Téléphone :</span>{" "}
-              {patient.phone ?? "—"}
-            </p>
-            <p>
-              <span className="text-slate-500">Email :</span>{" "}
-              {patient.email ?? "—"}
-            </p>
-            <p>
-              <span className="text-slate-500">Adresse :</span>{" "}
-              {patient.address ?? "—"}
-            </p>
-            <p>
-              <span className="text-slate-500">Ville :</span>{" "}
-              {patient.city ?? "—"}{" "}
-              {patient.wilaya ? `(${patient.wilaya})` : ""}
+          <CardContent className="space-y-3 pt-4 text-sm">
+            <InfoRow label="Téléphone" value={patient.phone} icon={Phone} />
+            <InfoRow label="Email" value={patient.email} icon={Mail} />
+            <InfoRow label="Adresse" value={patient.address} icon={MapPin} />
+            <InfoRow
+              label="Ville"
+              value={
+                patient.city
+                  ? `${patient.city}${patient.wilaya ? ` (${patient.wilaya})` : ""}`
+                  : null
+              }
+              icon={MapPin}
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="border-b border-slate-100 pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <FileText className="h-4 w-4 text-slate-500" />
+              Notes médicales
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <p className="min-h-[80px] whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+              {patient.notes || (
+                <span className="italic text-slate-400">
+                  Aucune note enregistrée.
+                </span>
+              )}
             </p>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Notes</CardTitle>
+          <CardHeader className="border-b border-slate-100 pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <Calendar className="h-4 w-4 text-slate-500" />
+              Statistiques
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p className="text-sm text-slate-700 whitespace-pre-wrap">
-              {patient.notes ?? "Aucune note."}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Statistiques</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 text-sm">
-            <p>
-              <span className="text-slate-500">RDV :</span>{" "}
-              {patient.appointments.length}
-            </p>
-            <p>
-              <span className="text-slate-500">Factures :</span>{" "}
-              {patient.invoices.length}
-            </p>
-            <p>
-              <span className="text-slate-500">Plans de traitement :</span>{" "}
-              {patient.treatmentPlans.length}
-            </p>
+          <CardContent className="space-y-3 pt-4 text-sm">
+            <StatRow
+              label="Rendez-vous"
+              value={patient.appointments.length}
+              icon={Calendar}
+            />
+            <StatRow
+              label="Factures"
+              value={patient.invoices.length}
+              icon={CreditCard}
+            />
+            <StatRow
+              label="Plans de traitement"
+              value={patient.treatmentPlans.length}
+              icon={Stethoscope}
+            />
+            <StatRow
+              label="Ordonnances"
+              value={patient.prescriptions.length}
+              icon={Pill}
+            />
           </CardContent>
         </Card>
       </div>
 
       {/* Odontogramme */}
       <Card>
-        <CardHeader>
-          <CardTitle>Odontogramme (FDI)</CardTitle>
+        <CardHeader className="border-b border-slate-100 pb-3">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <Stethoscope className="h-4 w-4 text-slate-500" />
+            Odontogramme (FDI)
+          </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex justify-center gap-1">
+        <CardContent className="pt-6">
+          <div className="space-y-6">
+            <div className="flex justify-center gap-1.5">
               {UPPER.map((n) => {
                 const ts = toothMap.get(n);
                 return (
                   <div key={n} className="flex flex-col items-center gap-1">
                     <div
-                      className={`h-8 w-8 rounded-full ${
+                      className={`h-9 w-9 rounded-full ${
                         ts ? TOOTH_COLORS[ts.status] : "bg-green-500"
-                      } border-2 border-white shadow`}
-                      title={`${n} — ${formatToothName(n)}${ts ? ` [${ts.status}]` : ""}`}
+                      } border-2 border-white shadow transition-transform hover:scale-110`}
+                      title={`${n} — ${formatToothName(n)}${
+                        ts ? ` [${ts.status}]` : ""
+                      }`}
                     />
-                    <span className="text-[10px] text-slate-500">{n}</span>
+                    <span className="text-[10px] font-medium text-slate-600">
+                      {n}
+                    </span>
                   </div>
                 );
               })}
             </div>
-            <div className="flex justify-center gap-1">
+            <div className="flex justify-center gap-1.5">
               {LOWER.map((n) => {
                 const ts = toothMap.get(n);
                 return (
                   <div key={n} className="flex flex-col items-center gap-1">
                     <div
-                      className={`h-8 w-8 rounded-full ${
+                      className={`h-9 w-9 rounded-full ${
                         ts ? TOOTH_COLORS[ts.status] : "bg-green-500"
-                      } border-2 border-white shadow`}
-                      title={`${n} — ${formatToothName(n)}${ts ? ` [${ts.status}]` : ""}`}
+                      } border-2 border-white shadow transition-transform hover:scale-110`}
+                      title={`${n} — ${formatToothName(n)}${
+                        ts ? ` [${ts.status}]` : ""
+                      }`}
                     />
-                    <span className="text-[10px] text-slate-500">{n}</span>
+                    <span className="text-[10px] font-medium text-slate-600">
+                      {n}
+                    </span>
                   </div>
                 );
               })}
             </div>
           </div>
-          <div className="mt-4 flex flex-wrap gap-3 text-xs">
+          <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-slate-700">
             {Object.entries(TOOTH_COLORS).map(([status, color]) => (
-              <span key={status} className="flex items-center gap-1">
+              <span key={status} className="flex items-center gap-1.5">
                 <span
                   className={`inline-block h-3 w-3 rounded-full ${color}`}
                 />
-                {status}
+                {status.replace(/_/g, " ")}
               </span>
             ))}
           </div>
         </CardContent>
       </Card>
 
-      {/* Historique des RDV */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Derniers rendez-vous</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {patient.appointments.length === 0 ? (
-            <p className="text-sm text-slate-500">Aucun rendez-vous.</p>
-          ) : (
-            <table className="w-full text-sm">
-              <tbody className="divide-y divide-slate-100">
-                {patient.appointments.map((a) => (
-                  <tr key={a.id}>
-                    <td className="py-2">{formatDateTime(a.startAt)}</td>
-                    <td className="py-2">{a.reason ?? "—"}</td>
-                    <td className="py-2">
-                      <Badge
-                        variant={
-                          a.status === "COMPLETED"
-                            ? "success"
-                            : a.status === "CANCELLED"
-                              ? "danger"
-                              : a.status === "CONFIRMED"
-                                ? "info"
-                                : "default"
-                        }
-                      >
-                        {a.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
+      {/* RDV */}
+      <SectionCard
+        title="Derniers rendez-vous"
+        icon={Calendar}
+        href={`/appointments?patientId=${id}`}
+        hrefLabel="Voir tout"
+      >
+        {patient.appointments.length === 0 ? (
+          <EmptyState text="Aucun rendez-vous enregistré." />
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {patient.appointments.map((a) => (
+              <div
+                key={a.id}
+                className="flex items-center justify-between py-3 text-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-medium text-slate-900">
+                    {formatDateTime(a.startAt)}
+                  </span>
+                  <span className="text-slate-600">{a.reason || "—"}</span>
+                </div>
+                <Badge
+                  variant={
+                    a.status === "COMPLETED"
+                      ? "success"
+                      : a.status === "CANCELLED"
+                        ? "danger"
+                        : a.status === "CONFIRMED"
+                          ? "info"
+                          : "default"
+                  }
+                >
+                  {a.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
 
       {/* Factures */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Dernières factures</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {patient.invoices.length === 0 ? (
-            <p className="text-sm text-slate-500">Aucune facture.</p>
-          ) : (
-            <table className="w-full text-sm">
-              <tbody className="divide-y divide-slate-100">
-                {patient.invoices.map((inv) => (
-                  <tr key={inv.id}>
-                    <td className="py-2">{inv.number}</td>
-                    <td className="py-2">{formatDate(inv.issuedAt)}</td>
-                    <td className="py-2 font-medium">
-                      {formatDA(inv.totalCents)}
-                    </td>
-                    <td className="py-2">
-                      <Badge
-                        variant={
-                          inv.status === "PAID"
-                            ? "success"
-                            : inv.status === "OVERDUE"
-                              ? "danger"
-                              : inv.status === "ISSUED"
-                                ? "warning"
-                                : "default"
-                        }
-                      >
-                        {inv.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </CardContent>
-      </Card>
+      <SectionCard
+        title="Dernières factures"
+        icon={CreditCard}
+        href={`/billing?patientId=${id}`}
+        hrefLabel="Voir tout"
+      >
+        {patient.invoices.length === 0 ? (
+          <EmptyState text="Aucune facture enregistrée." />
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {patient.invoices.map((inv) => (
+              <div
+                key={inv.id}
+                className="flex items-center justify-between py-3 text-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-medium text-slate-900">
+                    {inv.number}
+                  </span>
+                  <span className="text-slate-600">
+                    {formatDate(inv.issuedAt)}
+                  </span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-semibold text-slate-900">
+                    {formatDA(inv.totalCents)}
+                  </span>
+                  <Badge
+                    variant={
+                      inv.status === "PAID"
+                        ? "success"
+                        : inv.status === "OVERDUE"
+                          ? "danger"
+                          : inv.status === "ISSUED"
+                            ? "warning"
+                            : "default"
+                    }
+                  >
+                    {inv.status}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
 
       {/* Ordonnances */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Dernières ordonnances</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {patient.prescriptions.length === 0 ? (
-            <p className="text-sm text-slate-500">Aucune ordonnance.</p>
-          ) : (
-            <table className="w-full text-sm">
-              <tbody className="divide-y divide-slate-100">
-                {patient.prescriptions.map((pres) => (
-                  <tr key={pres.id}>
-                    <td className="py-2">{pres.number}</td>
-                    <td className="py-2">{formatDate(pres.issuedAt)}</td>
-                    <td className="py-2">
-                      {pres.items.length} médicament
-                      {pres.items.length > 1 ? "s" : ""}
-                    </td>
-                    <td className="py-2 text-right">
-                      <Link
-                        href={`/patients/${id}/prescriptions/${pres.id}`}
-                        className="text-sm font-medium text-slate-900 hover:underline"
-                      >
-                        Ouvrir
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-          <div className="mt-4">
-            <Link href={`/patients/${id}/prescriptions/new`}>
-              <Button variant="secondary" size="sm">
-                + Nouvelle ordonnance
-              </Button>
-            </Link>
-            <Link href={`/patients/${id}/prescriptions`} className="ml-2">
-              <Button variant="ghost" size="sm">
-                Voir tout
-              </Button>
-            </Link>
+      <SectionCard
+        title="Dernières ordonnances"
+        icon={Pill}
+        href={`/patients/${id}/prescriptions`}
+        hrefLabel="Voir tout"
+        action={
+          <Link href={`/patients/${id}/prescriptions/new`}>
+            <Button size="sm">
+              <Plus className="mr-1 h-4 w-4" />
+              Nouvelle
+            </Button>
+          </Link>
+        }
+      >
+        {patient.prescriptions.length === 0 ? (
+          <EmptyState text="Aucune ordonnance enregistrée." />
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {patient.prescriptions.map((pres) => (
+              <div
+                key={pres.id}
+                className="flex items-center justify-between py-3 text-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-medium text-slate-900">
+                    {pres.number}
+                  </span>
+                  <span className="text-slate-600">
+                    {formatDate(pres.issuedAt)}
+                  </span>
+                  <span className="text-slate-600">
+                    {pres.items.length} médicament
+                    {pres.items.length > 1 ? "s" : ""}
+                  </span>
+                </div>
+                <Link
+                  href={`/patients/${id}/prescriptions/${pres.id}`}
+                  className="flex items-center gap-1 text-sm font-medium text-slate-900 hover:underline"
+                >
+                  Ouvrir <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
+            ))}
           </div>
-        </CardContent>
-      </Card>
+        )}
+      </SectionCard>
+    </div>
+  );
+}
+
+function InfoRow({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: string | null;
+  icon: React.ElementType;
+}) {
+  return (
+    <div className="flex items-start gap-3">
+      <Icon className="mt-0.5 h-4 w-4 shrink-0 text-slate-500" />
+      <div>
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+          {label}
+        </p>
+        <p className="font-medium text-slate-900">
+          {value || <span className="text-slate-400">—</span>}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function StatRow({
+  label,
+  value,
+  icon: Icon,
+}: {
+  label: string;
+  value: number;
+  icon: React.ElementType;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-2 text-slate-600">
+        <Icon className="h-4 w-4 text-slate-500" />
+        <span>{label}</span>
+      </div>
+      <span className="text-lg font-bold text-slate-900">{value}</span>
+    </div>
+  );
+}
+
+function SectionCard({
+  title,
+  icon: Icon,
+  href,
+  hrefLabel,
+  action,
+  children,
+}: {
+  title: string;
+  icon: React.ElementType;
+  href?: string;
+  hrefLabel?: string;
+  action?: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 pb-3">
+        <CardTitle className="flex items-center gap-2 text-base font-semibold">
+          <Icon className="h-4 w-4 text-slate-500" />
+          {title}
+        </CardTitle>
+        <div className="flex items-center gap-2">
+          {action}
+          {href && (
+            <Link
+              href={href}
+              className="flex items-center gap-1 text-sm font-medium text-slate-700 hover:text-slate-900 hover:underline"
+            >
+              {hrefLabel} <ChevronRight className="h-4 w-4" />
+            </Link>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="pt-4">{children}</CardContent>
+    </Card>
+  );
+}
+
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="flex items-center justify-center py-6">
+      <p className="text-sm text-slate-500">{text}</p>
     </div>
   );
 }
