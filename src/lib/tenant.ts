@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 export interface ClinicContext {
   clinicId: string;
+  userId: string;
 }
 
 export class TenantError extends Error {
@@ -20,7 +21,7 @@ export async function getClinicContext(): Promise<ClinicContext> {
     throw new TenantError("Contexte cabinet requis.");
   }
 
-  return { clinicId: user.clinicId };
+  return { clinicId: user.clinicId, userId: user.id };
 }
 
 export function withClinic<T extends Record<string, unknown>>(

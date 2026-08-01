@@ -1,120 +1,183 @@
-import { PrismaClient, Plan, Role } from "@prisma/client";
+import { PrismaClient, Role, Plan } from "@prisma/client";
 import bcrypt from "bcrypt";
 
 const prisma = new PrismaClient();
 
-const PLAN_DEFINITIONS = [
-  {
-    plan: Plan.FREE,
-    name: "Gratuit",
-    description: "1 utilisateur, 100 patients, fonctionnalités essentielles.",
-    monthlyPriceCents: 0,
-    yearlyPriceCents: 0,
-    features: { maxUsers: 1, maxPatients: 100, includesBilling: false },
-  },
-  {
-    plan: Plan.ESSENTIEL,
-    name: "Essentiel",
-    description: "5 utilisateurs, patients illimités, facturation.",
-    monthlyPriceCents: 300_000,
-    yearlyPriceCents: 3_000_000,
-    features: { maxUsers: 5, maxPatients: null, includesBilling: true },
-  },
-  {
-    plan: Plan.PRO,
-    name: "Pro",
-    description: "15 utilisateurs, rappels SMS, offres d'emploi.",
-    monthlyPriceCents: 800_000,
-    yearlyPriceCents: 8_000_000,
-    features: { maxUsers: 15, maxPatients: null, includesBilling: true, includesSms: true },
-  },
-  {
-    plan: Plan.PREMIUM,
-    name: "Premium",
-    description: "Utilisateurs illimités, API, support prioritaire.",
-    monthlyPriceCents: 1_500_000,
-    yearlyPriceCents: 15_000_000,
-    features: { maxUsers: null, maxPatients: null, includesBilling: true, includesSms: true, includesApi: true },
-  },
-];
-
-const REFERENCE_PROCEDURES = [
-  { code: "CONS", name: "Consultation", description: "Consultation initiale", priceCents: 100_000 },
-  { code: "DET", name: "Détartrage", description: "Détartrage standard", priceCents: 250_000 },
-  { code: "OBT", name: "Obturation", description: "Soin de carie / obturation", priceCents: 300_000 },
-  { code: "SURF", name: "Surfaçage", description: "Détartrage + surfaçage", priceCents: 350_000 },
-  { code: "ENDO", name: "Endodontie", description: "Traitement canalaire", priceCents: 1_200_000 },
-  { code: "EXT", name: "Extraction simple", description: "Extraction dentaire simple", priceCents: 200_000 },
-  { code: "EXTC", name: "Extraction chirurgicale", description: "Extraction chirurgicale", priceCents: 500_000 },
-  { code: "COUR", name: "Couronne", description: "Couronne prothétique", priceCents: 1_800_000 },
-  { code: "BRID", name: "Bridge", description: "Bridge prothétique", priceCents: 6_000_000 },
-  { code: "IMPL", name: "Implant", description: "Implant dentaire", priceCents: 8_000_000 },
-  { code: "BLAN", name: "Blanchiment", description: "Blanchiment dentaire", priceCents: 1_500_000 },
-];
-
-function requireEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`Variable d'environnement manquante : ${name}`);
-  }
-  return value;
-}
-
 async function main() {
-  for (const planDef of PLAN_DEFINITIONS) {
-    await prisma.planDefinition.upsert({
-      where: { plan: planDef.plan },
-      update: {},
-      create: {
-        plan: planDef.plan,
-        name: planDef.name,
-        description: planDef.description,
-        monthlyPriceCents: planDef.monthlyPriceCents,
-        yearlyPriceCents: planDef.yearlyPriceCents,
-        features: planDef.features,
-      },
-    });
-  }
+  console.log("🌱 Seeding database...");
 
-  for (const proc of REFERENCE_PROCEDURES) {
-    const existing = await prisma.procedure.findFirst({
-      where: { clinicId: null, code: proc.code },
-    });
+  // Clean existing data (optional — remove in production)
+  await prisma.payment.deleteMany();
+  await prisma.invoiceItem.deleteMany();
+  await prisma.invoice.deleteMany();
+  await prisma.quoteItem.deleteMany();
+  await prisma.quote.deleteMany();
+  await prisma.treatmentItem.deleteMany();
+  await prisma.treatmentPlan.deleteMany();
+  await procedureDeleteMany();
+  await prisma.appointment.deleteMany();
+  await prisma.medicalNote.deleteMany();
+  await prisma.toothStatusEvent.deleteMany();
+  await prisma.toothStatus.deleteMany();
+  await prisma.patient.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.clinic.deleteMany();
 
-    if (!existing) {
-      await prisma.procedure.create({
-        data: {
-          clinicId: null,
-          code: proc.code,
-          name: proc.name,
-          description: proc.description,
-          priceCents: proc.priceCents,
-          isReference: true,
-        },
-      });
-    }
-  }
-
-  const adminEmail = requireEnv("PLATFORM_ADMIN_EMAIL");
-  const adminPassword = requireEnv("PLATFORM_ADMIN_PASSWORD");
-  const passwordHash = await bcrypt.hash(adminPassword, 12);
-
-  await prisma.user.upsert({
-    where: { email: adminEmail },
-    update: {
-      passwordHash,
-      role: Role.PLATFORM_ADMIN,
-      clinicId: null,
-    },
-    create: {
-      email: adminEmail,
-      passwordHash,
-      firstName: "Plateforme",
-      lastName: "Administrateur",
-      role: Role.PLATFORM_ADMIN,
-      clinicId: null,
+  // Create demo clinic
+  const clinic = await prisma.clinic.create({
+    data: {
+      name: "Cabinet Dentaire Benali",
+      slug: "cabinet-benali",
+      email: "contact@benali-dental.dz",
+      phone: "023456789",
+      address: "12 Rue Didouche Mourad",
+      city: "Alger Centre",
+      wilaya: "Alger",
+      plan: Plan.PRO,
+      isActive: true,
     },
   });
+
+  console.log(`✅ Clinic created: ${clinic.name}`);
+
+  // Create owner
+  const passwordHash = await bcrypt.hash("DemoPass123!", 10);
+  const owner = await prisma.user.create({
+    data: {
+      clinicId: clinic.id,
+      email: "dr.benali@demo.dz",
+      passwordHash,
+      firstName: "Amine",
+      lastName: "Benali",
+      role: Role.OWNER,
+      isActive: true,
+    },
+  });
+
+  // Create assistant
+  const assistant = await prisma.user.create({
+    data: {
+      clinicId: clinic.id,
+      email: "assistant@demo.dz",
+      passwordHash: await bcrypt.hash("DemoPass123!", 10),
+      firstName: "Fatima",
+      lastName: "Zerrouki",
+      role: Role.ASSISTANT,
+      isActive: true,
+    },
+  });
+
+  // Create secretary
+  const secretary = await prisma.user.create({
+    data: {
+      clinicId: clinic.id,
+      email: "secretary@demo.dz",
+      passwordHash: await bcrypt.hash("DemoPass123!", 10),
+      firstName: "Karim",
+      lastName: "Hadji",
+      role: Role.SECRETARY,
+      isActive: true,
+    },
+  });
+
+  console.log(`✅ Users created: ${owner.email}, ${assistant.email}, ${secretary.email}`);
+
+  // Create patients
+  const patients = await prisma.patient.createMany({
+    data: [
+      {
+        clinicId: clinic.id,
+        number: "0001",
+        firstName: "Fatima",
+        lastName: "Zerrouki",
+        phone: "0555123456",
+        email: "fatima.z@email.dz",
+        address: "Bab Ezzouar",
+        city: "Alger",
+        wilaya: "Alger",
+        dateOfBirth: new Date("1990-05-15"),
+        notes: "Allergie pénicilline. Diabète type 2.",
+      },
+      {
+        clinicId: clinic.id,
+        number: "0002",
+        firstName: "Karim",
+        lastName: "Hadji",
+        phone: "0555987654",
+        email: "karim.h@email.dz",
+        address: "Hydra",
+        city: "Alger",
+        wilaya: "Alger",
+        dateOfBirth: new Date("1985-11-22"),
+        notes: "Fumeur. Hypertension.",
+      },
+      {
+        clinicId: clinic.id,
+        number: "0003",
+        firstName: "Selma",
+        lastName: "Oudj",
+        phone: "0555345678",
+        email: "selma.o@email.dz",
+        address: "El Biar",
+        city: "Alger",
+        wilaya: "Alger",
+        dateOfBirth: new Date("1995-03-08"),
+      },
+      {
+        clinicId: clinic.id,
+        number: "0004",
+        firstName: "Youssef",
+        lastName: "Meziane",
+        phone: "0555567890",
+        city: "Oran",
+        wilaya: "Oran",
+        dateOfBirth: new Date("1988-09-12"),
+      },
+    ],
+  });
+
+  console.log(`✅ Patients created: 4`);
+
+  // Create procedures
+  const procedures = await prisma.procedure.createMany({
+    data: [
+      { clinicId: clinic.id, code: "CONSULT", name: "Consultation", priceCents: 200000, color: "#3b82f6", isActive: true },
+      { clinicId: clinic.id, code: "DETART", name: "Détartrage", priceCents: 300000, color: "#10b981", isActive: true },
+      { clinicId: clinic.id, code: "OBTUR", name: "Obturation composite", priceCents: 450000, color: "#f59e0b", isActive: true },
+      { clinicId: clinic.id, code: "EXTRAC", name: "Extraction simple", priceCents: 250000, color: "#ef4444", isActive: true },
+      { clinicId: clinic.id, code: "IMPLANT", name: "Implant + couronne", priceCents: 4500000, color: "#8b5cf6", isActive: true },
+      { clinicId: clinic.id, code: "DEVIT", name: "Dévitalisation", priceCents: 1200000, color: "#06b6d4", isActive: true },
+      { clinicId: clinic.id, code: "COURN", name: "Couronne céramique", priceCents: 1800000, color: "#a855f7", isActive: true },
+    ],
+  });
+
+  console.log(`✅ Procedures created: 7`);
+
+  // Create a published job offer
+  await prisma.jobOffer.create({
+    data: {
+      clinicId: clinic.id,
+      title: "Assistant(e) dentaire — CDI",
+      description: "Nous recherchons un(e) assistant(e) dentaire qualifié(e) pour rejoindre notre équipe.\n\nMissions :\n- Accueil et gestion des patients\n- Assistance au fauteuil\n- Stérilisation du matériel\n- Gestion des stocks\n\nProfil recherché :\n- Diplôme d'assistant(e) dentaire\n- 2 ans d'expérience minimum\n- Maîtrise du français",
+      location: "Alger Centre",
+      requirements: "Diplôme assistant dentaire, 2 ans expérience",
+      status: "PUBLISHED",
+      publishedAt: new Date(),
+    },
+  });
+
+  console.log(`✅ Job offer created`);
+
+  console.log("🎉 Seed completed successfully!");
+  console.log("");
+  console.log("Login credentials:");
+  console.log("  Owner:    dr.benali@demo.dz / DemoPass123!");
+  console.log("  Assistant: assistant@demo.dz / DemoPass123!");
+  console.log("  Secretary: secretary@demo.dz / DemoPass123!");
+}
+
+async function procedureDeleteMany() {
+  await prisma.procedure.deleteMany();
 }
 
 main()
