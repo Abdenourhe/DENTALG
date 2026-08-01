@@ -1,6 +1,6 @@
 "use server";
 
-import { signIn } from "../../../../../auth";
+import { signIn } from "@/auth";
 import { AuthError } from "next-auth";
 
 type AdminLoginResult = { ok: true } | { ok: false; error: string };

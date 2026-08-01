@@ -1,4 +1,4 @@
-import { auth } from "../../auth";
+import { auth } from "@/auth";
 import { Role } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { PERMISSIONS } from "./permissions";

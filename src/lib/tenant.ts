@@ -1,4 +1,4 @@
-import { auth } from "../../auth";
+import { auth } from "@/auth";
 import { notFound } from "next/navigation";
 
 export interface ClinicContext {
