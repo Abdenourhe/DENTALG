@@ -3,9 +3,12 @@ import { listInvoices, listProcedures } from "./actions";
 import InvoicePaymentForm from "./invoice-payment-form";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/date";
 import { formatDA } from "@/lib/money";
+import {
+  formatInvoiceStatus,
+  invoiceStatusColors,
+} from "@/lib/billing/invoice-helpers";
 
 export default async function BillingPage() {
   const invoices = await listInvoices();
@@ -90,19 +93,14 @@ export default async function BillingPage() {
                         {formatDA(balance)}
                       </td>
                       <td className="py-3">
-                        <Badge
-                          variant={
-                            inv.status === "PAID"
-                              ? "success"
-                              : inv.status === "OVERDUE"
-                                ? "danger"
-                                : inv.status === "ISSUED"
-                                  ? "warning"
-                                  : "default"
-                          }
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${
+                            invoiceStatusColors[inv.status] ??
+                            "bg-slate-100 text-slate-800 border-slate-200"
+                          }`}
                         >
-                          {inv.status}
-                        </Badge>
+                          {formatInvoiceStatus(inv.status)}
+                        </span>
                       </td>
                       <td className="py-3 text-right">
                         <InvoicePaymentForm

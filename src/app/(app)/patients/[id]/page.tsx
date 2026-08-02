@@ -25,6 +25,10 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate, formatDateTime } from "@/lib/date";
 import { formatDA } from "@/lib/money";
 import { formatToothName } from "./tooth-names";
+import {
+  formatInvoiceStatus,
+  invoiceStatusColors,
+} from "@/lib/billing/invoice-helpers";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -389,39 +393,49 @@ export default async function PatientDetailPage({ params }: Props) {
           <EmptyState text="Aucune facture enregistrée." />
         ) : (
           <div className="divide-y divide-slate-100">
-            {patient.invoices.map((inv) => (
-              <div
-                key={inv.id}
-                className="flex items-center justify-between py-3 text-sm"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="font-medium text-slate-900">
-                    {inv.number}
-                  </span>
-                  <span className="text-slate-600">
-                    {formatDate(inv.issuedAt)}
-                  </span>
+            {patient.invoices.map((inv) => {
+              const balance = Math.max(0, inv.totalCents - inv.paidCents);
+              return (
+                <div
+                  key={inv.id}
+                  className="flex items-center justify-between py-3 text-sm"
+                >
+                  <div className="flex flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+                    <span className="font-medium text-slate-900">
+                      {inv.number}
+                    </span>
+                    <span className="text-slate-600">
+                      {formatDate(inv.issuedAt)}
+                    </span>
+                  </div>
+                  <div className="flex flex-col items-end gap-1 sm:flex-row sm:items-center sm:gap-3">
+                    <div className="text-right text-xs text-slate-500">
+                      <span className="line-through opacity-70">
+                        {formatDA(inv.totalCents)}
+                      </span>
+                      {balance > 0 && (
+                        <span className="ml-2 font-semibold text-red-600">
+                          Reste {formatDA(balance)}
+                        </span>
+                      )}
+                      {balance === 0 && (
+                        <span className="ml-2 font-semibold text-green-600">
+                          Payée
+                        </span>
+                      )}
+                    </div>
+                    <Badge
+                      className={
+                        invoiceStatusColors[inv.status] ??
+                        "bg-slate-100 text-slate-800"
+                      }
+                    >
+                      {formatInvoiceStatus(inv.status)}
+                    </Badge>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-semibold text-slate-900">
-                    {formatDA(inv.totalCents)}
-                  </span>
-                  <Badge
-                    variant={
-                      inv.status === "PAID"
-                        ? "success"
-                        : inv.status === "OVERDUE"
-                          ? "danger"
-                          : inv.status === "ISSUED"
-                            ? "warning"
-                            : "default"
-                    }
-                  >
-                    {inv.status}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </SectionCard>
