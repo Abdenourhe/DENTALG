@@ -72,9 +72,14 @@ export async function createPatient(data: unknown) {
 
     revalidatePath("/patients");
     return { ok: true, patient } as const;
-  } catch {
+  } catch (err) {
+    console.error("createPatient error", err);
     return prismaError({
-      global: ["Une erreur est survenue lors de la création du patient."],
+      global: [
+        `Une erreur est survenue lors de la création du patient. ${
+          err instanceof Error ? err.message : ""
+        }`,
+      ],
     });
   }
 }
@@ -151,6 +156,84 @@ export async function updatePatient(id: string, data: unknown) {
   }
 }
 
+export async function archivePatient(id: string) {
+  await requireRole("patients:write");
+  const ctx = await requireClinicContext();
+
+  try {
+    const existing = await prisma.patient.findFirst({
+      where: { id, clinicId: ctx.clinicId, deletedAt: null },
+    });
+    if (!existing) return prismaError({ global: ["Patient introuvable."] });
+
+    const patient = await prisma.patient.update({
+      where: { id },
+      data: { isActive: false },
+    });
+
+    await logAudit({
+      action: AuditAction.UPDATE,
+      entityType: "Patient",
+      entityId: id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+      metadata: { isActive: false },
+    });
+
+    revalidatePath("/patients");
+    revalidatePath(`/patients/${id}`);
+    return { ok: true, patient } as const;
+  } catch (err) {
+    console.error("archivePatient error", err);
+    return prismaError({
+      global: [
+        `Une erreur est survenue lors de l'archivage du patient. ${
+          err instanceof Error ? err.message : ""
+        }`,
+      ],
+    });
+  }
+}
+
+export async function restorePatient(id: string) {
+  await requireRole("patients:write");
+  const ctx = await requireClinicContext();
+
+  try {
+    const existing = await prisma.patient.findFirst({
+      where: { id, clinicId: ctx.clinicId, deletedAt: null },
+    });
+    if (!existing) return prismaError({ global: ["Patient introuvable."] });
+
+    const patient = await prisma.patient.update({
+      where: { id },
+      data: { isActive: true },
+    });
+
+    await logAudit({
+      action: AuditAction.UPDATE,
+      entityType: "Patient",
+      entityId: id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+      metadata: { isActive: true },
+    });
+
+    revalidatePath("/patients");
+    revalidatePath(`/patients/${id}`);
+    return { ok: true, patient } as const;
+  } catch (err) {
+    console.error("restorePatient error", err);
+    return prismaError({
+      global: [
+        `Une erreur est survenue lors de la réactivation du patient. ${
+          err instanceof Error ? err.message : ""
+        }`,
+      ],
+    });
+  }
+}
+
 export async function deletePatient(id: string) {
   await requireRole("patients:write");
   const ctx = await requireClinicContext();
@@ -176,14 +259,19 @@ export async function deletePatient(id: string) {
 
     revalidatePath("/patients");
     return { ok: true } as const;
-  } catch {
+  } catch (err) {
+    console.error("deletePatient error", err);
     return prismaError({
-      global: ["Une erreur est survenue lors de la suppression du patient."],
+      global: [
+        `Une erreur est survenue lors de la suppression du patient. ${
+          err instanceof Error ? err.message : ""
+        }`,
+      ],
     });
   }
 }
 
-export async function listPatients(search?: string) {
+export async function listPatients(search?: string, archived?: boolean) {
   await requireRole("patients:read");
   const ctx = await requireClinicContext();
 
@@ -191,6 +279,7 @@ export async function listPatients(search?: string) {
     where: {
       clinicId: ctx.clinicId,
       deletedAt: null,
+      isActive: archived ? false : true,
       ...(search
         ? {
             OR: [

@@ -9,18 +9,28 @@ import { formatDate } from "@/lib/date";
 export default async function PatientsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; archived?: string }>;
 }) {
-  const { q } = await searchParams;
-  const patients = await listPatients(q);
+  const { q, archived } = await searchParams;
+  const showArchived = archived === "true";
+  const patients = await listPatients(q, showArchived);
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900">Patients</h2>
-        <Link href="/patients/new">
-          <Button>Nouveau patient</Button>
-        </Link>
+        <h2 className="text-2xl font-bold text-slate-900">
+          {showArchived ? "Patients archivés" : "Patients"}
+        </h2>
+        <div className="flex items-center gap-3">
+          <Link href={showArchived ? "/patients" : "/patients?archived=true"}>
+            <Button variant="secondary">
+              {showArchived ? "Patients actifs" : "Patients archivés"}
+            </Button>
+          </Link>
+          <Link href="/patients/new">
+            <Button>Nouveau patient</Button>
+          </Link>
+        </div>
       </div>
 
       <Card>

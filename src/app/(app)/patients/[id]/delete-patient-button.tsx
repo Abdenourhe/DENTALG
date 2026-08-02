@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { archivePatient } from "../actions";
+import { deletePatient } from "../actions";
 import { Button } from "@/components/ui/button";
 
 interface Props {
   patientId: string;
 }
 
-export default function ArchivePatientButton({ patientId }: Props) {
+export default function DeletePatientButton({ patientId }: Props) {
   const router = useRouter();
   const [confirming, setConfirming] = useState(false);
   const [pending, setPending] = useState(false);
@@ -21,12 +21,12 @@ export default function ArchivePatientButton({ patientId }: Props) {
     }
 
     setPending(true);
-    const res = await archivePatient(patientId);
+    const res = await deletePatient(patientId);
     setPending(false);
 
     if (!res.ok) {
       alert(
-        "Impossible d'archiver le patient : " +
+        "Impossible de supprimer le patient : " +
           (res.errors?.global?.[0] ?? "erreur inconnue."),
       );
       setConfirming(false);
@@ -39,11 +39,11 @@ export default function ArchivePatientButton({ patientId }: Props) {
   return (
     <Button
       type="button"
-      variant="secondary"
+      variant="danger"
       isLoading={pending}
       onClick={handleClick}
     >
-      {confirming ? "Confirmer l'archivage" : "Archiver"}
+      {confirming ? "Confirmer la suppression" : "Supprimer"}
     </Button>
   );
 }
