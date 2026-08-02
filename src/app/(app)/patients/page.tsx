@@ -3,6 +3,7 @@ import { listPatients } from "./actions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Eye, Pencil } from "lucide-react";
 import { formatDate } from "@/lib/date";
 
 export default async function PatientsPage({
@@ -47,34 +48,64 @@ export default async function PatientsPage({
                   <th className="pb-2 font-medium">Naissance</th>
                   <th className="pb-2 font-medium">RDV</th>
                   <th className="pb-2 font-medium">Factures</th>
-                  <th className="pb-2 font-medium"></th>
+                  <th className="pb-2 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {patients.map((p) => (
                   <tr key={p.id} className="hover:bg-slate-50">
-                    <td className="py-3 text-slate-500">{p.number}</td>
-                    <td className="py-3 font-medium text-slate-900">
-                      {p.lastName} {p.firstName}
-                    </td>
-                    <td className="py-3 text-slate-600">
-                      {p.nationalId ?? "—"}
-                    </td>
-                    <td className="py-3 text-slate-600">{p.phone ?? "—"}</td>
-                    <td className="py-3 text-slate-600">
-                      {formatDate(p.dateOfBirth)}
-                    </td>
-                    <td className="py-3 text-slate-600">
-                      {p._count.appointments}
-                    </td>
-                    <td className="py-3 text-slate-600">{p._count.invoices}</td>
-                    <td className="py-3 text-right">
-                      <Link
-                        href={`/patients/${p.id}`}
-                        className="text-sm font-medium text-slate-900 hover:underline"
-                      >
-                        Ouvrir
+                    <td className="py-3 text-slate-500">
+                      <Link href={`/patients/${p.id}`} className="block">
+                        {p.number}
                       </Link>
+                    </td>
+                    <td className="py-3 font-medium text-slate-900">
+                      <Link href={`/patients/${p.id}`} className="block">
+                        {p.lastName} {p.firstName}
+                      </Link>
+                    </td>
+                    <td className="py-3 text-slate-600">
+                      <Link href={`/patients/${p.id}`} className="block">
+                        {p.nationalId ?? "—"}
+                      </Link>
+                    </td>
+                    <td className="py-3 text-slate-600">
+                      <Link href={`/patients/${p.id}`} className="block">
+                        {p.phone ?? "—"}
+                      </Link>
+                    </td>
+                    <td className="py-3 text-slate-600">
+                      <Link href={`/patients/${p.id}`} className="block">
+                        {formatDate(p.dateOfBirth)}
+                      </Link>
+                    </td>
+                    <td className="py-3 text-slate-600">
+                      <Link href={`/patients/${p.id}`} className="block">
+                        {p._count.appointments}
+                      </Link>
+                    </td>
+                    <td className="py-3 text-slate-600">
+                      <Link href={`/patients/${p.id}`} className="block">
+                        {p._count.invoices}
+                      </Link>
+                    </td>
+                    <td className="py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <Link
+                          href={`/patients/${p.id}`}
+                          className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                          title="Ouvrir"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Link>
+                        <Link
+                          href={`/patients/${p.id}/edit`}
+                          className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+                          title="Modifier"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 ))}
