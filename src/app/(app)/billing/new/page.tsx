@@ -1,4 +1,5 @@
 import { listPatients } from "@/app/(app)/patients/actions";
+import { listProceduresForInvoice } from "../actions";
 import InvoiceForm from "./invoice-form";
 
 interface Props {
@@ -7,7 +8,10 @@ interface Props {
 
 export default async function NewInvoicePage({ searchParams }: Props) {
   const { patientId } = await searchParams;
-  const patients = await listPatients();
+  const [patients, procedures] = await Promise.all([
+    listPatients(),
+    listProceduresForInvoice(),
+  ]);
 
   return (
     <InvoiceForm
@@ -16,6 +20,12 @@ export default async function NewInvoicePage({ searchParams }: Props) {
         firstName: p.firstName,
         lastName: p.lastName,
         number: p.number,
+      }))}
+      procedures={procedures.map((p) => ({
+        id: p.id,
+        code: p.code,
+        name: p.name,
+        priceCents: p.priceCents,
       }))}
       defaultPatientId={patientId}
     />

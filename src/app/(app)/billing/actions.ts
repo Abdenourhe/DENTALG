@@ -51,7 +51,12 @@ export async function createInvoice(data: unknown) {
       pad: 5,
     });
 
-    if (parsed.data.initialPaymentCents > parsed.data.totalCents) {
+    const totalCents = parsed.data.items.reduce(
+      (sum, item) => sum + item.totalCents,
+      0,
+    );
+
+    if (parsed.data.initialPaymentCents > totalCents) {
       return prismaError({
         global: [
           "Le paiement initial ne peut pas être supérieur au total de la facture.",
@@ -64,17 +69,28 @@ export async function createInvoice(data: unknown) {
         data: withClinic(ctx, {
           number,
           patientId: parsed.data.patientId,
-          totalCents: parsed.data.totalCents,
+          totalCents,
           paidCents: parsed.data.initialPaymentCents,
           status:
-            parsed.data.totalCents === parsed.data.initialPaymentCents
-              ? "PAID"
-              : "ISSUED",
+            totalCents === parsed.data.initialPaymentCents ? "PAID" : "ISSUED",
           dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
           notes: parsed.data.notes || null,
           createdById: ctx.userId,
           issuedAt: new Date(),
         }),
+      });
+
+      await tx.invoiceItem.createMany({
+        data: parsed.data.items.map((item) =>
+          withClinic(ctx, {
+            invoiceId: created.id,
+            procedureId: item.procedureId,
+            quantity: item.quantity,
+            unitPriceCents: item.unitPriceCents,
+            totalCents: item.totalCents,
+            tooth: item.tooth ?? null,
+          }),
+        ),
       });
 
       if (parsed.data.initialPaymentCents > 0) {
@@ -164,6 +180,16 @@ export async function recordPayment(data: unknown) {
 
 export async function listProcedures() {
   await requireRole("procedures:manage");
+  const ctx = await requireClinicContext();
+
+  return prisma.procedure.findMany({
+    where: { clinicId: ctx.clinicId, deletedAt: null, isActive: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function listProceduresForInvoice() {
+  await requireRole("billing:write");
   const ctx = await requireClinicContext();
 
   return prisma.procedure.findMany({

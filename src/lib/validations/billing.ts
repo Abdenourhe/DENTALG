@@ -25,9 +25,19 @@ export const quoteItemSchema = z.object({
 export const invoiceSchema = z.object({
   patientId: z.string().min(1, "Patient requis."),
   quoteId: z.string().optional().or(z.literal("")),
-  totalCents: z.coerce.number().int().min(0, "Total invalide.").default(0),
   dueDate: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
+  items: z
+    .array(
+      z.object({
+        procedureId: z.string().min(1, "Acte requis."),
+        quantity: z.coerce.number().int().min(1).default(1),
+        unitPriceCents: z.coerce.number().int().min(0).default(0),
+        totalCents: z.coerce.number().int().min(0).default(0),
+        tooth: z.coerce.number().int().min(11).max(48).optional(),
+      }),
+    )
+    .min(1, "Ajoutez au moins un acte."),
   initialPaymentCents: z.coerce.number().int().min(0).default(0),
   initialPaymentMethod: z
     .enum(["CASH", "CARD", "TRANSFER", "CHEQUE", "OTHER"])
