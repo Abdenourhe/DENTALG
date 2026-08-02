@@ -12,7 +12,7 @@ export function Header() {
       </h1>
       <div className="flex items-center gap-3">
         <span className="text-sm text-slate-600">{session?.user?.email}</span>
-        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 uppercase">
+        <span className="rounded-full bg-primary-50 px-2 py-0.5 text-xs font-medium text-primary-900 uppercase">
           {session?.user?.role}
         </span>
       </div>
