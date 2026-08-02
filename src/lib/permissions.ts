@@ -21,5 +21,7 @@ export const PERMISSIONS: Record<string, Role[]> = {
     Role.SECRETARY,
   ],
   "prescriptions:write": [Role.OWNER, Role.DENTIST],
+  "lab:read": [Role.OWNER, Role.DENTIST, Role.ASSISTANT, Role.SECRETARY],
+  "lab:write": [Role.OWNER, Role.DENTIST, Role.ASSISTANT],
   "platform:admin": [Role.PLATFORM_ADMIN],
 };

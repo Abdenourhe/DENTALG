@@ -10,6 +10,7 @@ import {
   CreditCard,
   FileText,
   Pill,
+  FlaskConical,
   ChevronRight,
   Plus,
 } from "lucide-react";
@@ -164,6 +165,11 @@ export default async function PatientDetailPage({ params }: Props) {
               label="Ordonnances"
               value={patient.prescriptions.length}
               icon={Pill}
+            />
+            <StatRow
+              label="Analyses"
+              value={patient.labOrders.length}
+              icon={FlaskConical}
             />
           </CardContent>
         </Card>
@@ -360,6 +366,54 @@ export default async function PatientDetailPage({ params }: Props) {
                 </div>
                 <Link
                   href={`/patients/${id}/prescriptions/${pres.id}`}
+                  className="flex items-center gap-1 text-sm font-medium text-slate-900 hover:underline"
+                >
+                  Ouvrir <ChevronRight className="h-4 w-4" />
+                </Link>
+              </div>
+            ))}
+          </div>
+        )}
+      </SectionCard>
+
+      {/* Analyses biologiques */}
+      <SectionCard
+        title="Dernières analyses"
+        icon={FlaskConical}
+        href={`/patients/${id}/lab`}
+        hrefLabel="Voir tout"
+        action={
+          <Link href={`/patients/${id}/lab/new`}>
+            <Button size="sm">
+              <Plus className="mr-1 h-4 w-4" />
+              Nouvelle
+            </Button>
+          </Link>
+        }
+      >
+        {patient.labOrders.length === 0 ? (
+          <EmptyState text="Aucune analyse enregistrée." />
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {patient.labOrders.map((order) => (
+              <div
+                key={order.id}
+                className="flex items-center justify-between py-3 text-sm"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="font-medium text-slate-900">
+                    {order.number}
+                  </span>
+                  <span className="text-slate-600">
+                    {formatDate(order.orderedAt)}
+                  </span>
+                  <span className="text-slate-600">
+                    {order.requestedTests.length} analyse
+                    {order.requestedTests.length > 1 ? "s" : ""}
+                  </span>
+                </div>
+                <Link
+                  href={`/patients/${id}/lab/${order.id}`}
                   className="flex items-center gap-1 text-sm font-medium text-slate-900 hover:underline"
                 >
                   Ouvrir <ChevronRight className="h-4 w-4" />

@@ -96,6 +96,20 @@ enum PrescriptionStatus {
   ISSUED
 }
 
+enum LabOrderStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum LabResultStatus {
+  PENDING
+  NORMAL
+  ABNORMAL
+  CRITICAL
+}
+
 model Clinic {
   id                   String                @id @default(cuid())
   name                 String
@@ -137,6 +151,8 @@ model Clinic {
   toothStatusEvents    ToothStatusEvent[]
   prescriptions        Prescription[]
   prescriptionItems    PrescriptionItem[]
+  labOrders            LabOrder[]
+  labResults           LabResult[]
   counters             Counter[]
 }
 
@@ -173,6 +189,8 @@ model User {
   notifications        Notification[]
   auditLogs            AuditLog[]
   prescriptions        Prescription[]
+  labOrders            LabOrder[]
+  labResults           LabResult[]
 
   @@index([clinicId])
   @@index([email])
@@ -222,6 +240,7 @@ model Patient {
   reminderLogs    ReminderLog[]
   waitlistEntries WaitlistEntry[]
   prescriptions   Prescription[]
+  labOrders       LabOrder[]
 
   @@unique([clinicId, number])
   @@index([clinicId])
@@ -751,10 +770,59 @@ model PrescriptionItem {
   @@index([clinicId, position])
 }
 
+model LabOrder {
+  id             String         @id @default(cuid())
+  clinicId       String
+  clinic         Clinic         @relation(fields: [clinicId], references: [id])
+  patientId      String
+  patient        Patient        @relation(fields: [patientId], references: [id])
+  createdById    String
+  createdBy      User           @relation(fields: [createdById], references: [id])
+  number         String
+  status         LabOrderStatus @default(PENDING)
+  orderedAt      DateTime       @default(now())
+  requestedTests String[]
+  notes          String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  deletedAt      DateTime?
+
+  results LabResult[]
+
+  @@unique([clinicId, number])
+  @@index([clinicId])
+  @@index([patientId])
+  @@index([createdById])
+  @@index([clinicId, orderedAt])
+}
+
+model LabResult {
+  id             String          @id @default(cuid())
+  clinicId       String
+  clinic         Clinic          @relation(fields: [clinicId], references: [id])
+  labOrderId     String
+  labOrder       LabOrder        @relation(fields: [labOrderId], references: [id], onDelete: Cascade)
+  testName       String
+  value          String?
+  unit           String?
+  referenceRange String?
+  status         LabResultStatus @default(PENDING)
+  notes          String?
+  reportedAt     DateTime?
+  reportedById   String?
+  reportedBy     User?           @relation(fields: [reportedById], references: [id])
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([clinicId])
+  @@index([labOrderId])
+  @@index([reportedById])
+}
+
 model Counter {
   id        String   @id @default(cuid())
   clinicId  String
-  type      String   // PATIENT | INVOICE | QUOTE | PRESCRIPTION
+  type      String   // PATIENT | INVOICE | QUOTE | PRESCRIPTION | LAB_ORDER
   value     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

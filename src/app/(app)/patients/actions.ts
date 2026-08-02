@@ -197,6 +197,12 @@ export async function getPatient(id: string) {
         take: 5,
         include: { items: { orderBy: { position: "asc" } } },
       },
+      labOrders: {
+        where: { deletedAt: null },
+        orderBy: { orderedAt: "desc" },
+        take: 5,
+        include: { results: { orderBy: { testName: "asc" } } },
+      },
     },
   });
 
