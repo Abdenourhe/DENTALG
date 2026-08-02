@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "DENTALG — Gestion de cabinet dentaire",
   description: "SaaS multi-tenant de gestion de cabinets dentaires en Algérie.",
+  icons: {
+    icon: "/favicon.svg",
+  },
 };
 
 export default function RootLayout({
