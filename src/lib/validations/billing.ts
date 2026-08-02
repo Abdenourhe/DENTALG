@@ -4,7 +4,7 @@ export const procedureSchema = z.object({
   code: z.string().min(1, "Code requis."),
   name: z.string().min(1, "Nom requis."),
   description: z.string().optional().or(z.literal("")),
-  priceCents: z.number().int().min(0).default(0),
+  priceCents: z.coerce.number().int().min(0, "Tarif invalide.").default(0),
   color: z.string().optional().or(z.literal("")),
 });
 
@@ -41,6 +41,8 @@ export const paymentSchema = z.object({
   patientId: z.string().min(1, "Patient requis."),
   invoiceId: z.string().optional().or(z.literal("")),
   amountCents: z.number().int().min(1, "Montant requis."),
-  method: z.enum(["CASH", "CARD", "TRANSFER", "CHEQUE", "OTHER"]).default("CASH"),
+  method: z
+    .enum(["CASH", "CARD", "TRANSFER", "CHEQUE", "OTHER"])
+    .default("CASH"),
   reference: z.string().optional().or(z.literal("")),
 });

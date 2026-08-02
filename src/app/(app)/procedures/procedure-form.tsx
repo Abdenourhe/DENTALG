@@ -21,7 +21,7 @@ interface Procedure {
 interface Props {
   procedure?: Procedure;
   action: (
-    formData: FormData,
+    data: Record<string, unknown>,
   ) => Promise<{ ok: boolean; errors?: Record<string, string[]> }>;
   backUrl: string;
   title: string;
@@ -41,7 +41,7 @@ export default function ProcedureForm({
     setPending(true);
     setErrors({});
 
-    const res = await action(formData);
+    const res = await action(Object.fromEntries(formData.entries()));
 
     if (!res.ok) {
       setErrors(res.errors || {});
