@@ -19,7 +19,7 @@ export default function PatientRowActions({ patientId, isActive }: Props) {
   async function handleArchive() {
     if (
       !window.confirm(
-        "Archiver ce patient ? Il ne sera plus visible dans la liste active.",
+        "Archiver ce patient ?\n\nIl ne sera plus visible dans la liste active, mais vous pourrez le réactiver depuis la vue 'Patients archivés'.",
       )
     )
       return;
@@ -34,7 +34,12 @@ export default function PatientRowActions({ patientId, isActive }: Props) {
   }
 
   async function handleRestore() {
-    if (!window.confirm("Réactiver ce patient ?")) return;
+    if (
+      !window.confirm(
+        "Réactiver ce patient ?\n\nIl réapparaîtra dans la liste active.",
+      )
+    )
+      return;
     setPending("restore");
     const res = await restorePatient(patientId);
     setPending(null);
@@ -48,7 +53,7 @@ export default function PatientRowActions({ patientId, isActive }: Props) {
   async function handleDelete() {
     if (
       !window.confirm(
-        "Supprimer ce patient ? Cette action est définitive en logique (suppression logique).",
+        "Êtes-vous sûr de vouloir supprimer ce patient ?\n\nCette action est définitive en logique (suppression logique). Les données médicales restent conservées pour la conformité, mais le patient n'apparaîtra plus dans la liste.",
       )
     )
       return;
@@ -90,7 +95,7 @@ export default function PatientRowActions({ patientId, isActive }: Props) {
         onClick={handleDelete}
         disabled={pending === "delete"}
         className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-red-600 disabled:opacity-50"
-        title="Supprimer"
+        title="Supprimer définitivement (logique)"
       >
         <Trash2 className="h-4 w-4" />
       </button>
