@@ -4,7 +4,7 @@ export const patientSchema = z.object({
   firstName: z.string().min(1, "Prénom requis."),
   lastName: z.string().min(1, "Nom requis."),
   nationalId: z.string().optional().or(z.literal("")),
-  sex: z.enum(["M", "F", "OTHER"]).optional().or(z.literal("")),
+  sex: z.enum(["M", "F"]).optional().or(z.literal("")),
   bloodGroup: z
     .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
     .optional()

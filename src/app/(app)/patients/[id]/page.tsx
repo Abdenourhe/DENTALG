@@ -120,9 +120,7 @@ export default async function PatientDetailPage({ params }: Props) {
                 patient.sex
                   ? patient.sex === "M"
                     ? "Masculin"
-                    : patient.sex === "F"
-                      ? "Féminin"
-                      : "Autre"
+                    : "Féminin"
                   : null
               }
               icon={User}

@@ -65,16 +65,17 @@ export default function NewPatientPage() {
               <Select
                 name="sex"
                 label="Sexe"
+                defaultValue=""
                 placeholder="Choisir..."
                 options={[
                   { value: "M", label: "Masculin" },
                   { value: "F", label: "Féminin" },
-                  { value: "OTHER", label: "Autre" },
                 ]}
               />
               <Select
                 name="bloodGroup"
                 label="Groupe sanguin"
+                defaultValue=""
                 placeholder="Choisir..."
                 options={[
                   { value: "A+", label: "A+" },

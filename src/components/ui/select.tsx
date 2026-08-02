@@ -30,11 +30,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
           } ${className}`}
           {...props}
         >
-          {props.placeholder && (
-            <option value="" disabled>
-              {props.placeholder}
-            </option>
-          )}
+          {props.placeholder && <option value="">{props.placeholder}</option>}
           {options.map((opt) => (
             <option key={opt.value} value={opt.value}>
               {opt.label}

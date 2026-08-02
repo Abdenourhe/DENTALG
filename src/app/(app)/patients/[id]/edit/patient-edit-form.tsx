@@ -115,7 +115,6 @@ export default function PatientEditForm({ patient }: Props) {
                 options={[
                   { value: "M", label: "Masculin" },
                   { value: "F", label: "Féminin" },
-                  { value: "OTHER", label: "Autre" },
                 ]}
               />
               <Select
