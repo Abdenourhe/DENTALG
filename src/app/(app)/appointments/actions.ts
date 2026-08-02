@@ -190,6 +190,36 @@ export async function getAppointment(id: string) {
   });
 }
 
+export async function listAppointmentsRange(
+  startDate: string,
+  endDate: string,
+) {
+  await requireRole("appointments:read");
+  const ctx = await requireClinicContext();
+
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999);
+
+  const appointments = await prisma.appointment.findMany({
+    where: {
+      clinicId: ctx.clinicId,
+      deletedAt: null,
+      startAt: { gte: start, lte: end },
+    },
+    orderBy: { startAt: "asc" },
+    include: {
+      patient: {
+        select: { id: true, firstName: true, lastName: true, phone: true },
+      },
+      dentist: { select: { id: true, firstName: true, lastName: true } },
+    },
+  });
+
+  return appointments;
+}
+
 export async function listAppointments(date?: string) {
   await requireRole("appointments:read");
   const ctx = await requireClinicContext();

@@ -90,12 +90,20 @@ export default async function AppointmentsPage({
             </span>
           </p>
         </div>
-        <Link href="/appointments/new">
-          <Button>
-            <CalendarPlus className="mr-2 h-4 w-4" />
-            Nouveau RDV
-          </Button>
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link href="/appointments/calendar">
+            <Button variant="secondary">
+              <CalendarDays className="mr-2 h-4 w-4" />
+              Calendrier
+            </Button>
+          </Link>
+          <Link href="/appointments/new">
+            <Button>
+              <CalendarPlus className="mr-2 h-4 w-4" />
+              Nouveau RDV
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">

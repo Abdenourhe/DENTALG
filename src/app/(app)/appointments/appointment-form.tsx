@@ -45,6 +45,7 @@ interface Props {
   patients: PatientOption[];
   dentists: DentistOption[];
   defaultPatientId?: string;
+  defaultDate?: Date | string;
   appointment?: Appointment;
   action: (data: Record<string, unknown>) => Promise<{
     ok: boolean;
@@ -82,6 +83,7 @@ export default function AppointmentForm({
   patients,
   dentists,
   defaultPatientId,
+  defaultDate,
   appointment,
   action,
   title,
@@ -109,12 +111,12 @@ export default function AppointmentForm({
 
   useEffect(() => {
     if (!appointment && !startAt) {
-      const now = new Date();
-      now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15, 0, 0);
-      setStartAt(toDateTimeLocalInput(now));
-      setEndAt(toDateTimeLocalInput(addMinutes(now, 30)));
+      const base = defaultDate ? new Date(defaultDate) : new Date();
+      base.setMinutes(Math.ceil(base.getMinutes() / 15) * 15, 0, 0);
+      setStartAt(toDateTimeLocalInput(base));
+      setEndAt(toDateTimeLocalInput(addMinutes(base, 30)));
     }
-  }, [appointment, startAt]);
+  }, [appointment, startAt, defaultDate]);
 
   const patientOptions = patients.map((p) => ({
     value: p.id,

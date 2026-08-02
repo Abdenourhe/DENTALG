@@ -3,11 +3,11 @@ import { getDentists, createAppointment } from "../actions";
 import AppointmentForm from "../appointment-form";
 
 interface Props {
-  searchParams: Promise<{ patientId?: string }>;
+  searchParams: Promise<{ patientId?: string; date?: string }>;
 }
 
 export default async function NewAppointmentPage({ searchParams }: Props) {
-  const { patientId } = await searchParams;
+  const { patientId, date } = await searchParams;
   const [patients, dentists] = await Promise.all([
     listPatients(),
     getDentists(),
@@ -24,6 +24,7 @@ export default async function NewAppointmentPage({ searchParams }: Props) {
       }))}
       dentists={dentists}
       defaultPatientId={patientId}
+      defaultDate={date}
       action={createAppointment}
       title="Nouveau rendez-vous"
       subtitle="Planifiez un rendez-vous pour un patient avec un dentiste."
