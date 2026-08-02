@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { listInvoices, listProcedures } from "./actions";
+import InvoicePaymentForm from "./invoice-payment-form";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,19 +28,25 @@ export default async function BillingPage() {
         <Card>
           <CardContent className="pt-4">
             <p className="text-sm text-slate-500">Factures ce mois</p>
-            <p className="text-2xl font-bold text-slate-900">{invoices.length}</p>
+            <p className="text-2xl font-bold text-slate-900">
+              {invoices.length}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
             <p className="text-sm text-slate-500">Reste à payer</p>
-            <p className="text-2xl font-bold text-red-600">{formatDA(totalOutstanding)}</p>
+            <p className="text-2xl font-bold text-red-600">
+              {formatDA(totalOutstanding)}
+            </p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
             <p className="text-sm text-slate-500">Actes tarifés</p>
-            <p className="text-2xl font-bold text-slate-900">{procedures.length}</p>
+            <p className="text-2xl font-bold text-slate-900">
+              {procedures.length}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -58,41 +65,58 @@ export default async function BillingPage() {
                   <th className="pb-2 font-medium">Date</th>
                   <th className="pb-2 font-medium">Total</th>
                   <th className="pb-2 font-medium">Payé</th>
+                  <th className="pb-2 font-medium">Reste</th>
                   <th className="pb-2 font-medium">Statut</th>
+                  <th className="pb-2 font-medium"></th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {invoices.map((inv) => (
-                  <tr key={inv.id} className="hover:bg-slate-50">
-                    <td className="py-3 font-medium">{inv.number}</td>
-                    <td className="py-3">
-                      {inv.patient.lastName} {inv.patient.firstName}
-                    </td>
-                    <td className="py-3 text-slate-600">
-                      {formatDate(inv.issuedAt)}
-                    </td>
-                    <td className="py-3 font-medium">{formatDA(inv.totalCents)}</td>
-                    <td className="py-3">{formatDA(inv.paidCents)}</td>
-                    <td className="py-3">
-                      <Badge
-                        variant={
-                          inv.status === "PAID"
-                            ? "success"
-                            : inv.status === "OVERDUE"
-                            ? "danger"
-                            : inv.status === "ISSUED"
-                            ? "warning"
-                            : "default"
-                        }
-                      >
-                        {inv.status}
-                      </Badge>
-                    </td>
-                  </tr>
-                ))}
+                {invoices.map((inv) => {
+                  const balance = Math.max(0, inv.totalCents - inv.paidCents);
+                  return (
+                    <tr key={inv.id} className="hover:bg-slate-50">
+                      <td className="py-3 font-medium">{inv.number}</td>
+                      <td className="py-3">
+                        {inv.patient.lastName} {inv.patient.firstName}
+                      </td>
+                      <td className="py-3 text-slate-600">
+                        {formatDate(inv.issuedAt)}
+                      </td>
+                      <td className="py-3 font-medium">
+                        {formatDA(inv.totalCents)}
+                      </td>
+                      <td className="py-3">{formatDA(inv.paidCents)}</td>
+                      <td className="py-3 font-medium text-red-600">
+                        {formatDA(balance)}
+                      </td>
+                      <td className="py-3">
+                        <Badge
+                          variant={
+                            inv.status === "PAID"
+                              ? "success"
+                              : inv.status === "OVERDUE"
+                                ? "danger"
+                                : inv.status === "ISSUED"
+                                  ? "warning"
+                                  : "default"
+                          }
+                        >
+                          {inv.status}
+                        </Badge>
+                      </td>
+                      <td className="py-3 text-right">
+                        <InvoicePaymentForm
+                          invoiceId={inv.id}
+                          patientId={inv.patientId}
+                          balanceCents={balance}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })}
                 {invoices.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-500">
+                    <td colSpan={8} className="py-8 text-center text-slate-500">
                       Aucune facture.
                     </td>
                   </tr>

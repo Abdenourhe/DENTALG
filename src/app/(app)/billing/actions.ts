@@ -50,14 +50,46 @@ export async function createInvoice(data: unknown) {
       prefix: "F-",
       pad: 5,
     });
-    const invoice = await prisma.invoice.create({
-      data: withClinic(ctx, {
-        ...parsed.data,
-        number,
-        dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
-        createdById: ctx.userId,
-        issuedAt: new Date(),
-      }),
+
+    if (parsed.data.initialPaymentCents > parsed.data.totalCents) {
+      return prismaError({
+        global: [
+          "Le paiement initial ne peut pas être supérieur au total de la facture.",
+        ],
+      });
+    }
+
+    const invoice = await prisma.$transaction(async (tx) => {
+      const created = await tx.invoice.create({
+        data: withClinic(ctx, {
+          number,
+          patientId: parsed.data.patientId,
+          totalCents: parsed.data.totalCents,
+          paidCents: parsed.data.initialPaymentCents,
+          status:
+            parsed.data.totalCents === parsed.data.initialPaymentCents
+              ? "PAID"
+              : "ISSUED",
+          dueDate: parsed.data.dueDate ? new Date(parsed.data.dueDate) : null,
+          notes: parsed.data.notes || null,
+          createdById: ctx.userId,
+          issuedAt: new Date(),
+        }),
+      });
+
+      if (parsed.data.initialPaymentCents > 0) {
+        await tx.payment.create({
+          data: withClinic(ctx, {
+            patientId: parsed.data.patientId,
+            invoiceId: created.id,
+            amountCents: parsed.data.initialPaymentCents,
+            method: parsed.data.initialPaymentMethod,
+            receivedById: ctx.userId,
+          }),
+        });
+      }
+
+      return created;
     });
 
     await logAudit({
