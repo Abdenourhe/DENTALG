@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, Pencil } from "lucide-react";
+import PatientRowActions from "./patient-row-actions";
 import { formatDate } from "@/lib/date";
 
 export default async function PatientsPage({
@@ -115,6 +116,10 @@ export default async function PatientsPage({
                         >
                           <Pencil className="h-4 w-4" />
                         </Link>
+                        <PatientRowActions
+                          patientId={p.id}
+                          isActive={p.isActive}
+                        />
                       </div>
                     </td>
                   </tr>

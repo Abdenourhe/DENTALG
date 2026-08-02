@@ -19,8 +19,6 @@ import {
   Fingerprint,
 } from "lucide-react";
 import { getPatient } from "../actions";
-import ArchivePatientButton from "./archive-patient-button";
-import DeletePatientButton from "./delete-patient-button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -98,8 +96,6 @@ export default async function PatientDetailPage({ params }: Props) {
           <Link href={`/patients/${id}/prescriptions/new`}>
             <Button>Ordonnance</Button>
           </Link>
-          <ArchivePatientButton patientId={id} />
-          <DeletePatientButton patientId={id} />
         </div>
       </div>
 
