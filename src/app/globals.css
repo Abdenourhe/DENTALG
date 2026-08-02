@@ -53,18 +53,6 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0b1334;
-    --foreground: #f4f7f9;
-    --card: #1b2230;
-    --card-foreground: #f4f7f9;
-    --border: #2a3440;
-    --muted: #1b2230;
-    --muted-foreground: #8a9aad;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
