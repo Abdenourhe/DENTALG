@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Printer } from "lucide-react";
 import { listInvoices, listProcedures } from "./actions";
 import InvoicePaymentForm from "./invoice-payment-form";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -110,11 +111,25 @@ export default async function BillingPage() {
                         </span>
                       </td>
                       <td className="py-3 text-right">
-                        <InvoicePaymentForm
-                          invoiceId={inv.id}
-                          patientId={inv.patientId}
-                          balanceCents={balance}
-                        />
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/billing/${inv.id}/print`}
+                            title="Imprimer la facture"
+                          >
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              className="h-9 w-9 p-0"
+                            >
+                              <Printer className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <InvoicePaymentForm
+                            invoiceId={inv.id}
+                            patientId={inv.patientId}
+                            balanceCents={balance}
+                          />
+                        </div>
                       </td>
                     </tr>
                   );
