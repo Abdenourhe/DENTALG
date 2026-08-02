@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -9,8 +9,10 @@ import {
   Calendar as CalendarIcon,
   List,
   AlertTriangle,
+  Move,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { moveAppointment } from "../actions";
 
 interface Appointment {
   id: string;
@@ -45,6 +47,7 @@ const HOURS = Array.from(
 );
 const PX_PER_HOUR = 64;
 const PX_PER_MINUTE = PX_PER_HOUR / 60;
+const SNAP_MINUTES = 15;
 
 function startOfWeek(date: Date): Date {
   const d = new Date(date);
@@ -104,6 +107,10 @@ function dentistColor(dentistId: string, dentists: Dentist[]): string {
   return colors[index % colors.length] || colors[0];
 }
 
+function snapMinutes(minutes: number): number {
+  return Math.round(minutes / SNAP_MINUTES) * SNAP_MINUTES;
+}
+
 export default function CalendarView({
   appointments,
   dentists,
@@ -113,6 +120,11 @@ export default function CalendarView({
   const router = useRouter();
   const [currentDate, setCurrentDate] = useState<Date>(initialDate);
   const [view, setView] = useState<"week" | "day">(initialView);
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [dragOffsetY, setDragOffsetY] = useState(0);
+  const [dragOverDay, setDragOverDay] = useState<Date | null>(null);
 
   const weekStart = useMemo(() => startOfWeek(currentDate), [currentDate]);
   const days = useMemo(() => {
@@ -177,6 +189,61 @@ export default function CalendarView({
     const d = new Date(day);
     d.setHours(hour, 0, 0, 0);
     return `/appointments/new?date=${encodeURIComponent(d.toISOString())}`;
+  }
+
+  function handleDragStart(e: React.DragEvent, appointment: Appointment) {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const offsetY = e.clientY - rect.top;
+    setDraggedId(appointment.id);
+    setDragOffsetY(offsetY);
+    setError(null);
+    e.dataTransfer.effectAllowed = "move";
+    // Hide default ghost image isn't possible, but we can set a custom drag image if desired
+  }
+
+  function handleDragEnd() {
+    setDraggedId(null);
+    setDragOverDay(null);
+  }
+
+  function handleDragOver(e: React.DragEvent, day: Date) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverDay(day);
+  }
+
+  function handleDrop(e: React.DragEvent, day: Date) {
+    e.preventDefault();
+    setDragOverDay(null);
+    if (!draggedId) return;
+
+    const column = e.currentTarget as HTMLElement;
+    const rect = column.getBoundingClientRect();
+    const y = e.clientY - rect.top - dragOffsetY;
+    const rawMinutes = START_HOUR * 60 + y / PX_PER_MINUTE;
+    const minutes = Math.max(
+      START_HOUR * 60,
+      Math.min(END_HOUR * 60 - 1, snapMinutes(rawMinutes)),
+    );
+
+    const newStart = new Date(day);
+    newStart.setHours(0, minutes, 0, 0);
+
+    const appointment = appointments.find((a) => a.id === draggedId);
+    if (!appointment) return;
+
+    startTransition(async () => {
+      const res = await moveAppointment(draggedId, newStart.toISOString());
+      if (!res.ok) {
+        setError(
+          res.errors?.global?.[0] ?? "Impossible de déplacer le rendez-vous.",
+        );
+      } else {
+        setError(null);
+        router.refresh();
+      }
+      setDraggedId(null);
+    });
   }
 
   return (
@@ -245,6 +312,12 @@ export default function CalendarView({
         </div>
       </div>
 
+      {error && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          {error}
+        </div>
+      )}
+
       {/* Calendar grid */}
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
         {/* Header row */}
@@ -282,7 +355,7 @@ export default function CalendarView({
           className="relative grid"
           style={{
             gridTemplateColumns: `60px repeat(${days.length}, minmax(0, 1fr))`,
-            height: `${HOURS.length * 64}px`,
+            height: `${HOURS.length * PX_PER_HOUR}px`,
           }}
         >
           {/* Hour labels */}
@@ -290,7 +363,7 @@ export default function CalendarView({
             <div
               key={hour}
               className="absolute left-0 flex h-16 w-[60px] items-start justify-end border-r border-slate-200 pr-2 pt-2 text-xs font-medium text-slate-500"
-              style={{ top: `${(hour - START_HOUR) * 64}px` }}
+              style={{ top: `${(hour - START_HOUR) * PX_PER_HOUR}px` }}
             >
               {String(hour).padStart(2, "0")}:00
             </div>
@@ -301,7 +374,7 @@ export default function CalendarView({
             <div
               key={`line-${hour}`}
               className="absolute left-[60px] right-0 border-b border-slate-100"
-              style={{ top: `${(hour - START_HOUR + 1) * 64}px` }}
+              style={{ top: `${(hour - START_HOUR + 1) * PX_PER_HOUR}px` }}
             />
           ))}
 
@@ -309,12 +382,17 @@ export default function CalendarView({
           {days.map((day, dayIndex) => {
             const dayKey = day.toISOString().slice(0, 10);
             const dayAppointments = groupedByDay.get(dayKey) || [];
+            const isDropTarget = dragOverDay && isSameDay(day, dragOverDay);
 
             return (
               <div
                 key={dayKey}
-                className="relative h-full border-r border-slate-100 last:border-r-0"
+                className={`relative h-full border-r border-slate-100 last:border-r-0 ${
+                  isDropTarget ? "bg-primary-50/50" : ""
+                }`}
                 style={{ gridColumn: `${dayIndex + 2}` }}
+                onDragOver={(e) => handleDragOver(e, day)}
+                onDrop={(e) => handleDrop(e, day)}
               >
                 {/* Clickable slots */}
                 {HOURS.map((hour) => (
@@ -323,9 +401,10 @@ export default function CalendarView({
                     href={slotHref(day, hour)}
                     className="absolute left-0 right-0 block hover:bg-slate-50"
                     style={{
-                      top: `${(hour - START_HOUR) * 64}px`,
-                      height: "64px",
+                      top: `${(hour - START_HOUR) * PX_PER_HOUR}px`,
+                      height: `${PX_PER_HOUR}px`,
                     }}
+                    onDragOver={(e) => e.preventDefault()}
                   />
                 ))}
 
@@ -344,20 +423,26 @@ export default function CalendarView({
                       new Date(other.startAt) < end &&
                       new Date(other.endAt) > start,
                   );
+                  const isDragging = draggedId === a.id;
 
                   return (
                     <Link
                       key={a.id}
                       href={`/appointments/${a.id}/edit`}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, a)}
+                      onDragEnd={handleDragEnd}
                       className={`absolute left-1 right-1 overflow-hidden rounded-md border px-2 py-1 text-xs shadow-sm transition-shadow hover:shadow-md ${dentistColor(a.dentistId, dentists)} ${
                         hasConflict ? "ring-2 ring-red-400" : ""
+                      } ${isDragging ? "opacity-60" : ""} ${
+                        isPending ? "cursor-wait" : "cursor-move"
                       }`}
                       style={{
                         top: `${top}px`,
                         height: `${Math.max(height, 24)}px`,
                         minHeight: "24px",
                       }}
-                      title={`${capitalize(a.patient.lastName)} ${capitalize(a.patient.firstName)} — Dr. ${capitalize(a.dentist.lastName)}`}
+                      title={`Glissez pour déplacer — ${capitalize(a.patient.lastName)} ${capitalize(a.patient.firstName)} — Dr. ${capitalize(a.dentist.lastName)}`}
                     >
                       <div className="flex items-start justify-between gap-1">
                         <span className="truncate font-medium">
@@ -366,6 +451,9 @@ export default function CalendarView({
                         </span>
                         {hasConflict && (
                           <AlertTriangle className="h-3 w-3 shrink-0 text-red-600" />
+                        )}
+                        {!hasConflict && (
+                          <Move className="h-3 w-3 shrink-0 opacity-50" />
                         )}
                       </div>
                       <div className="truncate text-[10px] opacity-90">
@@ -395,6 +483,10 @@ export default function CalendarView({
         <div className="flex items-center gap-1.5">
           <span className="inline-block h-3 w-3 rounded-sm border border-red-400 ring-2 ring-red-400" />
           <span>Conflit de créneau (même dentiste)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Move className="h-3 w-3" />
+          <span>Glisser-déposer pour déplacer</span>
         </div>
         {dentists.map((d) => (
           <div key={d.id} className="flex items-center gap-1.5">

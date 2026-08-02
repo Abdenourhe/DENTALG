@@ -175,6 +175,62 @@ export async function deleteAppointment(id: string) {
   }
 }
 
+export async function moveAppointment(
+  id: string,
+  newStartAt: string,
+  newDentistId?: string,
+) {
+  await requireRole("appointments:write");
+  const ctx = await requireClinicContext();
+
+  try {
+    const existing = await prisma.appointment.findFirst({
+      where: { id, clinicId: ctx.clinicId, deletedAt: null },
+    });
+    if (!existing) return prismaError({ global: ["Rendez-vous introuvable."] });
+
+    const startDate = new Date(newStartAt);
+    if (isNaN(startDate.getTime())) {
+      return prismaError({ global: ["Date invalide."] });
+    }
+
+    const durationMs = existing.endAt.getTime() - existing.startAt.getTime();
+    const endDate = new Date(startDate.getTime() + durationMs);
+    const dentistId = newDentistId ?? existing.dentistId;
+
+    if (await hasConflict(ctx.clinicId, dentistId, startDate, endDate, id)) {
+      return prismaError({
+        global: ["Ce créneau est déjà occupé pour ce dentiste."],
+      });
+    }
+
+    const appointment = await prisma.appointment.update({
+      where: { id },
+      data: {
+        startAt: startDate,
+        endAt: endDate,
+        ...(newDentistId ? { dentistId: newDentistId } : {}),
+      },
+    });
+
+    await logAudit({
+      action: AuditAction.UPDATE,
+      entityType: "Appointment",
+      entityId: id,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+    });
+
+    revalidatePath("/appointments");
+    revalidatePath("/appointments/calendar");
+    return { ok: true, appointment } as const;
+  } catch {
+    return prismaError({
+      global: ["Une erreur est survenue lors du déplacement du rendez-vous."],
+    });
+  }
+}
+
 export async function getAppointment(id: string) {
   await requireRole("appointments:read");
   const ctx = await requireClinicContext();
