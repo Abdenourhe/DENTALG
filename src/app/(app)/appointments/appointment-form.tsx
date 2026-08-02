@@ -10,7 +10,6 @@ import {
   ArrowLeft,
   Save,
 } from "lucide-react";
-import { createAppointment } from "../actions";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
@@ -31,10 +30,29 @@ interface DentistOption {
   lastName: string;
 }
 
+interface Appointment {
+  id: string;
+  patientId: string;
+  dentistId: string;
+  startAt: Date;
+  endAt: Date;
+  reason: string | null;
+  notes: string | null;
+  status: string;
+}
+
 interface Props {
   patients: PatientOption[];
   dentists: DentistOption[];
   defaultPatientId?: string;
+  appointment?: Appointment;
+  action: (data: Record<string, unknown>) => Promise<{
+    ok: boolean;
+    errors?: Record<string, string[]>;
+  }>;
+  title: string;
+  subtitle: string;
+  backUrl: string;
 }
 
 function toDateTimeLocalInput(date: Date): string {
@@ -64,26 +82,39 @@ export default function AppointmentForm({
   patients,
   dentists,
   defaultPatientId,
+  appointment,
+  action,
+  title,
+  subtitle,
+  backUrl,
 }: Props) {
   const router = useRouter();
+  const isEditing = !!appointment;
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [pending, setPending] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState(
-    defaultPatientId || "",
+    appointment?.patientId || defaultPatientId || "",
   );
-  const [startAt, setStartAt] = useState("");
-  const [endAt, setEndAt] = useState("");
+  const [selectedDentistId, setSelectedDentistId] = useState(
+    appointment?.dentistId || "",
+  );
+  const [startAt, setStartAt] = useState(
+    appointment ? toDateTimeLocalInput(appointment.startAt) : "",
+  );
+  const [endAt, setEndAt] = useState(
+    appointment ? toDateTimeLocalInput(appointment.endAt) : "",
+  );
 
   const selectedPatient = patients.find((p) => p.id === selectedPatientId);
 
   useEffect(() => {
-    if (!startAt) {
+    if (!appointment && !startAt) {
       const now = new Date();
       now.setMinutes(Math.ceil(now.getMinutes() / 15) * 15, 0, 0);
       setStartAt(toDateTimeLocalInput(now));
       setEndAt(toDateTimeLocalInput(addMinutes(now, 30)));
     }
-  }, [startAt]);
+  }, [appointment, startAt]);
 
   const patientOptions = patients.map((p) => ({
     value: p.id,
@@ -100,15 +131,15 @@ export default function AppointmentForm({
     setErrors({});
 
     const data = Object.fromEntries(formData.entries());
-    const res = await createAppointment(data);
+    const res = await action(data);
 
     if (!res.ok) {
-      setErrors(res.errors as Record<string, string[]>);
+      setErrors(res.errors || {});
       setPending(false);
       return;
     }
 
-    router.push("/appointments");
+    router.push(backUrl);
   }
 
   function handleStartChange(value: string) {
@@ -123,20 +154,16 @@ export default function AppointmentForm({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          onClick={() => router.push("/appointments")}
+          onClick={() => router.push(backUrl)}
           className="flex items-center gap-1 text-sm font-medium text-slate-600 hover:text-slate-900"
         >
-          <ArrowLeft className="h-4 w-4" /> Retour aux rendez-vous
+          <ArrowLeft className="h-4 w-4" /> Retour
         </button>
       </div>
 
       <div>
-        <h2 className="text-2xl font-bold text-slate-900">
-          Nouveau rendez-vous
-        </h2>
-        <p className="text-sm text-slate-500">
-          Planifiez un rendez-vous pour un patient avec un dentiste.
-        </p>
+        <h2 className="text-2xl font-bold text-slate-900">{title}</h2>
+        <p className="text-sm text-slate-500">{subtitle}</p>
       </div>
 
       {selectedPatient && (
@@ -183,6 +210,8 @@ export default function AppointmentForm({
                 <Select
                   name="dentistId"
                   required
+                  value={selectedDentistId}
+                  onChange={(e) => setSelectedDentistId(e.target.value)}
                   placeholder="Choisir un dentiste..."
                   options={dentistOptions}
                   error={errors.dentistId?.[0]}
@@ -224,6 +253,7 @@ export default function AppointmentForm({
             <Input
               name="reason"
               label="Motif"
+              defaultValue={appointment?.reason || ""}
               placeholder="Consultation, contrôle, soin..."
               error={errors.reason?.[0]}
             />
@@ -231,8 +261,32 @@ export default function AppointmentForm({
               name="notes"
               label="Notes"
               rows={3}
+              defaultValue={appointment?.notes || ""}
               placeholder="Informations complémentaires..."
             />
+
+            {appointment && (
+              <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-slate-700">
+                    Statut
+                  </label>
+                  <Select
+                    name="status"
+                    required
+                    defaultValue={appointment.status}
+                    options={[
+                      { value: "SCHEDULED", label: "Planifié" },
+                      { value: "CONFIRMED", label: "Confirmé" },
+                      { value: "CANCELLED", label: "Annulé" },
+                      { value: "NO_SHOW", label: "Absent" },
+                      { value: "COMPLETED", label: "Terminé" },
+                    ]}
+                    error={errors.status?.[0]}
+                  />
+                </div>
+              </div>
+            )}
 
             {errors.global && (
               <p className="text-sm text-red-600">{errors.global[0]}</p>
@@ -242,13 +296,13 @@ export default function AppointmentForm({
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => router.push("/appointments")}
+                onClick={() => router.push(backUrl)}
               >
                 Annuler
               </Button>
               <Button type="submit" isLoading={pending}>
                 <Save className="mr-2 h-4 w-4" />
-                Enregistrer
+                {isEditing ? "Enregistrer les modifications" : "Enregistrer"}
               </Button>
             </div>
           </form>

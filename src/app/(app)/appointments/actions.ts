@@ -1,6 +1,5 @@
 "use server";
 
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { requireClinicContext, withClinic } from "@/lib/tenant";
@@ -174,6 +173,21 @@ export async function deleteAppointment(id: string) {
       ],
     });
   }
+}
+
+export async function getAppointment(id: string) {
+  await requireRole("appointments:read");
+  const ctx = await requireClinicContext();
+
+  return prisma.appointment.findFirst({
+    where: { id, clinicId: ctx.clinicId, deletedAt: null },
+    include: {
+      patient: {
+        select: { id: true, firstName: true, lastName: true, phone: true },
+      },
+      dentist: { select: { id: true, firstName: true, lastName: true } },
+    },
+  });
 }
 
 export async function listAppointments(date?: string) {

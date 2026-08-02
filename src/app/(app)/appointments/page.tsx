@@ -1,9 +1,57 @@
 import Link from "next/link";
+import {
+  ChevronLeft,
+  ChevronRight,
+  CalendarDays,
+  Clock,
+  User,
+  Stethoscope,
+  Pencil,
+  CalendarPlus,
+} from "lucide-react";
 import { listAppointments, getDentists } from "./actions";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { formatDateTime, formatDate } from "@/lib/date";
+import { formatDate, formatTime, addDays } from "@/lib/date";
+import { AppointmentStatus } from "@prisma/client";
+
+function capitalize(value: string): string {
+  return value
+    .split(" ")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function statusLabel(status: AppointmentStatus): string {
+  const labels: Record<AppointmentStatus, string> = {
+    SCHEDULED: "Planifié",
+    CONFIRMED: "Confirmé",
+    CANCELLED: "Annulé",
+    NO_SHOW: "Absent",
+    COMPLETED: "Terminé",
+  };
+  return labels[status] ?? status;
+}
+
+function statusVariant(
+  status: AppointmentStatus,
+): "default" | "success" | "warning" | "danger" | "info" {
+  switch (status) {
+    case "COMPLETED":
+      return "success";
+    case "CONFIRMED":
+      return "info";
+    case "SCHEDULED":
+      return "warning";
+    case "NO_SHOW":
+      return "danger";
+    case "CANCELLED":
+      return "danger";
+    default:
+      return "default";
+  }
+}
 
 export default async function AppointmentsPage({
   searchParams,
@@ -11,88 +59,172 @@ export default async function AppointmentsPage({
   searchParams: Promise<{ date?: string }>;
 }) {
   const { date } = await searchParams;
-  const appointments = await listAppointments(date);
-  const dentists = await getDentists();
+  const currentDate = date ? new Date(date) : new Date();
+  currentDate.setHours(0, 0, 0, 0);
+
+  const prevDate = addDays(currentDate, -1);
+  const nextDate = addDays(currentDate, 1);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isToday =
+    currentDate.getFullYear() === today.getFullYear() &&
+    currentDate.getMonth() === today.getMonth() &&
+    currentDate.getDate() === today.getDate();
+
+  const [appointments, dentists] = await Promise.all([
+    listAppointments(date),
+    getDentists(),
+  ]);
+
+  const dateParam = (d: Date) => d.toISOString().slice(0, 10);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900">Rendez-vous</h2>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-900">Rendez-vous</h2>
+          <p className="text-sm text-slate-500">
+            {isToday ? "Aujourd'hui" : "Date sélectionnée"} —{" "}
+            <span className="font-medium text-slate-700">
+              {formatDate(currentDate)}
+            </span>
+          </p>
+        </div>
         <Link href="/appointments/new">
-          <Button>Nouveau RDV</Button>
+          <Button>
+            <CalendarPlus className="mr-2 h-4 w-4" />
+            Nouveau RDV
+          </Button>
         </Link>
       </div>
 
-      <Card>
-        <CardContent className="pt-4">
-          <form className="mb-4 flex items-center gap-3">
-            <input
-              name="date"
-              type="date"
-              defaultValue={date ?? new Date().toISOString().slice(0, 10)}
-              className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-            <Button type="submit" variant="secondary">
-              Filtrer
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <Link href={`/appointments?date=${dateParam(prevDate)}`}>
+            <Button variant="secondary" size="sm">
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              Précédent
             </Button>
-          </form>
+          </Link>
+          <Link href={`/appointments?date=${dateParam(today)}`}>
+            <Button variant="secondary" size="sm">
+              Aujourd&apos;hui
+            </Button>
+          </Link>
+          <Link href={`/appointments?date=${dateParam(nextDate)}`}>
+            <Button variant="secondary" size="sm">
+              Suivant
+              <ChevronRight className="ml-1 h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
 
+        <form className="flex items-center gap-2">
+          <input
+            name="date"
+            type="date"
+            defaultValue={dateParam(currentDate)}
+            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 focus:border-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+          />
+          <Button type="submit" variant="secondary" size="sm">
+            Filtrer
+          </Button>
+        </form>
+      </div>
+
+      <Card>
+        <CardHeader className="border-b border-slate-100">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold text-slate-900">
+            <CalendarDays className="h-5 w-5 text-slate-500" />
+            Liste des rendez-vous
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-4">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-200 text-left text-slate-600">
-                  <th className="pb-2 font-medium">Heure</th>
-                  <th className="pb-2 font-medium">Patient</th>
-                  <th className="pb-2 font-medium">Dentiste</th>
-                  <th className="pb-2 font-medium">Motif</th>
-                  <th className="pb-2 font-medium">Statut</th>
-                  <th className="pb-2 font-medium"></th>
+                <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  <th className="pb-3 pl-4 pt-2">Heure</th>
+                  <th className="pb-3 pt-2">Patient</th>
+                  <th className="pb-3 pt-2">Dentiste</th>
+                  <th className="pb-3 pt-2">Motif</th>
+                  <th className="pb-3 pt-2">Statut</th>
+                  <th className="pb-3 pt-2 text-right pr-4">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {appointments.map((a) => (
-                  <tr key={a.id} className="hover:bg-slate-50">
-                    <td className="py-3 whitespace-nowrap">
-                      {formatDateTime(a.startAt)}
+                  <tr key={a.id} className="group hover:bg-slate-50">
+                    <td className="py-4 pl-4 whitespace-nowrap">
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <Clock className="h-4 w-4 text-slate-400" />
+                        <span className="font-medium">
+                          {formatTime(a.startAt)} — {formatTime(a.endAt)}
+                        </span>
+                      </div>
                     </td>
-                    <td className="py-3 font-medium text-slate-900">
-                      {a.patient.lastName} {a.patient.firstName}
+                    <td className="py-4">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-slate-400" />
+                        <span className="font-medium text-slate-900">
+                          {capitalize(a.patient.lastName)}{" "}
+                          {capitalize(a.patient.firstName)}
+                        </span>
+                      </div>
+                      {a.patient.phone && (
+                        <p className="ml-6 mt-0.5 text-xs text-slate-500">
+                          {a.patient.phone}
+                        </p>
+                      )}
                     </td>
-                    <td className="py-3 text-slate-600">
-                      Dr. {a.dentist.lastName}
+                    <td className="py-4">
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <Stethoscope className="h-4 w-4 text-slate-400" />
+                        Dr. {capitalize(a.dentist.lastName)}{" "}
+                        {capitalize(a.dentist.firstName)}
+                      </div>
                     </td>
-                    <td className="py-3 text-slate-600">
-                      {a.reason ?? "—"}
+                    <td className="py-4 text-slate-600">
+                      {a.reason ? (
+                        <span className="line-clamp-1">{a.reason}</span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
                     </td>
-                    <td className="py-3">
-                      <Badge
-                        variant={
-                          a.status === "COMPLETED"
-                            ? "success"
-                            : a.status === "CANCELLED"
-                            ? "danger"
-                            : a.status === "CONFIRMED"
-                            ? "info"
-                            : "default"
-                        }
-                      >
-                        {a.status}
+                    <td className="py-4">
+                      <Badge variant={statusVariant(a.status)}>
+                        {statusLabel(a.status)}
                       </Badge>
                     </td>
-                    <td className="py-3 text-right">
-                      <Link
-                        href={`/appointments/${a.id}`}
-                        className="text-sm font-medium text-slate-900 hover:underline"
-                      >
-                        Détails
+                    <td className="py-4 pr-4 text-right">
+                      <Link href={`/appointments/${a.id}/edit`}>
+                        <Button variant="ghost" size="sm">
+                          <Pencil className="mr-1 h-4 w-4" />
+                          Modifier
+                        </Button>
                       </Link>
                     </td>
                   </tr>
                 ))}
                 {appointments.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-8 text-center text-slate-500">
-                      Aucun rendez-vous pour cette date.
+                    <td
+                      colSpan={6}
+                      className="py-12 text-center text-slate-500"
+                    >
+                      <div className="flex flex-col items-center gap-2">
+                        <CalendarDays className="h-8 w-8 text-slate-300" />
+                        <p>Aucun rendez-vous pour cette date.</p>
+                        <Link href="/appointments/new">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            className="mt-2"
+                          >
+                            Planifier un rendez-vous
+                          </Button>
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 )}
@@ -101,6 +233,13 @@ export default async function AppointmentsPage({
           </div>
         </CardContent>
       </Card>
+
+      {dentists.length === 0 && (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          Aucun dentiste actif dans ce cabinet. Les rendez-vous nécessitent un
+          dentiste ou un propriétaire avec le rôle dentiste.
+        </div>
+      )}
     </div>
   );
 }

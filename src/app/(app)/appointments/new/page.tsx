@@ -1,6 +1,6 @@
 import { listPatients } from "@/app/(app)/patients/actions";
-import { getDentists } from "../actions";
-import AppointmentForm from "./appointment-form";
+import { getDentists, createAppointment } from "../actions";
+import AppointmentForm from "../appointment-form";
 
 interface Props {
   searchParams: Promise<{ patientId?: string }>;
@@ -24,6 +24,10 @@ export default async function NewAppointmentPage({ searchParams }: Props) {
       }))}
       dentists={dentists}
       defaultPatientId={patientId}
+      action={createAppointment}
+      title="Nouveau rendez-vous"
+      subtitle="Planifiez un rendez-vous pour un patient avec un dentiste."
+      backUrl="/appointments"
     />
   );
 }
