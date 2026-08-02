@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Printer } from "lucide-react";
+import { InvoiceRow } from "./invoice-row";
 import { listInvoices, listProcedures } from "./actions";
 import InvoicePaymentForm from "./invoice-payment-form";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -78,15 +79,8 @@ export default async function BillingPage() {
                 {invoices.map((inv) => {
                   const balance = Math.max(0, inv.totalCents - inv.paidCents);
                   return (
-                    <tr key={inv.id} className="hover:bg-slate-50">
-                      <td className="py-3 font-medium">
-                        <Link
-                          href={`/billing/${inv.id}`}
-                          className="hover:underline"
-                        >
-                          {inv.number}
-                        </Link>
-                      </td>
+                    <InvoiceRow key={inv.id} id={inv.id}>
+                      <td className="py-3 font-medium">{inv.number}</td>
                       <td className="py-3">
                         {inv.patient.lastName} {inv.patient.firstName}
                       </td>
@@ -131,7 +125,7 @@ export default async function BillingPage() {
                           />
                         </div>
                       </td>
-                    </tr>
+                    </InvoiceRow>
                   );
                 })}
                 {invoices.length === 0 && (
