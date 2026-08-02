@@ -3,12 +3,23 @@ import { z } from "zod";
 export const patientSchema = z.object({
   firstName: z.string().min(1, "Prénom requis."),
   lastName: z.string().min(1, "Nom requis."),
+  nationalId: z.string().optional().or(z.literal("")),
+  sex: z.enum(["M", "F", "OTHER"]).optional().or(z.literal("")),
+  bloodGroup: z
+    .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
+    .optional()
+    .or(z.literal("")),
   dateOfBirth: z.string().optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   email: z.string().email().optional().or(z.literal("")),
   address: z.string().optional().or(z.literal("")),
   city: z.string().optional().or(z.literal("")),
   wilaya: z.string().optional().or(z.literal("")),
+  emergencyContactName: z.string().optional().or(z.literal("")),
+  emergencyContactPhone: z.string().optional().or(z.literal("")),
+  medicalHistory: z.string().optional().or(z.literal("")),
+  allergies: z.string().optional().or(z.literal("")),
+  currentMedications: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
 });
 
@@ -38,7 +49,9 @@ export const toothStatusSchema = z.object({
 export const treatmentPlanSchema = z.object({
   patientId: z.string().min(1),
   title: z.string().min(1, "Titre requis."),
-  status: z.enum(["DRAFT", "PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]).default("DRAFT"),
+  status: z
+    .enum(["DRAFT", "PLANNED", "IN_PROGRESS", "COMPLETED", "CANCELLED"])
+    .default("DRAFT"),
   totalCents: z.number().int().min(0).default(0),
   notes: z.string().optional().or(z.literal("")),
 });

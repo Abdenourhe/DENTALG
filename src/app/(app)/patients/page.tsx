@@ -42,6 +42,7 @@ export default async function PatientsPage({
                 <tr className="border-b border-slate-200 text-left text-slate-600">
                   <th className="pb-2 font-medium">N°</th>
                   <th className="pb-2 font-medium">Nom</th>
+                  <th className="pb-2 font-medium">N° carte d&apos;identité</th>
                   <th className="pb-2 font-medium">Téléphone</th>
                   <th className="pb-2 font-medium">Naissance</th>
                   <th className="pb-2 font-medium">RDV</th>
@@ -56,6 +57,9 @@ export default async function PatientsPage({
                     <td className="py-3 font-medium text-slate-900">
                       {p.lastName} {p.firstName}
                     </td>
+                    <td className="py-3 text-slate-600">
+                      {p.nationalId ?? "—"}
+                    </td>
                     <td className="py-3 text-slate-600">{p.phone ?? "—"}</td>
                     <td className="py-3 text-slate-600">
                       {formatDate(p.dateOfBirth)}
@@ -63,9 +67,7 @@ export default async function PatientsPage({
                     <td className="py-3 text-slate-600">
                       {p._count.appointments}
                     </td>
-                    <td className="py-3 text-slate-600">
-                      {p._count.invoices}
-                    </td>
+                    <td className="py-3 text-slate-600">{p._count.invoices}</td>
                     <td className="py-3 text-right">
                       <Link
                         href={`/patients/${p.id}`}
@@ -78,7 +80,7 @@ export default async function PatientsPage({
                 ))}
                 {patients.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="py-8 text-center text-slate-500">
+                    <td colSpan={8} className="py-8 text-center text-slate-500">
                       Aucun patient trouvé.
                     </td>
                   </tr>

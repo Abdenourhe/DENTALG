@@ -13,6 +13,10 @@ import {
   FlaskConical,
   ChevronRight,
   Plus,
+  Heart,
+  AlertCircle,
+  Activity,
+  Fingerprint,
 } from "lucide-react";
 import { getPatient } from "../actions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -95,8 +99,47 @@ export default async function PatientDetailPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Info cards */}
+      {/* Informations d'identité et contact */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="border-b border-slate-100 pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <User className="h-4 w-4 text-slate-500" />
+              Informations personnelles
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-4 text-sm">
+            <InfoRow
+              label="N° carte nationale d'identité"
+              value={patient.nationalId}
+              icon={Fingerprint}
+            />
+            <InfoRow
+              label="Sexe"
+              value={
+                patient.sex
+                  ? patient.sex === "M"
+                    ? "Masculin"
+                    : patient.sex === "F"
+                      ? "Féminin"
+                      : "Autre"
+                  : null
+              }
+              icon={User}
+            />
+            <InfoRow
+              label="Groupe sanguin"
+              value={patient.bloodGroup}
+              icon={Heart}
+            />
+            <InfoRow
+              label="Date de naissance"
+              value={formatDate(patient.dateOfBirth)}
+              icon={Calendar}
+            />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="border-b border-slate-100 pb-3">
             <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -123,18 +166,75 @@ export default async function PatientDetailPage({ params }: Props) {
         <Card>
           <CardHeader className="border-b border-slate-100 pb-3">
             <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <FileText className="h-4 w-4 text-slate-500" />
-              Notes médicales
+              <AlertCircle className="h-4 w-4 text-slate-500" />
+              Personne à contacter en cas d&apos;urgence
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 pt-4 text-sm">
+            <InfoRow
+              label="Nom et prénom"
+              value={patient.emergencyContactName}
+              icon={User}
+            />
+            <InfoRow
+              label="Téléphone"
+              value={patient.emergencyContactPhone}
+              icon={Phone}
+            />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Informations médicales */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="border-b border-slate-100 pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <Activity className="h-4 w-4 text-slate-500" />
+              Antécédents médicaux
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
-            <p className="min-h-[80px] whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
-              {patient.notes || (
-                <span className="italic text-slate-400">
-                  Aucune note enregistrée.
-                </span>
-              )}
-            </p>
+            <MedicalText value={patient.medicalHistory} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="border-b border-slate-100 pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <AlertCircle className="h-4 w-4 text-slate-500" />
+              Allergies
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <MedicalText value={patient.allergies} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="border-b border-slate-100 pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <Pill className="h-4 w-4 text-slate-500" />
+              Médicaments en cours
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <MedicalText value={patient.currentMedications} />
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Notes libres + statistiques */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <Card className="lg:col-span-2">
+          <CardHeader className="border-b border-slate-100 pb-3">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <FileText className="h-4 w-4 text-slate-500" />
+              Notes libres
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <MedicalText value={patient.notes} />
           </CardContent>
         </Card>
 
@@ -424,6 +524,18 @@ export default async function PatientDetailPage({ params }: Props) {
         )}
       </SectionCard>
     </div>
+  );
+}
+
+function MedicalText({ value }: { value: string | null }) {
+  return (
+    <p className="min-h-[80px] whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+      {value || (
+        <span className="italic text-slate-400">
+          Aucune information enregistrée.
+        </span>
+      )}
+    </p>
   );
 }
 

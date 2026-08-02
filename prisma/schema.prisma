@@ -210,23 +210,31 @@ model PasswordResetToken {
 }
 
 model Patient {
-  id              String            @id @default(cuid())
-  clinicId        String
-  clinic          Clinic            @relation(fields: [clinicId], references: [id])
-  number          String
-  firstName       String
-  lastName        String
-  dateOfBirth     DateTime?
-  phone           String?
-  email           String?
-  address         String?
-  city            String?
-  wilaya          String?
-  notes           String?
-  isActive        Boolean           @default(true)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  deletedAt       DateTime?
+  id                    String            @id @default(cuid())
+  clinicId              String
+  clinic                Clinic            @relation(fields: [clinicId], references: [id])
+  number                String
+  firstName             String
+  lastName              String
+  nationalId            String?           // Numéro de carte nationale d'identité
+  sex                   String?           // M / F / Autre
+  bloodGroup            String?           // A+, A-, B+, B-, AB+, AB-, O+, O-
+  dateOfBirth           DateTime?
+  phone                 String?
+  email                 String?
+  address               String?
+  city                  String?
+  wilaya                String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  medicalHistory        String?           // Antécédents médicaux
+  allergies             String?           // Allergies
+  currentMedications    String?           // Médicaments en cours
+  notes                 String?
+  isActive              Boolean           @default(true)
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  deletedAt             DateTime?
 
   medicalNotes    MedicalNote[]
   toothStatuses   ToothStatus[]

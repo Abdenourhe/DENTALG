@@ -4,8 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { updatePatient } from "../../actions";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { TextArea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
@@ -13,12 +14,20 @@ interface Patient {
   id: string;
   firstName: string;
   lastName: string;
+  nationalId: string | null;
+  sex: string | null;
+  bloodGroup: string | null;
   dateOfBirth: Date | null;
   phone: string | null;
   email: string | null;
   address: string | null;
   city: string | null;
   wilaya: string | null;
+  emergencyContactName: string | null;
+  emergencyContactPhone: string | null;
+  medicalHistory: string | null;
+  allergies: string | null;
+  currentMedications: string | null;
   notes: string | null;
 }
 
@@ -57,7 +66,7 @@ export default function PatientEditForm({ patient }: Props) {
   }
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <form action={handleSubmit} className="mx-auto max-w-3xl space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-slate-900">
           Modifier le patient
@@ -68,9 +77,12 @@ export default function PatientEditForm({ patient }: Props) {
       </div>
 
       <Card>
+        <CardHeader>
+          <CardTitle>Identité</CardTitle>
+        </CardHeader>
         <CardContent className="pt-6">
-          <form action={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
                 name="firstName"
                 label="Prénom *"
@@ -86,6 +98,44 @@ export default function PatientEditForm({ patient }: Props) {
                 required
               />
             </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <Input
+                name="nationalId"
+                label="N° carte nationale d'identité"
+                defaultValue={patient.nationalId ?? ""}
+                placeholder="Ex : 12345678901234567890"
+                error={errors.nationalId?.[0]}
+              />
+              <Select
+                name="sex"
+                label="Sexe"
+                defaultValue={patient.sex ?? ""}
+                placeholder="Choisir..."
+                options={[
+                  { value: "M", label: "Masculin" },
+                  { value: "F", label: "Féminin" },
+                  { value: "OTHER", label: "Autre" },
+                ]}
+              />
+              <Select
+                name="bloodGroup"
+                label="Groupe sanguin"
+                defaultValue={patient.bloodGroup ?? ""}
+                placeholder="Choisir..."
+                options={[
+                  { value: "A+", label: "A+" },
+                  { value: "A-", label: "A-" },
+                  { value: "B+", label: "B+" },
+                  { value: "B-", label: "B-" },
+                  { value: "AB+", label: "AB+" },
+                  { value: "AB-", label: "AB-" },
+                  { value: "O+", label: "O+" },
+                  { value: "O-", label: "O-" },
+                ]}
+              />
+            </div>
+
             <Input
               name="dateOfBirth"
               label="Date de naissance"
@@ -93,7 +143,17 @@ export default function PatientEditForm({ patient }: Props) {
               defaultValue={toInputDate(patient.dateOfBirth)}
               error={errors.dateOfBirth?.[0]}
             />
-            <div className="grid grid-cols-2 gap-4">
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Coordonnées</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
                 name="phone"
                 label="Téléphone"
@@ -114,7 +174,7 @@ export default function PatientEditForm({ patient }: Props) {
               defaultValue={patient.address ?? ""}
               error={errors.address?.[0]}
             />
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Input
                 name="city"
                 label="Ville"
@@ -128,30 +188,83 @@ export default function PatientEditForm({ patient }: Props) {
                 error={errors.wilaya?.[0]}
               />
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Personne à contacter en cas d&apos;urgence</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Input
+              name="emergencyContactName"
+              label="Nom et prénom"
+              defaultValue={patient.emergencyContactName ?? ""}
+              error={errors.emergencyContactName?.[0]}
+            />
+            <Input
+              name="emergencyContactPhone"
+              label="Téléphone"
+              defaultValue={patient.emergencyContactPhone ?? ""}
+              error={errors.emergencyContactPhone?.[0]}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Informations médicales</CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="space-y-4">
+            <TextArea
+              name="medicalHistory"
+              label="Antécédents médicaux"
+              rows={3}
+              defaultValue={patient.medicalHistory ?? ""}
+              placeholder="Maladies chroniques, chirurgies, antécédents familiaux..."
+            />
+            <TextArea
+              name="allergies"
+              label="Allergies"
+              rows={2}
+              defaultValue={patient.allergies ?? ""}
+              placeholder="Médicaments, aliments, produits..."
+            />
+            <TextArea
+              name="currentMedications"
+              label="Médicaments en cours"
+              rows={2}
+              defaultValue={patient.currentMedications ?? ""}
+              placeholder="Traitements réguliers..."
+            />
             <TextArea
               name="notes"
-              label="Notes"
+              label="Notes libres"
               rows={3}
               defaultValue={patient.notes ?? ""}
             />
-
-            {errors.global && (
-              <p className="text-sm text-red-600">{errors.global[0]}</p>
-            )}
-
-            <div className="flex justify-end gap-3 pt-2">
-              <Link href={`/patients/${patient.id}`}>
-                <Button type="button" variant="secondary">
-                  Annuler
-                </Button>
-              </Link>
-              <Button type="submit" isLoading={pending}>
-                Enregistrer
-              </Button>
-            </div>
-          </form>
+          </div>
         </CardContent>
       </Card>
-    </div>
+
+      {errors.global && (
+        <p className="text-sm text-red-600">{errors.global[0]}</p>
+      )}
+
+      <div className="flex justify-end gap-3">
+        <Link href={`/patients/${patient.id}`}>
+          <Button type="button" variant="secondary">
+            Annuler
+          </Button>
+        </Link>
+        <Button type="submit" isLoading={pending}>
+          Enregistrer
+        </Button>
+      </div>
+    </form>
   );
 }

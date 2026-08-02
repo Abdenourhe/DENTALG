@@ -13,13 +13,17 @@ import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import { nextNumber } from "@/lib/billing/numbering";
 import { logAudit } from "@/lib/audit";
-import { AuditAction } from "@prisma/client";
+import { AuditAction, Prisma } from "@prisma/client";
 
 function prismaError(errors: Record<string, string[]>): {
   ok: false;
   errors: Record<string, string[]>;
 } {
   return { ok: false, errors } as const;
+}
+
+function normalizeOptional(value: string | undefined): string | null {
+  return value === undefined || value === "" ? null : value;
 }
 
 export async function createPatient(data: unknown) {
@@ -33,15 +37,30 @@ export async function createPatient(data: unknown) {
 
   try {
     const number = await nextNumber(ctx.clinicId, "PATIENT", { pad: 4 });
-    const payload = withClinic(ctx, {
-      ...parsed.data,
-      number,
-      dateOfBirth: parsed.data.dateOfBirth
-        ? new Date(parsed.data.dateOfBirth)
-        : null,
-    });
+    const d = parsed.data;
 
-    const patient = await prisma.patient.create({ data: payload });
+    const patient = await prisma.patient.create({
+      data: withClinic(ctx, {
+        number,
+        firstName: d.firstName,
+        lastName: d.lastName,
+        nationalId: normalizeOptional(d.nationalId),
+        sex: normalizeOptional(d.sex),
+        bloodGroup: normalizeOptional(d.bloodGroup),
+        dateOfBirth: d.dateOfBirth ? new Date(d.dateOfBirth) : null,
+        phone: normalizeOptional(d.phone),
+        email: normalizeOptional(d.email),
+        address: normalizeOptional(d.address),
+        city: normalizeOptional(d.city),
+        wilaya: normalizeOptional(d.wilaya),
+        emergencyContactName: normalizeOptional(d.emergencyContactName),
+        emergencyContactPhone: normalizeOptional(d.emergencyContactPhone),
+        medicalHistory: normalizeOptional(d.medicalHistory),
+        allergies: normalizeOptional(d.allergies),
+        currentMedications: normalizeOptional(d.currentMedications),
+        notes: normalizeOptional(d.notes),
+      }),
+    });
 
     await logAudit({
       action: AuditAction.CREATE,
@@ -75,16 +94,43 @@ export async function updatePatient(id: string, data: unknown) {
     });
     if (!existing) return prismaError({ global: ["Patient introuvable."] });
 
-    const updateData = {
-      ...parsed.data,
-      dateOfBirth: parsed.data.dateOfBirth
-        ? new Date(parsed.data.dateOfBirth)
-        : null,
-    };
+    const d = parsed.data;
+    const normalized: Prisma.PatientUpdateInput = {};
+
+    if (d.firstName !== undefined) normalized.firstName = d.firstName;
+    if (d.lastName !== undefined) normalized.lastName = d.lastName;
+    if (d.nationalId !== undefined)
+      normalized.nationalId = normalizeOptional(d.nationalId);
+    if (d.sex !== undefined) normalized.sex = normalizeOptional(d.sex);
+    if (d.bloodGroup !== undefined)
+      normalized.bloodGroup = normalizeOptional(d.bloodGroup);
+    if (d.dateOfBirth !== undefined)
+      normalized.dateOfBirth = d.dateOfBirth ? new Date(d.dateOfBirth) : null;
+    if (d.phone !== undefined) normalized.phone = normalizeOptional(d.phone);
+    if (d.email !== undefined) normalized.email = normalizeOptional(d.email);
+    if (d.address !== undefined)
+      normalized.address = normalizeOptional(d.address);
+    if (d.city !== undefined) normalized.city = normalizeOptional(d.city);
+    if (d.wilaya !== undefined) normalized.wilaya = normalizeOptional(d.wilaya);
+    if (d.emergencyContactName !== undefined)
+      normalized.emergencyContactName = normalizeOptional(
+        d.emergencyContactName,
+      );
+    if (d.emergencyContactPhone !== undefined)
+      normalized.emergencyContactPhone = normalizeOptional(
+        d.emergencyContactPhone,
+      );
+    if (d.medicalHistory !== undefined)
+      normalized.medicalHistory = normalizeOptional(d.medicalHistory);
+    if (d.allergies !== undefined)
+      normalized.allergies = normalizeOptional(d.allergies);
+    if (d.currentMedications !== undefined)
+      normalized.currentMedications = normalizeOptional(d.currentMedications);
+    if (d.notes !== undefined) normalized.notes = normalizeOptional(d.notes);
 
     const patient = await prisma.patient.update({
       where: { id },
-      data: updateData,
+      data: normalized,
     });
 
     await logAudit({
