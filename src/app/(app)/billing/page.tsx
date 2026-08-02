@@ -78,7 +78,14 @@ export default async function BillingPage() {
                   const balance = Math.max(0, inv.totalCents - inv.paidCents);
                   return (
                     <tr key={inv.id} className="hover:bg-slate-50">
-                      <td className="py-3 font-medium">{inv.number}</td>
+                      <td className="py-3 font-medium">
+                        <Link
+                          href={`/billing/${inv.id}`}
+                          className="hover:underline"
+                        >
+                          {inv.number}
+                        </Link>
+                      </td>
                       <td className="py-3">
                         {inv.patient.lastName} {inv.patient.firstName}
                       </td>

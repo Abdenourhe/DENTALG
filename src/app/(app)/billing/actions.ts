@@ -10,6 +10,7 @@ import {
   procedureSchema,
 } from "@/lib/validations/billing";
 import { revalidatePath } from "next/cache";
+import { notFound } from "next/navigation";
 import { nextNumber } from "@/lib/billing/numbering";
 import { logAudit } from "@/lib/audit";
 import { AuditAction } from "@prisma/client";
@@ -19,6 +20,23 @@ function prismaError(errors: Record<string, string[]>): {
   errors: Record<string, string[]>;
 } {
   return { ok: false, errors } as const;
+}
+
+export async function getInvoice(id: string) {
+  await requireRole("billing:read");
+  const ctx = await requireClinicContext();
+
+  const invoice = await prisma.invoice.findFirst({
+    where: { id, clinicId: ctx.clinicId, deletedAt: null },
+    include: {
+      patient: true,
+      items: { include: { procedure: true } },
+      payments: { orderBy: { paidAt: "desc" } },
+    },
+  });
+
+  if (!invoice) notFound();
+  return invoice;
 }
 
 export async function listInvoices() {
