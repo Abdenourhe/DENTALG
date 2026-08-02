@@ -10,7 +10,7 @@ import {
   formatInvoiceStatus,
   invoiceStatusColors,
 } from "@/lib/billing/invoice-helpers";
-import { ArrowLeft, User, Calendar } from "lucide-react";
+import { ArrowLeft, User, Calendar, Printer } from "lucide-react";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -31,6 +31,12 @@ export default async function InvoiceDetailPage({ params }: Props) {
           <Button type="button" variant="secondary">
             <ArrowLeft className="mr-1 h-4 w-4" />
             Retour
+          </Button>
+        </Link>
+        <Link href={`/billing/${invoice.id}/print`}>
+          <Button type="button" variant="secondary">
+            <Printer className="mr-1 h-4 w-4" />
+            Imprimer
           </Button>
         </Link>
       </div>
