@@ -19,13 +19,16 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-slate-200 bg-white">
-      <div className="flex h-16 items-center border-b border-slate-100 px-6">
-        <Link href="/dashboard" className="flex items-center gap-2">
+      <div className="flex h-16 items-center justify-center border-b border-slate-100 px-6">
+        <Link
+          href="/dashboard"
+          className="relative block h-10 w-full max-w-[180px]"
+        >
           <Image
             src="/logo.svg"
             alt="DENTALG"
-            width={140}
-            height={32}
+            fill
+            className="object-contain object-center"
             priority
           />
         </Link>
