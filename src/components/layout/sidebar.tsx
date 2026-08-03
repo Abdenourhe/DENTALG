@@ -18,13 +18,13 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-slate-200 bg-white">
-      <div className="flex h-24 items-center justify-center border-b border-slate-100 px-4">
+      <div className="flex h-30 items-center justify-center border-b border-slate-100 px-4">
         <Link href="/dashboard" className="flex items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo.svg"
             alt="DENTALG"
-            className="h-16 w-auto object-contain"
+            className="h-22 w-auto object-contain"
           />
         </Link>
       </div>
