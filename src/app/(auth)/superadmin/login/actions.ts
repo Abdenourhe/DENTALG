@@ -7,7 +7,7 @@ type AdminLoginResult = { ok: true } | { ok: false; error: string };
 
 export async function adminLoginAction(
   _prevState: AdminLoginResult | null,
-  formData: FormData
+  formData: FormData,
 ): Promise<AdminLoginResult> {
   const raw = Object.fromEntries(formData.entries());
 

@@ -14,7 +14,9 @@ export default function AdminLoginPage() {
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-blue-100">
             <Shield className="h-8 w-8 text-blue-600" />
           </div>
-          <h1 className="text-2xl font-bold text-slate-900">Admin plateforme</h1>
+          <h1 className="text-2xl font-bold text-slate-900">
+            Admin plateforme
+          </h1>
           <p className="mt-2 text-sm text-slate-500">
             Espace réservé à l&apos;administration DENTALG.
           </p>
