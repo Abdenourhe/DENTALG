@@ -25,7 +25,7 @@ export function Sidebar() {
           <img
             src="/logo.svg"
             alt="DENTALG"
-            className="h-12 w-auto object-contain"
+            className="h-18 w-auto object-contain"
           />
         </Link>
       </div>
