@@ -23,11 +23,11 @@ export default auth((req: AuthNextRequest) => {
 
   if (!isLoggedIn && !isPublic) {
     return NextResponse.redirect(
-      new URL(isPlatform ? "/superadmin/login" : "/login", nextUrl)
+      new URL(isPlatform ? "/superadmin/login" : "/login", nextUrl),
     );
   }
 
-  if (isPlatform && role !== "PLATFORM_ADMIN") {
+  if (isPlatform && !isPublic && role !== "PLATFORM_ADMIN") {
     return NextResponse.redirect(new URL("/", nextUrl));
   }
 
