@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 
@@ -19,18 +18,9 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-slate-200 bg-white">
-      <div className="flex h-16 items-center justify-center border-b border-slate-100 px-6">
-        <Link
-          href="/dashboard"
-          className="relative block h-10 w-full max-w-[180px]"
-        >
-          <Image
-            src="/logo.svg"
-            alt="DENTALG"
-            fill
-            className="object-contain object-center"
-            priority
-          />
+      <div className="flex h-16 items-center border-b border-slate-100 px-6">
+        <Link href="/dashboard" className="text-xl font-bold text-primary">
+          DENTALG
         </Link>
       </div>
       <nav className="flex-1 space-y-1 px-3 py-4">
