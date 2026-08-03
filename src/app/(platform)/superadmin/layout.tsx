@@ -1,15 +1,22 @@
-import { requirePlatformAdmin } from "@/lib/platform-auth";
 import Link from "next/link";
+import { requirePlatformAdmin } from "@/lib/platform-auth";
 import {
   LayoutDashboard,
   Building2,
   Shield,
+  MessageSquare,
+  Ticket,
+  UserPlus,
+  LogOut,
 } from "lucide-react";
 import { SidebarLogout } from "@/components/sidebar-logout";
 
 const navItems = [
   { href: "/superadmin", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/superadmin/clinics", label: "Cabinets", icon: Building2 },
+  { href: "/superadmin/messages", label: "Messagerie", icon: MessageSquare },
+  { href: "/superadmin/tickets", label: "Tickets support", icon: Ticket },
+  { href: "/superadmin/requests", label: "Demandes profils", icon: UserPlus },
 ];
 
 export default async function SuperAdminLayout({
@@ -25,7 +32,10 @@ export default async function SuperAdminLayout({
         <div className="flex h-20 items-center gap-3 border-b border-slate-800 px-8">
           <Shield className="h-7 w-7 text-blue-400" />
           <div>
-            <Link href="/superadmin" className="text-lg font-bold tracking-tight">
+            <Link
+              href="/superadmin"
+              className="text-lg font-bold tracking-tight"
+            >
               DENTALG Admin
             </Link>
             <p className="text-xs text-slate-400">Plateforme</p>
@@ -51,7 +61,9 @@ export default async function SuperAdminLayout({
         <div className="border-t border-slate-800 p-4">
           <div className="mb-4 px-4 py-2">
             <p className="text-xs font-medium text-slate-400">Connecté</p>
-            <p className="truncate text-sm font-medium text-white">{admin.email}</p>
+            <p className="truncate text-sm font-medium text-white">
+              {admin.email}
+            </p>
           </div>
           <SidebarLogout />
         </div>

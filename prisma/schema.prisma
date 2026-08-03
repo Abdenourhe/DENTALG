@@ -154,6 +154,8 @@ model Clinic {
   labOrders            LabOrder[]
   labResults           LabResult[]
   counters             Counter[]
+  supportTickets       SupportTicket[]
+  userRequests         UserRequest[]
 }
 
 model User {
@@ -191,6 +193,8 @@ model User {
   prescriptions        Prescription[]
   labOrders            LabOrder[]
   labResults           LabResult[]
+  supportTickets       SupportTicket[]
+  userRequestsCreated  UserRequest[]
 
   @@index([clinicId])
   @@index([email])
@@ -839,4 +843,108 @@ model Counter {
 
   @@unique([clinicId, type])
   @@index([clinicId])
+}
+
+enum TicketType {
+  BUG
+  COMMENT
+  FEATURE_REQUEST
+  SUGGESTION
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PlatformMessageType {
+  ANNOUNCEMENT
+  ALERT
+  MAINTENANCE
+  UPDATE
+}
+
+// ── Messages plateforme (admin → cabinets) ──
+model PlatformMessage {
+  id           String              @id @default(cuid())
+  senderId     String
+  title        String
+  content      String
+  type         PlatformMessageType @default(ANNOUNCEMENT)
+  targetRole   Role?               // null = tous les rôles
+  targetClinicId String?           // null = tous les cabinets
+  isBroadcast  Boolean             @default(false)
+  readBy       String[]            // IDs des users qui ont lu
+  createdAt    DateTime            @default(now())
+
+  @@index([targetClinicId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// ── Tickets de support (users → admin) ──
+model SupportTicket {
+  id          String        @id @default(cuid())
+  clinicId    String
+  clinic      Clinic        @relation(fields: [clinicId], references: [id])
+  userId      String
+  user        User          @relation(fields: [userId], references: [id])
+  type        TicketType
+  subject     String
+  description String
+  status      TicketStatus  @default(OPEN)
+  attachments Json?         // [{name, url, mimeType}]
+  messages    TicketMessage[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([clinicId])
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model TicketMessage {
+  id        String        @id @default(cuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId  String
+  content   String
+  isAdmin   Boolean       @default(false)
+  createdAt DateTime      @default(now())
+
+  @@index([ticketId])
+  @@index([authorId])
+}
+
+// ── Demandes de création de profil ──
+model UserRequest {
+  id           String        @id @default(cuid())
+  clinicId     String
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  requesterId  String
+  requester    User          @relation(fields: [requesterId], references: [id])
+  firstName    String
+  lastName     String
+  email        String
+  role         Role
+  status       RequestStatus @default(PENDING)
+  reviewedById String?
+  reviewedAt   DateTime?
+  notes        String?
+  createdAt    DateTime      @default(now())
+
+  @@index([clinicId])
+  @@index([requesterId])
+  @@index([status])
+  @@index([createdAt])
 }
