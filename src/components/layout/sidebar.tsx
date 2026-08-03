@@ -18,16 +18,19 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-slate-200 bg-white">
-      <div className="flex h-40 flex-col items-center justify-end border-b border-slate-100 px-4 pb-2 pt-8">
-        <Link href="/dashboard" className="flex items-center justify-center">
+      {/* Header compact : icône + DENTALG */}
+      <div className="flex h-16 items-center gap-2 border-b border-slate-200 px-4">
+        <Link href="/dashboard" className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo.svg"
-            alt="DENTALG"
-            className="h-32 w-auto object-contain"
+            src="/favicon.svg"
+            alt=""
+            className="h-10 w-auto object-contain"
           />
+          <span className="text-xl font-bold text-primary">DENTALG</span>
         </Link>
       </div>
+
       <nav className="flex-1 space-y-1 px-3 py-4">
         {navItems.map((item) => {
           const isActive =
