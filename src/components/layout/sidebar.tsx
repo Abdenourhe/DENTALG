@@ -12,6 +12,7 @@ import {
   Stethoscope,
   Briefcase,
   LogOut,
+  UserCog,
 } from "lucide-react";
 
 const navItems = [
@@ -21,6 +22,7 @@ const navItems = [
   { href: "/billing", label: "Facturation", icon: CreditCard },
   { href: "/procedures", label: "Actes", icon: Stethoscope },
   { href: "/carrieres", label: "Carrière", icon: Briefcase },
+  { href: "/users", label: "Utilisateurs", icon: UserCog },
 ];
 
 const containerVariants: Variants = {
