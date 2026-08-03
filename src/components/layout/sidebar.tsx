@@ -18,16 +18,15 @@ export function Sidebar() {
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-slate-200 bg-white">
-      {/* Header compact : icône + DENTALG */}
-      <div className="flex h-16 items-center gap-2 border-b border-slate-200 px-4">
-        <Link href="/dashboard" className="flex items-center gap-2">
+      {/* Logo horizontal */}
+      <div className="flex h-16 items-center justify-center border-b border-slate-200 px-4">
+        <Link href="/dashboard" className="flex items-center justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/favicon.svg"
-            alt=""
-            className="h-10 w-auto object-contain"
+            src="/logo.svg"
+            alt="DENTALG"
+            className="h-12 w-auto object-contain"
           />
-          <span className="text-xl font-bold text-primary">DENTALG</span>
         </Link>
       </div>
 
