@@ -1,4 +1,3 @@
-import Link from "next/link";
 import AnimatedHero from "./_components/AnimatedHero";
 import AnimatedFeatures from "./_components/AnimatedFeatures";
 import AnimatedCTA from "./_components/AnimatedCTA";

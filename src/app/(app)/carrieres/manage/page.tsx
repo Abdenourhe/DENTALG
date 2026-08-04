@@ -33,6 +33,8 @@ import {
   publishEquipmentListing,
   deleteEquipmentListing,
 } from "@/lib/actions/carrieres-listings";
+import ClinicListingForm from "../_components/ClinicListingForm";
+import EquipmentListingForm from "../_components/EquipmentListingForm";
 
 function formatDA(cents: number) {
   if (cents === 0) return "Prix sur demande";
@@ -176,39 +178,7 @@ async function ClinicsSection() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <form
-            action={async (formData: FormData) => {
-              "use server";
-              const data = Object.fromEntries(formData.entries());
-              await createClinicListing(data);
-            }}
-            className="space-y-4"
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Titre *</label>
-                <input name="title" type="text" required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Prix (DA)</label>
-                <input name="price" type="number" min="0" placeholder="0 = sur demande" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div><label className="mb-1.5 block text-sm font-medium text-slate-700">Ville</label><input name="city" type="text" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></div>
-              <div><label className="mb-1.5 block text-sm font-medium text-slate-700">Wilaya</label><input name="wilaya" type="text" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></div>
-              <div><label className="mb-1.5 block text-sm font-medium text-slate-700">Téléphone contact</label><input name="contactPhone" type="tel" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Description *</label>
-              <textarea name="description" rows={3} required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Photos (URLs, une par ligne)</label>
-              <textarea name="photos" rows={3} placeholder="https://...&#10;https://..." className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-            </div>
-            <Button type="submit"><Plus className="mr-2 h-4 w-4" />Créer l&apos;annonce</Button>
-          </form>
+          <ClinicListingForm createAction={createClinicListing} />
         </CardContent>
       </Card>
 
@@ -269,39 +239,7 @@ async function EquipmentSection() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-6">
-          <form
-            action={async (formData: FormData) => {
-              "use server";
-              const data = Object.fromEntries(formData.entries());
-              await createEquipmentListing(data);
-            }}
-            className="space-y-4"
-          >
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Titre *</label>
-                <input name="title" type="text" required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Prix (DA)</label>
-                <input name="price" type="number" min="0" placeholder="0 = sur demande" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-              </div>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-3">
-              <div><label className="mb-1.5 block text-sm font-medium text-slate-700">Marque</label><input name="brand" type="text" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></div>
-              <div><label className="mb-1.5 block text-sm font-medium text-slate-700">État</label><input name="condition" type="text" placeholder="Neuf, Occasion..." className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></div>
-              <div><label className="mb-1.5 block text-sm font-medium text-slate-700">Téléphone contact</label><input name="contactPhone" type="tel" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" /></div>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Description *</label>
-              <textarea name="description" rows={3} required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Photos (URLs, une par ligne)</label>
-              <textarea name="photos" rows={3} placeholder="https://...&#10;https://..." className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-            </div>
-            <Button type="submit"><Plus className="mr-2 h-4 w-4" />Créer l&apos;annonce</Button>
-          </form>
+          <EquipmentListingForm createAction={createEquipmentListing} />
         </CardContent>
       </Card>
 
