@@ -157,6 +157,8 @@ model Clinic {
   counters             Counter[]
   supportTickets       SupportTicket[]
   userRequests         UserRequest[]
+  clinicListings       ClinicListing[]
+  equipmentListings    EquipmentListing[]
 }
 
 model User {
@@ -970,6 +972,60 @@ model ClinicRequest {
   notes          String?
   createdAt      DateTime      @default(now())
 
+  @@index([status])
+  @@index([createdAt])
+}
+
+
+enum ListingStatus {
+  DRAFT
+  PUBLISHED
+  SOLD
+}
+
+// ── Cabinets dentaires à vendre ──
+model ClinicListing {
+  id           String        @id @default(cuid())
+  clinicId     String
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  title        String
+  description  String
+  price        Int           @default(0)
+  location     String?
+  city         String?
+  wilaya       String?
+  photos       String[]
+  status       ListingStatus @default(DRAFT)
+  contactPhone String?
+  contactEmail String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+
+  @@index([clinicId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ── Matériel dentaire à vendre ──
+model EquipmentListing {
+  id           String        @id @default(cuid())
+  clinicId     String
+  clinic       Clinic        @relation(fields: [clinicId], references: [id])
+  title        String
+  description  String
+  price        Int           @default(0)
+  condition    String?
+  brand        String?
+  photos       String[]
+  status       ListingStatus @default(DRAFT)
+  contactPhone String?
+  contactEmail String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  deletedAt    DateTime?
+
+  @@index([clinicId])
   @@index([status])
   @@index([createdAt])
 }

@@ -1,24 +1,40 @@
 import Link from "next/link";
 import { listPublicJobOffers } from "@/lib/actions/job-offers";
+import {
+  listPublicClinicListings,
+  listPublicEquipmentListings,
+} from "@/lib/actions/carrieres-listings";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Briefcase,
   MapPin,
-  Clock,
   ArrowRight,
   Building2,
-  Search,
   GraduationCap,
   Stethoscope,
-  Users,
+  Store,
+  Wrench,
+  ImageIcon,
 } from "lucide-react";
+import type { JobOffer, ClinicListing, EquipmentListing } from "@prisma/client";
+
+function formatDA(cents: number) {
+  if (cents === 0) return "Prix sur demande";
+  return new Intl.NumberFormat("fr-DZ", {
+    style: "currency",
+    currency: "DZD",
+  }).format(cents / 100);
+}
 
 export default async function CarrieresPublicPage() {
-  const offers = await listPublicJobOffers();
+  const [offers, clinics, equipment] = await Promise.all([
+    listPublicJobOffers(),
+    listPublicClinicListings(),
+    listPublicEquipmentListings(),
+  ]);
 
-  // Count by type (heuristic from title keywords)
-  const stageCount = offers.filter((o) =>
+  const stageCount = offers.filter((o: JobOffer) =>
     /stage|internship|stagiaire/i.test(o.title),
   ).length;
   const emploiCount = offers.length - stageCount;
@@ -34,7 +50,7 @@ export default async function CarrieresPublicPage() {
           </Link>
           <div className="flex items-center gap-4 text-sm">
             <Link href="/carrieres" className="font-medium text-primary">
-              Offres
+              Carrières & Annonces
             </Link>
             <Link
               href="/login"
@@ -47,21 +63,18 @@ export default async function CarrieresPublicPage() {
       </header>
 
       {/* Hero */}
-      <section className="bg-slate-900 px-6 py-16">
+      <section className="bg-slate-900 px-6 py-14">
         <div className="mx-auto max-w-6xl text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/20 ring-1 ring-primary/30">
-            <Briefcase className="h-7 w-7 text-primary-300" />
-          </div>
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Offres d&apos;emploi dentaire
+            Carrières & Annonces dentaires
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-slate-400">
-            Stages, postes d&apos;assistant, associations et remplacements dans
-            les cabinets dentaires en Algérie.
+          <p className="mx-auto mt-3 max-w-2xl text-slate-400">
+            Offres d&apos;emploi, cabinets à vendre et matériel dentaire en
+            Algérie. Le marketplace dédié aux professionnels de la dentisterie.
           </p>
 
           {/* Stats */}
-          <div className="mx-auto mt-8 flex max-w-md justify-center gap-4">
+          <div className="mx-auto mt-8 flex max-w-xl flex-wrap justify-center gap-3">
             <div className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-2.5 ring-1 ring-white/10">
               <Stethoscope className="h-4 w-4 text-emerald-400" />
               <span className="text-sm font-medium text-white">
@@ -74,121 +87,242 @@ export default async function CarrieresPublicPage() {
                 {stageCount} stage{stageCount > 1 ? "s" : ""}
               </span>
             </div>
+            <div className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-2.5 ring-1 ring-white/10">
+              <Store className="h-4 w-4 text-amber-400" />
+              <span className="text-sm font-medium text-white">
+                {clinics.length} cabinet{clinics.length > 1 ? "s" : ""} à vendre
+              </span>
+            </div>
+            <div className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-2.5 ring-1 ring-white/10">
+              <Wrench className="h-4 w-4 text-blue-400" />
+              <span className="text-sm font-medium text-white">
+                {equipment.length} matériel{equipment.length > 1 ? "s" : ""}
+              </span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Offers list */}
-      <section className="mx-auto w-full max-w-6xl px-6 py-12">
-        {offers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <Search className="h-12 w-12 text-slate-300" />
-            <h3 className="mt-4 text-lg font-semibold text-slate-900">
-              Aucune offre pour le moment
-            </h3>
-            <p className="mt-1 text-sm text-slate-500">
-              Revenez bientôt ou publiez votre propre offre depuis votre espace
-              cabinet.
-            </p>
-            <Link
-              href="/register"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-800"
-            >
-              Créer un compte cabinet
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+      <main className="mx-auto w-full max-w-6xl px-6 py-10 space-y-14">
+        {/* ── JOB OFFERS ── */}
+        <section>
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100">
+              <Briefcase className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Offres d&apos;emploi & stages
+              </h2>
+              <p className="text-sm text-slate-500">
+                Postes dans les cabinets dentaires en Algérie
+              </p>
+            </div>
           </div>
-        ) : (
-          <div className="grid gap-4">
-            {offers.map((offer) => {
-              const isStage = /stage|internship|stagiaire/i.test(offer.title);
-              return (
-                <Card
-                  key={offer.id}
-                  className="group transition-all duration-200 hover:border-primary-200 hover:shadow-md"
-                >
-                  <CardContent className="flex flex-col gap-4 py-5 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-base font-semibold text-slate-900">
-                          {offer.title}
-                        </h3>
-                        <Badge variant={isStage ? "info" : "success"}>
-                          {isStage ? "Stage" : "Emploi"}
-                        </Badge>
-                        {offer.closesAt &&
-                          new Date(offer.closesAt) < new Date() && (
-                            <Badge variant="danger">Clôturée</Badge>
-                          )}
-                      </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-slate-500">
-                        <span className="flex items-center gap-1">
-                          <Building2 className="h-4 w-4 text-slate-400" />
-                          {offer.clinic.name}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-4 w-4 text-slate-400" />
-                          {offer.clinic.city}, {offer.clinic.wilaya}
-                        </span>
-                        {offer.publishedAt && (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-4 w-4 text-slate-400" />
-                            Publiée le{" "}
-                            {offer.publishedAt.toLocaleDateString("fr-FR")}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-2 line-clamp-2 text-sm text-slate-600">
-                        {offer.description}
-                      </p>
-                    </div>
 
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className="text-xs text-slate-400">
-                        {offer._count.applications} candidature
-                        {offer._count.applications > 1 ? "s" : ""}
-                      </span>
+          {offers.length === 0 ? (
+            <p className="py-6 text-center text-sm text-slate-400">
+              Aucune offre pour le moment.
+            </p>
+          ) : (
+            <div className="grid gap-4">
+              {offers.slice(0, 5).map((offer: JobOffer & { clinic: { name: string; city: string | null; wilaya: string | null } }) => {
+                const isStage = /stage|internship|stagiaire/i.test(offer.title);
+                return (
+                  <Card
+                    key={offer.id}
+                    className="transition-all hover:shadow-md"
+                  >
+                    <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-base font-semibold text-slate-900">
+                            {offer.title}
+                          </h3>
+                          <Badge variant={isStage ? "info" : "success"}>
+                            {isStage ? "Stage" : "Emploi"}
+                          </Badge>
+                        </div>
+                        <div className="mt-1.5 flex flex-wrap items-center gap-3 text-sm text-slate-500">
+                          <span className="flex items-center gap-1">
+                            <Building2 className="h-3.5 w-3.5" />
+                            {offer.clinic.name}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {offer.clinic.city}, {offer.clinic.wilaya}
+                          </span>
+                        </div>
+                      </div>
                       <Link
                         href={`/carrieres/${offer.id}`}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-all hover:bg-primary-800"
+                        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-all hover:bg-primary-800"
                       >
-                        Voir l&apos;offre
-                        <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                        Voir
+                        <ArrowRight className="h-3.5 w-3.5" />
                       </Link>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* ── CLINICS FOR SALE ── */}
+        <section>
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100">
+              <Store className="h-5 w-5 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Cabinets dentaires à vendre
+              </h2>
+              <p className="text-sm text-slate-500">
+                Cédez ou acquérez un cabinet équipé en Algérie
+              </p>
+            </div>
+          </div>
+
+          {clinics.length === 0 ? (
+            <p className="py-6 text-center text-sm text-slate-400">
+              Aucun cabinet à vendre pour le moment.
+            </p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {clinics.map((item: ClinicListing & { clinic: { name: string } }) => (
+                <Card
+                  key={item.id}
+                  className="overflow-hidden transition-all hover:shadow-md"
+                >
+                  {item.photos.length > 0 ? (
+                    <div className="relative h-40 w-full overflow-hidden bg-slate-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.photos[0]}
+                        alt={item.title}
+                        className="h-full w-full object-cover"
+                      />
+                      <div className="absolute right-2 top-2">
+                        <Badge variant="warning">À vendre</Badge>
+                      </div>
                     </div>
+                  ) : (
+                    <div className="flex h-40 items-center justify-center bg-slate-100">
+                      <ImageIcon className="h-10 w-10 text-slate-300" />
+                    </div>
+                  )}
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-slate-900 line-clamp-1">
+                      {item.title}
+                    </h3>
+                    <p className="mt-1 line-clamp-2 text-sm text-slate-500">
+                      {item.description}
+                    </p>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-sm font-bold text-primary">
+                        {formatDA(item.price)}
+                      </span>
+                      <span className="flex items-center gap-1 text-xs text-slate-400">
+                        <MapPin className="h-3 w-3" />
+                        {item.city || "N/A"}
+                      </span>
+                    </div>
+                    <Link
+                      href={`/carrieres/clinics/${item.id}`}
+                      className="mt-3 block text-center rounded-lg bg-slate-100 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200"
+                    >
+                      Voir détails
+                    </Link>
                   </CardContent>
                 </Card>
-              );
-            })}
-          </div>
-        )}
-      </section>
+              ))}
+            </div>
+          )}
+        </section>
 
-      {/* CTA for clinics */}
-      <section className="mx-auto w-full max-w-6xl px-6 pb-16">
-        <div className="relative overflow-hidden rounded-2xl bg-primary-900 px-6 py-10 text-center">
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -left-10 -top-10 h-64 w-64 rounded-full bg-primary-700/30 blur-3xl" />
-            <div className="absolute -bottom-10 -right-10 h-64 w-64 rounded-full bg-blue-600/20 blur-3xl" />
+        {/* ── EQUIPMENT FOR SALE ── */}
+        <section>
+          <div className="mb-5 flex items-center gap-3">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100">
+              <Wrench className="h-5 w-5 text-emerald-600" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                Matériel dentaire
+              </h2>
+              <p className="text-sm text-slate-500">
+                Équipements, fauteuils, instruments et plus
+              </p>
+            </div>
           </div>
-          <div className="relative">
-            <h2 className="text-xl font-bold text-white sm:text-2xl">
-              Vous cherchez à recruter ?
-            </h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-primary-200">
-              Publiez vos offres de stage et d&apos;emploi gratuitement sur
-              DENTALG et trouvez les meilleurs talents dentaires en Algérie.
+
+          {equipment.length === 0 ? (
+            <p className="py-6 text-center text-sm text-slate-400">
+              Aucun matériel en vente pour le moment.
             </p>
-            <Link
-              href="/register"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-6 py-2.5 text-sm font-semibold text-primary-900 transition-colors hover:bg-primary-50"
-            >
-              Créer un compte cabinet
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {equipment.map((item: EquipmentListing & { clinic: { name: string } }) => (
+                <Card
+                  key={item.id}
+                  className="overflow-hidden transition-all hover:shadow-md"
+                >
+                  {item.photos.length > 0 ? (
+                    <div className="relative h-40 w-full overflow-hidden bg-slate-100">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={item.photos[0]}
+                        alt={item.title}
+                        className="h-full w-full object-cover"
+                      />
+                      <div className="absolute right-2 top-2">
+                        <Badge variant="success">En vente</Badge>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex h-40 items-center justify-center bg-slate-100">
+                      <ImageIcon className="h-10 w-10 text-slate-300" />
+                    </div>
+                  )}
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-slate-900 line-clamp-1">
+                      {item.title}
+                    </h3>
+                    <p className="mt-1 line-clamp-2 text-sm text-slate-500">
+                      {item.description}
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      {item.brand && (
+                        <span className="text-xs text-slate-500">
+                          {item.brand}
+                        </span>
+                      )}
+                      {item.condition && (
+                        <Badge variant="default" className="text-[10px]">
+                          {item.condition}
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="mt-3 flex items-center justify-between">
+                      <span className="text-sm font-bold text-primary">
+                        {formatDA(item.price)}
+                      </span>
+                    </div>
+                    <Link
+                      href={`/carrieres/equipment/${item.id}`}
+                      className="mt-3 block text-center rounded-lg bg-slate-100 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200"
+                    >
+                      Voir détails
+                    </Link>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
+      </main>
 
       {/* Footer */}
       <footer className="mt-auto border-t border-slate-200 bg-white py-6">
@@ -196,8 +330,8 @@ export default async function CarrieresPublicPage() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="DENTALG" className="h-5 w-auto" />
           <p className="text-xs text-slate-400">
-            © {new Date().getFullYear()} DENTALG — Plateforme de recrutement
-            dentaire en Algérie
+            © {new Date().getFullYear()} DENTALG — Marketplace dentaire en
+            Algérie
           </p>
         </div>
       </footer>
