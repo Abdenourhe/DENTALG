@@ -289,8 +289,6 @@ model ToothStatus {
   status    String
   surfaces  Json?    // { "O": "CARIES", "M": "HEALTHY", ... }
   notes     String?
-  status    String
-  notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
