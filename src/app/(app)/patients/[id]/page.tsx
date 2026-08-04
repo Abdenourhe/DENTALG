@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate, formatDateTime } from "@/lib/date";
 import { formatDA } from "@/lib/money";
-import { formatToothName } from "./tooth-names";
+import OdontogramWrapper from "./odontogram-wrapper";
 import {
   formatInvoiceStatus,
   invoiceStatusColors,
@@ -33,20 +33,6 @@ import {
 interface Props {
   params: Promise<{ id: string }>;
 }
-
-const TOOTH_COLORS: Record<string, string> = {
-  HEALTHY: "bg-green-500",
-  CARIES: "bg-red-500",
-  TREATED: "bg-amber-500",
-  MISSING: "bg-slate-800",
-  CROWN: "bg-purple-500",
-  IMPLANT: "bg-blue-500",
-  ROOT_CANAL: "bg-cyan-500",
-  EXTRACTION_PLANNED: "bg-orange-500",
-};
-
-const UPPER = [18, 17, 16, 15, 14, 13, 12, 11, 21, 22, 23, 24, 25, 26, 27, 28];
-const LOWER = [48, 47, 46, 45, 44, 43, 42, 41, 31, 32, 33, 34, 35, 36, 37, 38];
 
 function capitalize(value: string): string {
   return value
@@ -60,7 +46,6 @@ export default async function PatientDetailPage({ params }: Props) {
   const patient = await getPatient(id);
   if (!patient) notFound();
 
-  const toothMap = new Map(patient.toothStatuses.map((t) => [t.tooth, t]));
   const fullName = `${capitalize(patient.lastName)} ${capitalize(
     patient.firstName,
   )}`;
@@ -282,62 +267,14 @@ export default async function PatientDetailPage({ params }: Props) {
         <CardHeader className="border-b border-slate-100 pb-3">
           <CardTitle className="flex items-center gap-2 text-base font-semibold">
             <Stethoscope className="h-4 w-4 text-slate-500" />
-            Odontogramme (FDI)
+            Odontogramme interactif (FDI)
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          <div className="space-y-6">
-            <div className="flex justify-center gap-1.5">
-              {UPPER.map((n) => {
-                const ts = toothMap.get(n);
-                return (
-                  <div key={n} className="flex flex-col items-center gap-1">
-                    <div
-                      className={`h-9 w-9 rounded-full ${
-                        ts ? TOOTH_COLORS[ts.status] : "bg-green-500"
-                      } border-2 border-white shadow transition-transform hover:scale-110`}
-                      title={`${n} — ${formatToothName(n)}${
-                        ts ? ` [${ts.status}]` : ""
-                      }`}
-                    />
-                    <span className="text-[10px] font-medium text-slate-600">
-                      {n}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex justify-center gap-1.5">
-              {LOWER.map((n) => {
-                const ts = toothMap.get(n);
-                return (
-                  <div key={n} className="flex flex-col items-center gap-1">
-                    <div
-                      className={`h-9 w-9 rounded-full ${
-                        ts ? TOOTH_COLORS[ts.status] : "bg-green-500"
-                      } border-2 border-white shadow transition-transform hover:scale-110`}
-                      title={`${n} — ${formatToothName(n)}${
-                        ts ? ` [${ts.status}]` : ""
-                      }`}
-                    />
-                    <span className="text-[10px] font-medium text-slate-600">
-                      {n}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          <div className="mt-6 flex flex-wrap justify-center gap-4 text-xs text-slate-700">
-            {Object.entries(TOOTH_COLORS).map(([status, color]) => (
-              <span key={status} className="flex items-center gap-1.5">
-                <span
-                  className={`inline-block h-3 w-3 rounded-full ${color}`}
-                />
-                {status.replace(/_/g, " ")}
-              </span>
-            ))}
-          </div>
+          <OdontogramWrapper
+            patientId={id}
+            toothStatuses={patient.toothStatuses}
+          />
         </CardContent>
       </Card>
 

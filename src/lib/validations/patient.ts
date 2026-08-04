@@ -42,6 +42,23 @@ export const toothStatusSchema = z.object({
     "IMPLANT",
     "ROOT_CANAL",
     "EXTRACTION_PLANNED",
+    "FRACTURE",
+    "ABCESS",
+  ]),
+  surfaces: z.record(z.enum(["O", "M", "D", "B", "L"]), z.string()).optional(),
+  notes: z.string().optional().or(z.literal("")),
+});
+  patientId: z.string().min(1),
+  tooth: z.number().int().min(11).max(48),
+  status: z.enum([
+    "HEALTHY",
+    "CARIES",
+    "TREATED",
+    "MISSING",
+    "CROWN",
+    "IMPLANT",
+    "ROOT_CANAL",
+    "EXTRACTION_PLANNED",
   ]),
   notes: z.string().optional().or(z.literal("")),
 });

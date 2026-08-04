@@ -389,6 +389,72 @@ export async function upsertToothStatus(data: unknown) {
   }
 
   try {
+    const { patientId, tooth, status, surfaces, notes } = parsed.data;
+
+    const existing = await prisma.toothStatus.findUnique({
+      where: {
+        clinicId_patientId_tooth: { clinicId: ctx.clinicId, patientId, tooth },
+      },
+    });
+
+    if (existing) {
+      await prisma.toothStatus.update({
+        where: { id: existing.id },
+        data: { status, surfaces: surfaces ?? existing.surfaces, notes, updatedAt: new Date() },
+      });
+      await prisma.toothStatusEvent.create({
+        data: withClinic(ctx, {
+          toothStatusId: existing.id,
+          patientId,
+          createdById: ctx.userId,
+          oldStatus: existing.status,
+          newStatus: status,
+          notes,
+        }),
+      });
+    } else {
+      const created = await prisma.toothStatus.create({
+        data: withClinic(ctx, { patientId, tooth, status, surfaces, notes }),
+      });
+      await prisma.toothStatusEvent.create({
+        data: withClinic(ctx, {
+          toothStatusId: created.id,
+          patientId,
+          createdById: ctx.userId,
+          newStatus: status,
+          notes,
+        }),
+      });
+    }
+
+    await logAudit({
+      action: AuditAction.UPDATE,
+      entityType: "ToothStatus",
+      entityId: `${patientId}-${tooth}`,
+      clinicId: ctx.clinicId,
+      userId: ctx.userId,
+      metadata: { status, surfaces },
+    });
+
+    revalidatePath(`/patients/${patientId}`);
+    return { ok: true } as const;
+  } catch {
+    return prismaError({
+      global: [
+        "Une erreur est survenue lors de la mise à jour du statut dentaire.",
+      ],
+    });
+  }
+}
+  await requireRole("patients:write");
+  const ctx = await requireClinicContext();
+
+  const parsed = toothStatusSchema.safeParse(data);
+  if (!parsed.success) {
+    return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
+  }
+
+  try {
     const { patientId, tooth, status, notes } = parsed.data;
 
     const existing = await prisma.toothStatus.findUnique({
