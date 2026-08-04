@@ -1,3 +1,4 @@
+import PublicHeader from "./_components/PublicHeader";
 import AnimatedHero from "./_components/AnimatedHero";
 import AnimatedFeatures from "./_components/AnimatedFeatures";
 import AnimatedCTA from "./_components/AnimatedCTA";
@@ -6,6 +7,7 @@ import CareersPreviewSection from "./_components/CareersPreview";
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
+      <PublicHeader active="home" />
       <AnimatedHero />
       <AnimatedFeatures />
       <CareersPreviewSection />

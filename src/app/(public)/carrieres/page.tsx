@@ -1,4 +1,5 @@
 import Link from "next/link";
+import PublicHeader from "../_components/PublicHeader";
 import { listPublicJobOffers } from "@/lib/actions/job-offers";
 import {
   listPublicClinicListings,
@@ -41,28 +42,8 @@ export default async function CarrieresPublicPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
-      {/* Header */}
-      <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="DENTALG" className="h-7 w-auto" />
-          </Link>
-          <div className="flex items-center gap-4 text-sm">
-            <Link href="/carrieres" className="font-medium text-primary">
-              Carrières & Annonces
-            </Link>
-            <Link
-              href="/login"
-              className="rounded-lg bg-primary px-4 py-2 font-medium text-white transition-colors hover:bg-primary-800"
-            >
-              Connexion pro
-            </Link>
-          </div>
-        </div>
-      </header>
+      <PublicHeader active="carrieres" />
 
-      {/* Hero */}
       <section className="bg-slate-900 px-6 py-14">
         <div className="mx-auto max-w-6xl text-center">
           <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
@@ -73,7 +54,6 @@ export default async function CarrieresPublicPage() {
             Algérie. Le marketplace dédié aux professionnels de la dentisterie.
           </p>
 
-          {/* Stats */}
           <div className="mx-auto mt-8 flex max-w-xl flex-wrap justify-center gap-3">
             <div className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-2.5 ring-1 ring-white/10">
               <Stethoscope className="h-4 w-4 text-emerald-400" />
@@ -324,7 +304,6 @@ export default async function CarrieresPublicPage() {
         </section>
       </main>
 
-      {/* Footer */}
       <footer className="mt-auto border-t border-slate-200 bg-white py-6">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 sm:flex-row">
           {/* eslint-disable-next-line @next/next/no-img-element */}
