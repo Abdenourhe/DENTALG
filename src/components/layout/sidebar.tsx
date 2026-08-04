@@ -16,6 +16,7 @@ import {
   FlaskConical,
   FileText,
   Settings,
+  Megaphone,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FeatureKey } from "@/lib/features";
@@ -68,6 +69,12 @@ const allNavItems = [
     label: "Carrière",
     icon: Briefcase,
     feature: "JOB_OFFERS" as FeatureKey,
+  },
+  {
+    href: "/messages",
+    label: "Messages",
+    icon: Megaphone,
+    feature: null as FeatureKey | null,
   },
   {
     href: "/users",
