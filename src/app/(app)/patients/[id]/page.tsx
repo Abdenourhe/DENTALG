@@ -273,7 +273,10 @@ export default async function PatientDetailPage({ params }: Props) {
         <CardContent className="pt-6">
           <OdontogramWrapper
             patientId={id}
-            toothStatuses={patient.toothStatuses}
+            toothStatuses={patient.toothStatuses.map((ts) => ({
+              ...ts,
+              surfaces: ts.surfaces as Record<string, string> | null,
+            }))}
           />
         </CardContent>
       </Card>
