@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { motion, Variants } from "framer-motion";
 import {
   LayoutDashboard,
@@ -13,16 +13,75 @@ import {
   Briefcase,
   LogOut,
   UserCog,
+  FlaskConical,
+  FileText,
+  Settings,
 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FeatureKey } from "@/lib/features";
 
-const navItems = [
-  { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
-  { href: "/patients", label: "Patients", icon: Users },
-  { href: "/appointments", label: "Rendez-vous", icon: CalendarDays },
-  { href: "/billing", label: "Facturation", icon: CreditCard },
-  { href: "/procedures", label: "Actes", icon: Stethoscope },
-  { href: "/carrieres", label: "Carrière", icon: Briefcase },
-  { href: "/users", label: "Utilisateurs", icon: UserCog },
+const allNavItems = [
+  {
+    href: "/dashboard",
+    label: "Tableau de bord",
+    icon: LayoutDashboard,
+    feature: null as FeatureKey | null,
+  },
+  {
+    href: "/patients",
+    label: "Patients",
+    icon: Users,
+    feature: null as FeatureKey | null,
+  },
+  {
+    href: "/appointments",
+    label: "Rendez-vous",
+    icon: CalendarDays,
+    feature: null as FeatureKey | null,
+  },
+  {
+    href: "/procedures",
+    label: "Actes",
+    icon: Stethoscope,
+    feature: null as FeatureKey | null,
+  },
+  {
+    href: "/billing",
+    label: "Facturation",
+    icon: CreditCard,
+    feature: "INVOICING" as FeatureKey,
+  },
+  {
+    href: "/prescriptions",
+    label: "Ordonnances",
+    icon: FileText,
+    feature: "PRESCRIPTIONS" as FeatureKey,
+  },
+  {
+    href: "/lab",
+    label: "Labo",
+    icon: FlaskConical,
+    feature: "LAB_ORDERS" as FeatureKey,
+  },
+  {
+    href: "/carrieres",
+    label: "Carrière",
+    icon: Briefcase,
+    feature: "JOB_OFFERS" as FeatureKey,
+  },
+  {
+    href: "/users",
+    label: "Utilisateurs",
+    icon: UserCog,
+    feature: null as FeatureKey | null,
+  },
+  {
+    href: "/settings/features",
+    label: "Fonctionnalités",
+    icon: Settings,
+    feature: null as FeatureKey | null,
+    ownerOnly: true,
+  },
 ];
 
 const containerVariants: Variants = {
@@ -43,13 +102,32 @@ const itemVariants: Variants = {
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const [enabledFeatures, setEnabledFeatures] = useState<FeatureKey[]>([]);
+  const role = session?.user?.role;
+  const isOwner = role === "OWNER";
+
+  useEffect(() => {
+    if (session?.user?.clinicId) {
+      fetch("/api/clinic/features")
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.ok) setEnabledFeatures(data.features);
+        });
+    }
+  }, [session?.user?.clinicId]);
+
+  const navItems = allNavItems.filter((item) => {
+    if (item.ownerOnly && !isOwner) return false;
+    if (item.feature && !enabledFeatures.includes(item.feature)) return false;
+    return true;
+  });
 
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-slate-200/80 bg-white">
       {/* Logo */}
       <div className="flex h-16 items-center justify-center border-b border-slate-200/80 px-4">
         <Link href="/dashboard" className="flex items-center justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo.svg"
             alt="DENTALG"
@@ -81,7 +159,6 @@ export function Sidebar() {
                       : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                   }`}
                 >
-                  {/* Active indicator bar */}
                   {isActive && (
                     <motion.span
                       layoutId="sidebar-active"

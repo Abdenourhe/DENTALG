@@ -1,6 +1,7 @@
 import { SessionProvider } from "next-auth/react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
+import { BugReporter } from "@/components/bug-reporter";
 
 export default function AppLayout({
   children,
@@ -13,9 +14,12 @@ export default function AppLayout({
         <Sidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Header />
-          <main className="flex-1 overflow-y-auto bg-slate-50 p-6">{children}</main>
+          <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
+            {children}
+          </main>
         </div>
       </div>
+      <BugReporter />
     </SessionProvider>
   );
 }

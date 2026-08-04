@@ -1,12 +1,16 @@
+"use server";
+
+import Link from "next/link";
+import { requirePlatformAdmin } from "@/lib/platform-auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
-import { toggleClinicStatus } from "../actions";
-import { Building2, Eye, ArrowLeft } from "lucide-react";
+import { Building2, ArrowLeft, Eye, Mail, Phone, MapPin } from "lucide-react";
 
 export default async function ClinicsPage() {
+  await requirePlatformAdmin();
+
   const clinics = await prisma.clinic.findMany({
     orderBy: { createdAt: "desc" },
     include: {
@@ -27,13 +31,21 @@ export default async function ClinicsPage() {
             {clinics.length} cabinet{clinics.length > 1 ? "s" : ""} au total.
           </p>
         </div>
-        <Link
-          href="/superadmin"
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Retour au tableau de bord
-        </Link>
+        <div className="flex items-center gap-3">
+          <Link
+            href="/superadmin/clinic-requests"
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Demandes
+          </Link>
+          <Link
+            href="/superadmin"
+            className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Retour
+          </Link>
+        </div>
       </div>
 
       <Card>
@@ -46,22 +58,16 @@ export default async function ClinicsPage() {
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-slate-500">
+              <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th className="px-6 py-3 font-medium">Cabinet</th>
-                  <th className="px-6 py-3 font-medium">Contact</th>
-                  <th className="px-6 py-3 font-medium">Plan</th>
-                  <th className="px-6 py-3 font-medium text-center">
-                    Utilisateurs
-                  </th>
-                  <th className="px-6 py-3 font-medium text-center">
-                    Patients
-                  </th>
-                  <th className="px-6 py-3 font-medium text-center">
-                    Factures
-                  </th>
-                  <th className="px-6 py-3 font-medium">Statut</th>
-                  <th className="px-6 py-3 font-medium text-right">Actions</th>
+                  <th className="px-6 py-3">Cabinet</th>
+                  <th className="px-6 py-3">Contact</th>
+                  <th className="px-6 py-3">Plan</th>
+                  <th className="px-6 py-3 text-center">Utilisateurs</th>
+                  <th className="px-6 py-3 text-center">Patients</th>
+                  <th className="px-6 py-3 text-center">Factures</th>
+                  <th className="px-6 py-3">Statut</th>
+                  <th className="px-6 py-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -79,10 +85,24 @@ export default async function ClinicsPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div>{clinic.email}</div>
-                      <div className="text-xs text-slate-500">
-                        {clinic.phone ?? "-"}
+                      <div className="flex items-center gap-1 text-slate-600">
+                        <Mail className="h-3.5 w-3.5" />
+                        {clinic.email}
                       </div>
+                      {clinic.phone && (
+                        <div className="flex items-center gap-1 text-xs text-slate-500">
+                          <Phone className="h-3.5 w-3.5" />
+                          {clinic.phone}
+                        </div>
+                      )}
+                      {(clinic.city || clinic.wilaya) && (
+                        <div className="flex items-center gap-1 text-xs text-slate-500">
+                          <MapPin className="h-3.5 w-3.5" />
+                          {clinic.city}
+                          {clinic.city && clinic.wilaya ? ", " : ""}
+                          {clinic.wilaya}
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant="info">{clinic.plan}</Badge>
@@ -106,6 +126,8 @@ export default async function ClinicsPage() {
                         <form
                           action={async (formData: FormData) => {
                             "use server";
+                            const { toggleClinicStatus } =
+                              await import("../actions");
                             await toggleClinicStatus(
                               Object.fromEntries(formData),
                             );

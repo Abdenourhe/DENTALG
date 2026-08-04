@@ -7,13 +7,18 @@ import {
   MessageSquare,
   Ticket,
   UserPlus,
-  LogOut,
+  Store,
 } from "lucide-react";
 import { SidebarLogout } from "@/components/sidebar-logout";
 
 const navItems = [
   { href: "/superadmin", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/superadmin/clinics", label: "Cabinets", icon: Building2 },
+  {
+    href: "/superadmin/clinic-requests",
+    label: "Demandes cabinets",
+    icon: Store,
+  },
   { href: "/superadmin/messages", label: "Messagerie", icon: MessageSquare },
   { href: "/superadmin/tickets", label: "Tickets support", icon: Ticket },
   { href: "/superadmin/requests", label: "Demandes profils", icon: UserPlus },

@@ -2,7 +2,6 @@ import { requirePlatformAdmin } from "@/lib/platform-auth";
 import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
   Building2,
@@ -11,12 +10,10 @@ import {
   Banknote,
   ArrowUpRight,
   TrendingUp,
-  MessageSquare,
   Ticket,
   UserPlus,
   Megaphone,
-  AlertCircle,
-  Clock,
+  Store,
 } from "lucide-react";
 import { getSuperAdminStats } from "./actions";
 
@@ -101,7 +98,15 @@ export default async function SuperAdminDashboardPage() {
       href: "/superadmin/tickets",
     },
     {
-      label: "Demandes en attente",
+      label: "Demandes cabinets",
+      value: stats.pendingClinicRequests,
+      icon: Store,
+      color: "text-cyan-600",
+      bg: "bg-cyan-50",
+      href: "/superadmin/clinic-requests",
+    },
+    {
+      label: "Demandes profils",
       value: stats.pendingRequests,
       icon: UserPlus,
       color: "text-orange-600",
@@ -166,7 +171,7 @@ export default async function SuperAdminDashboardPage() {
       </div>
 
       {/* Alert stats */}
-      <div className="grid gap-6 sm:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         {alertStats.map((stat) => {
           const Icon = stat.icon;
           return (

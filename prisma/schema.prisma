@@ -121,6 +121,7 @@ model Clinic {
   wilaya               String?
   plan                 Plan                  @default(FREE)
   isActive             Boolean               @default(true)
+  features             Json?                 @default("{}")
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   deletedAt            DateTime?
@@ -220,9 +221,9 @@ model Patient {
   number                String
   firstName             String
   lastName              String
-  nationalId            String?           // Numéro de carte nationale d'identité
-  sex                   String?           // M / F / Autre
-  bloodGroup            String?           // A+, A-, B+, B-, AB+, AB-, O+, O-
+  nationalId            String?
+  sex                   String?
+  bloodGroup            String?
   dateOfBirth           DateTime?
   phone                 String?
   email                 String?
@@ -231,9 +232,9 @@ model Patient {
   wilaya                String?
   emergencyContactName  String?
   emergencyContactPhone String?
-  medicalHistory        String?           // Antécédents médicaux
-  allergies             String?           // Allergies
-  currentMedications    String?           // Médicaments en cours
+  medicalHistory        String?
+  allergies             String?
+  currentMedications    String?
   notes                 String?
   isActive              Boolean           @default(true)
   createdAt             DateTime          @default(now())
@@ -834,7 +835,7 @@ model LabResult {
 model Counter {
   id        String   @id @default(cuid())
   clinicId  String
-  type      String   // PATIENT | INVOICE | QUOTE | PRESCRIPTION | LAB_ORDER
+  type      String
   value     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -879,10 +880,10 @@ model PlatformMessage {
   title        String
   content      String
   type         PlatformMessageType @default(ANNOUNCEMENT)
-  targetRole   Role?               // null = tous les rôles
-  targetClinicId String?           // null = tous les cabinets
+  targetRole   Role?
+  targetClinicId String?
   isBroadcast  Boolean             @default(false)
-  readBy       String[]            // IDs des users qui ont lu
+  readBy       String[]
   createdAt    DateTime            @default(now())
 
   @@index([targetClinicId])
@@ -901,7 +902,7 @@ model SupportTicket {
   subject     String
   description String
   status      TicketStatus  @default(OPEN)
-  attachments Json?         // [{name, url, mimeType}]
+  attachments Json?
   messages    TicketMessage[]
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
@@ -945,6 +946,30 @@ model UserRequest {
 
   @@index([clinicId])
   @@index([requesterId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ── Demandes de création de cabinet ──
+model ClinicRequest {
+  id             String        @id @default(cuid())
+  name           String
+  slug           String
+  email          String
+  phone          String?
+  address        String?
+  city           String?
+  wilaya         String?
+  ownerFirstName String
+  ownerLastName  String
+  ownerEmail     String
+  ownerPassword  String?
+  status         RequestStatus @default(PENDING)
+  reviewedById   String?
+  reviewedAt     DateTime?
+  notes          String?
+  createdAt      DateTime      @default(now())
+
   @@index([status])
   @@index([createdAt])
 }
