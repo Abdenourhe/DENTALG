@@ -39,7 +39,7 @@ export default function OdontogramWrapper({
   toothStatuses,
 }: OdontogramWrapperProps) {
   const [teeth, setTeeth] = useState<ToothState[]>(
-    dbToComponentState(toothStatuses)
+    dbToComponentState(toothStatuses),
   );
   const [isPending, startTransition] = useTransition();
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -54,10 +54,10 @@ export default function OdontogramWrapper({
       const prev = prevMap.get(next.tooth);
       if (!prev) return true;
       const nextSorted = [...next.surfaces].sort((a, b) =>
-        a.surface.localeCompare(b.surface)
+        a.surface.localeCompare(b.surface),
       );
       const prevSorted = [...prev.surfaces].sort((a, b) =>
-        a.surface.localeCompare(b.surface)
+        a.surface.localeCompare(b.surface),
       );
       return JSON.stringify(nextSorted) !== JSON.stringify(prevSorted);
     });
@@ -100,7 +100,14 @@ export default function OdontogramWrapper({
         surfaces: surfacesRecord,
       });
       if (!result.ok) {
-        setSaveError("Erreur lors de la sauvegarde du statut dentaire.");
+        const detail = result.errors?.global?.[0]
+          ? result.errors.global[0]
+          : Object.entries(result.errors || {})
+              .map(([k, v]) => `${k}: ${v.join(", ")}`)
+              .join(" | ");
+        setSaveError(
+          detail || "Erreur lors de la sauvegarde du statut dentaire.",
+        );
         console.error("upsertToothStatus failed", result);
       }
     });
