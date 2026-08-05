@@ -1,57 +1,45 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import PublicHeader from "../_components/PublicHeader";
+import JobOffersSection from "../_components/JobOffersSection";
 import { listPublicJobOffers } from "@/lib/actions/job-offers";
-import {
-  listPublicClinicListings,
-  listPublicEquipmentListings,
-} from "@/lib/actions/carrieres-listings";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Briefcase,
-  MapPin,
-  ArrowRight,
-  Building2,
   GraduationCap,
   Stethoscope,
-  Store,
-  Wrench,
-  ImageIcon,
+  Plus,
+  ArrowRight,
 } from "lucide-react";
-import type { JobOffer, ClinicListing, EquipmentListing } from "@prisma/client";
 
-function formatDA(cents: number) {
-  if (cents === 0) return "Prix sur demande";
-  return new Intl.NumberFormat("fr-DZ", {
-    style: "currency",
-    currency: "DZD",
-  }).format(cents / 100);
+function isStageOffer(title: string) {
+  return /stage|internship|stagiaire/i.test(title);
 }
 
 export default async function CarrieresPublicPage() {
-  const [offers, clinics, equipment] = await Promise.all([
-    listPublicJobOffers(),
-    listPublicClinicListings(),
-    listPublicEquipmentListings(),
-  ]);
+  const session = await auth();
+  const offers = await listPublicJobOffers();
 
-  const stageCount = offers.filter((o: JobOffer) =>
-    /stage|internship|stagiaire/i.test(o.title),
-  ).length;
+  const stageCount = offers.filter((o) => isStageOffer(o.title)).length;
   const emploiCount = offers.length - stageCount;
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
       <PublicHeader active="carrieres" />
 
-      <section className="bg-slate-900 px-6 py-14">
+      <section className="bg-slate-900 px-6 py-14 sm:py-20">
         <div className="mx-auto max-w-6xl text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Carrières & Annonces dentaires
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-primary-200 ring-1 ring-white/20">
+            <Briefcase className="h-4 w-4" />
+            Espace recrutement dentaire
+          </span>
+
+          <h1 className="mt-6 text-3xl font-extrabold tracking-tight text-white sm:text-5xl">
+            Offres d&apos;emploi & stages dentaires
           </h1>
-          <p className="mx-auto mt-3 max-w-2xl text-slate-400">
-            Offres d&apos;emploi, cabinets à vendre et matériel dentaire en
-            Algérie. Le marketplace dédié aux professionnels de la dentisterie.
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-400">
+            Postes proposés par les cabinets dentaires en Algérie. Trouvez votre
+            prochaine opportunité professionnelle.
           </p>
 
           <div className="mx-auto mt-8 flex max-w-xl flex-wrap justify-center gap-3">
@@ -68,240 +56,52 @@ export default async function CarrieresPublicPage() {
               </span>
             </div>
             <div className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-2.5 ring-1 ring-white/10">
-              <Store className="h-4 w-4 text-amber-400" />
+              <Briefcase className="h-4 w-4 text-blue-400" />
               <span className="text-sm font-medium text-white">
-                {clinics.length} cabinet{clinics.length > 1 ? "s" : ""} à vendre
-              </span>
-            </div>
-            <div className="flex items-center gap-2 rounded-xl bg-white/5 px-4 py-2.5 ring-1 ring-white/10">
-              <Wrench className="h-4 w-4 text-blue-400" />
-              <span className="text-sm font-medium text-white">
-                {equipment.length} matériel{equipment.length > 1 ? "s" : ""}
+                {offers.length} offre{offers.length > 1 ? "s" : ""} au total
               </span>
             </div>
           </div>
+
+          {session?.user?.clinicId && (
+            <div className="mt-8">
+              <Link href="/carrieres/manage">
+                <Button className="bg-primary hover:bg-primary-800">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Publier une offre
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
-      <main className="mx-auto w-full max-w-6xl px-6 py-10 space-y-14">
-        {/* ── JOB OFFERS ── */}
-        <section>
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-100">
-              <Briefcase className="h-5 w-5 text-blue-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Offres d&apos;emploi & stages
-              </h2>
-              <p className="text-sm text-slate-500">
-                Postes dans les cabinets dentaires en Algérie
-              </p>
-            </div>
-          </div>
-
-          {offers.length === 0 ? (
-            <p className="py-6 text-center text-sm text-slate-400">
-              Aucune offre pour le moment.
+      <main className="mx-auto w-full max-w-6xl px-6 py-12">
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-slate-900">
+              Offres récentes
+            </h2>
+            <p className="text-sm text-slate-500">
+              Découvrez les dernières opportunités publiées par les cabinets.
             </p>
-          ) : (
-            <div className="grid gap-4">
-              {offers.slice(0, 5).map((offer: JobOffer & { clinic: { name: string; city: string | null; wilaya: string | null } }) => {
-                const isStage = /stage|internship|stagiaire/i.test(offer.title);
-                return (
-                  <Card
-                    key={offer.id}
-                    className="transition-all hover:shadow-md"
-                  >
-                    <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-base font-semibold text-slate-900">
-                            {offer.title}
-                          </h3>
-                          <Badge variant={isStage ? "info" : "success"}>
-                            {isStage ? "Stage" : "Emploi"}
-                          </Badge>
-                        </div>
-                        <div className="mt-1.5 flex flex-wrap items-center gap-3 text-sm text-slate-500">
-                          <span className="flex items-center gap-1">
-                            <Building2 className="h-3.5 w-3.5" />
-                            {offer.clinic.name}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MapPin className="h-3.5 w-3.5" />
-                            {offer.clinic.city}, {offer.clinic.wilaya}
-                          </span>
-                        </div>
-                      </div>
-                      <Link
-                        href={`/carrieres/${offer.id}`}
-                        className="inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white transition-all hover:bg-primary-800"
-                      >
-                        Voir
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </Link>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        {/* ── CLINICS FOR SALE ── */}
-        <section>
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-100">
-              <Store className="h-5 w-5 text-amber-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Cabinets dentaires à vendre
-              </h2>
-              <p className="text-sm text-slate-500">
-                Cédez ou acquérez un cabinet équipé en Algérie
-              </p>
-            </div>
           </div>
-
-          {clinics.length === 0 ? (
-            <p className="py-6 text-center text-sm text-slate-400">
-              Aucun cabinet à vendre pour le moment.
-            </p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {clinics.map((item: ClinicListing & { clinic: { name: string } }) => (
-                <Card
-                  key={item.id}
-                  className="overflow-hidden transition-all hover:shadow-md"
-                >
-                  {item.photos.length > 0 ? (
-                    <div className="relative h-40 w-full overflow-hidden bg-slate-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={item.photos[0]}
-                        alt={item.title}
-                        className="h-full w-full object-cover"
-                      />
-                      <div className="absolute right-2 top-2">
-                        <Badge variant="warning">À vendre</Badge>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex h-40 items-center justify-center bg-slate-100">
-                      <ImageIcon className="h-10 w-10 text-slate-300" />
-                    </div>
-                  )}
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-slate-900 line-clamp-1">
-                      {item.title}
-                    </h3>
-                    <p className="mt-1 line-clamp-2 text-sm text-slate-500">
-                      {item.description}
-                    </p>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="text-sm font-bold text-primary">
-                        {formatDA(item.price)}
-                      </span>
-                      <span className="flex items-center gap-1 text-xs text-slate-400">
-                        <MapPin className="h-3 w-3" />
-                        {item.city || "N/A"}
-                      </span>
-                    </div>
-                    <Link
-                      href={`/carrieres/clinics/${item.id}`}
-                      className="mt-3 block text-center rounded-lg bg-slate-100 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200"
-                    >
-                      Voir détails
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+          {!session?.user?.clinicId && (
+            <Link
+              href="/login"
+              className="hidden items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-700 sm:inline-flex"
+            >
+              Espace recruteur
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           )}
-        </section>
+        </div>
 
-        {/* ── EQUIPMENT FOR SALE ── */}
-        <section>
-          <div className="mb-5 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-100">
-              <Wrench className="h-5 w-5 text-emerald-600" />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">
-                Matériel dentaire
-              </h2>
-              <p className="text-sm text-slate-500">
-                Équipements, fauteuils, instruments et plus
-              </p>
-            </div>
-          </div>
-
-          {equipment.length === 0 ? (
-            <p className="py-6 text-center text-sm text-slate-400">
-              Aucun matériel en vente pour le moment.
-            </p>
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {equipment.map((item: EquipmentListing & { clinic: { name: string } }) => (
-                <Card
-                  key={item.id}
-                  className="overflow-hidden transition-all hover:shadow-md"
-                >
-                  {item.photos.length > 0 ? (
-                    <div className="relative h-40 w-full overflow-hidden bg-slate-100">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={item.photos[0]}
-                        alt={item.title}
-                        className="h-full w-full object-cover"
-                      />
-                      <div className="absolute right-2 top-2">
-                        <Badge variant="success">En vente</Badge>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex h-40 items-center justify-center bg-slate-100">
-                      <ImageIcon className="h-10 w-10 text-slate-300" />
-                    </div>
-                  )}
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-slate-900 line-clamp-1">
-                      {item.title}
-                    </h3>
-                    <p className="mt-1 line-clamp-2 text-sm text-slate-500">
-                      {item.description}
-                    </p>
-                    <div className="mt-2 flex items-center gap-2">
-                      {item.brand && (
-                        <span className="text-xs text-slate-500">
-                          {item.brand}
-                        </span>
-                      )}
-                      {item.condition && (
-                        <Badge variant="default" className="text-[10px]">
-                          {item.condition}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="mt-3 flex items-center justify-between">
-                      <span className="text-sm font-bold text-primary">
-                        {formatDA(item.price)}
-                      </span>
-                    </div>
-                    <Link
-                      href={`/carrieres/equipment/${item.id}`}
-                      className="mt-3 block text-center rounded-lg bg-slate-100 py-2 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-200"
-                    >
-                      Voir détails
-                    </Link>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </section>
+        <JobOffersSection
+          offers={offers}
+          variant="list"
+          emptyMessage="Aucune offre d'emploi ou de stage pour le moment. Revenez bientôt ou publiez la vôtre."
+        />
       </main>
 
       <footer className="mt-auto border-t border-slate-200 bg-white py-6">

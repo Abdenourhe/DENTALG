@@ -11,7 +11,14 @@ const benefits = [
   "Sauvegarde cloud automatique",
 ];
 
-export default function AnimatedHero() {
+interface AnimatedHeroProps {
+  stats?: {
+    clinics: number;
+    offers: number;
+  };
+}
+
+export default function AnimatedHero({ stats }: AnimatedHeroProps) {
   return (
     <section className="relative overflow-hidden bg-slate-900 px-6 pb-20 pt-16 sm:pb-28 sm:pt-24">
       {/* Background gradient orbs */}
@@ -65,8 +72,7 @@ export default function AnimatedHero() {
           className="mx-auto mt-6 max-w-2xl text-lg text-slate-300"
         >
           DENTALG est le SaaS de gestion conçu pour les cabinets dentaires en
-          Algérie. Patients, rendez-vous, facturation — tout en un seul
-          endroit.
+          Algérie. Patients, rendez-vous, facturation — tout en un seul endroit.
         </motion.p>
 
         <motion.div
@@ -107,6 +113,29 @@ export default function AnimatedHero() {
             </span>
           ))}
         </motion.div>
+
+        {/* Stats */}
+        {stats && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+            className="mx-auto mt-12 grid max-w-md grid-cols-2 gap-4 rounded-2xl bg-white/5 p-4 ring-1 ring-white/10 backdrop-blur-sm"
+          >
+            <div className="text-center">
+              <div className="text-2xl font-bold text-white">
+                {stats.clinics}+
+              </div>
+              <div className="text-xs text-slate-400">cabinets inscrits</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-white">
+                {stats.offers}+
+              </div>
+              <div className="text-xs text-slate-400">offres publiées</div>
+            </div>
+          </motion.div>
+        )}
       </div>
     </section>
   );

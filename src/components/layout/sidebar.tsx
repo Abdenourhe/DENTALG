@@ -65,7 +65,7 @@ const allNavItems = [
     feature: "LAB_ORDERS" as FeatureKey,
   },
   {
-    href: "/carrieres",
+    href: "/carrieres/manage",
     label: "Carrière",
     icon: Briefcase,
     feature: "JOB_OFFERS" as FeatureKey,

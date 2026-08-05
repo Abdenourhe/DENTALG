@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 interface PublicHeaderProps {
-  active?: "home" | "carrieres" | "fonctionnalites";
+  active?: "home" | "carrieres" | "fonctionnalites" | "tarifs";
 }
 
 export default function PublicHeader({ active }: PublicHeaderProps) {
@@ -32,6 +32,16 @@ export default function PublicHeader({ active }: PublicHeaderProps) {
             }
           >
             Carrières
+          </Link>
+          <Link
+            href="/register"
+            className={
+              active === "tarifs"
+                ? "font-semibold text-primary"
+                : "font-medium text-slate-600 transition-colors hover:text-slate-900"
+            }
+          >
+            Tarifs
           </Link>
           <Link
             href="/login"

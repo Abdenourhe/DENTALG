@@ -2,40 +2,56 @@
 
 import { motion } from "framer-motion";
 import {
-  Stethoscope,
+  Users,
   CalendarDays,
   CreditCard,
-  Shield,
+  FileText,
+  Briefcase,
+  ShieldCheck,
 } from "lucide-react";
 
 const features = [
   {
-    icon: Stethoscope,
-    title: "Gestion des patients",
+    icon: Users,
+    title: "Patients & dossiers",
     description:
-      "Dossiers patients complets, historique médical, prescriptions et ordonnances numériques.",
+      "Dossiers médicaux complets, historique dentaire, ordonnances et pièces jointes centralisés.",
     color: "bg-blue-50 text-blue-600 ring-blue-200",
   },
   {
     icon: CalendarDays,
-    title: "Rendez-vous intelligents",
+    title: "Agenda intelligent",
     description:
-      "Planification optimisée, rappels automatiques et gestion des annulations en temps réel.",
+      "Planification des rendez-vous, rappels automatiques et gestion des absences en temps réel.",
     color: "bg-purple-50 text-purple-600 ring-purple-200",
   },
   {
     icon: CreditCard,
-    title: "Facturation simplifiée",
+    title: "Facturation & devis",
     description:
-      "Devis, factures et avoirs conformes à la réglementation algérienne, paiements suivis.",
+      "Devis, factures, avoirs et paiements conformes à la réglementation algérienne.",
     color: "bg-emerald-50 text-emerald-600 ring-emerald-200",
   },
   {
-    icon: Shield,
-    title: "Sécurité des données",
+    icon: FileText,
+    title: "Ordonnances & labo",
     description:
-      "Données de santé protégées, conformité RGPD, soft-delete et traçabilité complète.",
+      "Prescriptions numériques et suivi des commandes labo directement dans le dossier patient.",
     color: "bg-amber-50 text-amber-600 ring-amber-200",
+  },
+  {
+    icon: Briefcase,
+    title: "Carrières dentaires",
+    description:
+      "Publiez vos offres d'emploi et stages pour attirer les meilleurs talents de la dentisterie.",
+    color: "bg-rose-50 text-rose-600 ring-rose-200",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Sécurité & conformité",
+    description:
+      "Données de santé protégées, RBAC par rôle, soft-delete et traçabilité complète.",
+    color: "bg-cyan-50 text-cyan-600 ring-cyan-200",
   },
 ];
 
@@ -43,16 +59,16 @@ export default function AnimatedFeatures() {
   return (
     <section className="mx-auto w-full max-w-6xl px-6 py-20">
       <div className="text-center">
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
           Tout ce qu&apos;il faut pour votre cabinet
         </h2>
-        <p className="mt-3 text-slate-500">
-          Une suite complète d&apos;outils pensés pour les dentistes
+        <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-500">
+          Une suite complète d&apos;outils pensés pour les dentistes et cabinets
           algériens.
         </p>
       </div>
 
-      <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {features.map((f, i) => {
           const Icon = f.icon;
           return (
@@ -61,7 +77,7 @@ export default function AnimatedFeatures() {
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: i * 0.1 }}
+              transition={{ duration: 0.4, delay: i * 0.08 }}
               whileHover={{ y: -4 }}
               className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-shadow hover:shadow-md"
             >
