@@ -45,7 +45,7 @@ export const toothStatusSchema = z.object({
     "FRACTURE",
     "ABCESS",
   ]),
-  surfaces: z.record(z.enum(["O", "M", "D", "B", "L"]), z.string()).optional(),
+  surfaces: z.record(z.string(), z.string()).optional(),
   notes: z.string().optional().or(z.literal("")),
 });
 
