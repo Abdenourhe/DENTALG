@@ -100,11 +100,9 @@ export default function OdontogramWrapper({
         surfaces: surfacesRecord,
       });
       if (!result.ok) {
-        const detail = result.errors?.global?.[0]
-          ? result.errors.global[0]
-          : Object.entries(result.errors || {})
-              .map(([k, v]) => `${k}: ${v.join(", ")}`)
-              .join(" | ");
+        const detail = Object.entries(result.errors || {})
+          .map(([k, v]) => `${k}: ${v.join(", ")}`)
+          .join(" | ");
         setSaveError(
           detail || "Erreur lors de la sauvegarde du statut dentaire.",
         );
