@@ -34,6 +34,27 @@ interface Props {
   params: Promise<{ id: string }>;
 }
 
+function formatGeneralCondition(value: string | null): string | null {
+  if (!value) return null;
+  const map: Record<string, string> = {
+    RAS: "RAS",
+    HYPERTENSION_ARTERIELLE: "Hypertension artérielle",
+    DIABETE: "Diabète",
+    INSUFFISANCE_CARDIAQUE: "Insuffisance cardiaque",
+    INFARCTUS_DU_MYOCARDE: "Infarctus du myocarde",
+    ENDOCARDITE: "Endocardite",
+    ASTHME: "Asthme",
+    TUBERCULOSE: "Tuberculose",
+    ALLERGIE: "Allergie",
+    INSUFFISANCE_RENALE_CHRONIQUE: "Insuffisance rénale chronique",
+    ANEMIES: "Anémies",
+    RETARD_PSYCHOMOTEUR: "Retard psychomoteur",
+    EPILEPSIE: "Épilepsie",
+    AUTRE: "Autre",
+  };
+  return map[value] ?? value;
+}
+
 function capitalize(value: string): string {
   return value
     .split(" ")
@@ -118,6 +139,11 @@ export default async function PatientDetailPage({ params }: Props) {
               label="Groupe sanguin"
               value={patient.bloodGroup}
               icon={Heart}
+            />
+            <InfoRow
+              label="État général"
+              value={formatGeneralCondition(patient.generalCondition)}
+              icon={Activity}
             />
             <InfoRow
               label="Date de naissance"

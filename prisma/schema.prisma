@@ -110,6 +110,23 @@ enum LabResultStatus {
   CRITICAL
 }
 
+enum GeneralCondition {
+  RAS
+  HYPERTENSION_ARTERIELLE
+  DIABETE
+  INSUFFISANCE_CARDIAQUE
+  INFARCTUS_DU_MYOCARDE
+  ENDOCARDITE
+  ASTHME
+  TUBERCULOSE
+  ALLERGIE
+  INSUFFISANCE_RENALE_CHRONIQUE
+  ANEMIES
+  RETARD_PSYCHOMOTEUR
+  EPILEPSIE
+  AUTRE
+}
+
 model Clinic {
   id                   String                @id @default(cuid())
   name                 String
@@ -226,6 +243,7 @@ model Patient {
   nationalId            String?
   sex                   String?
   bloodGroup            String?
+  generalCondition      GeneralCondition?
   dateOfBirth           DateTime?
   phone                 String?
   email                 String?

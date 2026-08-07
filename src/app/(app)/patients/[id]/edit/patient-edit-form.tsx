@@ -17,6 +17,7 @@ interface Patient {
   nationalId: string | null;
   sex: string | null;
   bloodGroup: string | null;
+  generalCondition: string | null;
   dateOfBirth: Date | null;
   phone: string | null;
   email: string | null;
@@ -219,6 +220,41 @@ export default function PatientEditForm({ patient }: Props) {
         </CardHeader>
         <CardContent className="pt-6">
           <div className="space-y-4">
+            <Select
+              name="generalCondition"
+              label="État général"
+              defaultValue={patient.generalCondition ?? ""}
+              placeholder="Choisir..."
+              options={[
+                { value: "", label: "Choisir..." },
+                { value: "RAS", label: "RAS" },
+                {
+                  value: "HYPERTENSION_ARTERIELLE",
+                  label: "Hypertension artérielle",
+                },
+                { value: "DIABETE", label: "Diabète" },
+                {
+                  value: "INSUFFISANCE_CARDIAQUE",
+                  label: "Insuffisance cardiaque",
+                },
+                {
+                  value: "INFARCTUS_DU_MYOCARDE",
+                  label: "Infarctus du myocarde",
+                },
+                { value: "ENDOCARDITE", label: "Endocardite" },
+                { value: "ASTHME", label: "Asthme" },
+                { value: "TUBERCULOSE", label: "Tuberculose" },
+                { value: "ALLERGIE", label: "Allergie" },
+                {
+                  value: "INSUFFISANCE_RENALE_CHRONIQUE",
+                  label: "Insuffisance rénale chronique",
+                },
+                { value: "ANEMIES", label: "Anémies" },
+                { value: "RETARD_PSYCHOMOTEUR", label: "Retard psychomoteur" },
+                { value: "EPILEPSIE", label: "Épilepsie" },
+                { value: "AUTRE", label: "Autre" },
+              ]}
+            />
             <TextArea
               name="medicalHistory"
               label="Antécédents médicaux"

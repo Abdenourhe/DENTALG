@@ -47,6 +47,7 @@ export async function createPatient(data: unknown) {
         nationalId: normalizeOptional(d.nationalId),
         sex: normalizeOptional(d.sex),
         bloodGroup: normalizeOptional(d.bloodGroup),
+        generalCondition: d.generalCondition || null,
         dateOfBirth: d.dateOfBirth ? new Date(d.dateOfBirth) : null,
         phone: normalizeOptional(d.phone),
         email: normalizeOptional(d.email),
@@ -109,6 +110,8 @@ export async function updatePatient(id: string, data: unknown) {
     if (d.sex !== undefined) normalized.sex = normalizeOptional(d.sex);
     if (d.bloodGroup !== undefined)
       normalized.bloodGroup = normalizeOptional(d.bloodGroup);
+    if (d.generalCondition !== undefined)
+      normalized.generalCondition = d.generalCondition || null;
     if (d.dateOfBirth !== undefined)
       normalized.dateOfBirth = d.dateOfBirth ? new Date(d.dateOfBirth) : null;
     if (d.phone !== undefined) normalized.phone = normalizeOptional(d.phone);

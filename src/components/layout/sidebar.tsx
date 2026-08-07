@@ -7,6 +7,7 @@ import { motion, Variants } from "framer-motion";
 import {
   LayoutDashboard,
   Users,
+  UserPlus,
   CalendarDays,
   CreditCard,
   Stethoscope,
@@ -32,6 +33,12 @@ const allNavItems = [
     href: "/patients",
     label: "Patients",
     icon: Users,
+    feature: null as FeatureKey | null,
+  },
+  {
+    href: "/patients/new",
+    label: "Nouveau patient",
+    icon: UserPlus,
     feature: null as FeatureKey | null,
   },
   {
@@ -130,6 +137,16 @@ export function Sidebar() {
     return true;
   });
 
+  // Active le lien le plus spécifique (plus long href) pour éviter
+  // que /patients soit actif en même temps que /patients/new
+  const activeHref =
+    navItems
+      .filter(
+        (item) =>
+          pathname === item.href || pathname.startsWith(`${item.href}/`),
+      )
+      .sort((a, b) => b.href.length - a.href.length)[0]?.href ?? null;
+
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-slate-200/80 bg-white">
       {/* Logo */}
@@ -152,8 +169,7 @@ export function Sidebar() {
           className="space-y-1"
         >
           {navItems.map((item) => {
-            const isActive =
-              pathname === item.href || pathname.startsWith(`${item.href}/`);
+            const isActive = activeHref === item.href;
             const Icon = item.icon;
 
             return (

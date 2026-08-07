@@ -9,6 +9,25 @@ export const patientSchema = z.object({
     .enum(["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"])
     .optional()
     .or(z.literal("")),
+  generalCondition: z
+    .enum([
+      "RAS",
+      "HYPERTENSION_ARTERIELLE",
+      "DIABETE",
+      "INSUFFISANCE_CARDIAQUE",
+      "INFARCTUS_DU_MYOCARDE",
+      "ENDOCARDITE",
+      "ASTHME",
+      "TUBERCULOSE",
+      "ALLERGIE",
+      "INSUFFISANCE_RENALE_CHRONIQUE",
+      "ANEMIES",
+      "RETARD_PSYCHOMOTEUR",
+      "EPILEPSIE",
+      "AUTRE",
+    ])
+    .optional()
+    .or(z.literal("")),
   dateOfBirth: z.string().optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   email: z.string().email().optional().or(z.literal("")),

@@ -18,6 +18,7 @@ export default async function EditPatientPage({ params }: Props) {
         nationalId: patient.nationalId,
         sex: patient.sex,
         bloodGroup: patient.bloodGroup,
+        generalCondition: patient.generalCondition,
         dateOfBirth: patient.dateOfBirth,
         phone: patient.phone,
         email: patient.email,
