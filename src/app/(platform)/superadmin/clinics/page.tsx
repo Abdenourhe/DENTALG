@@ -6,7 +6,15 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Building2, ArrowLeft, Eye, Mail, Phone, MapPin } from "lucide-react";
+import {
+  Building2,
+  ArrowLeft,
+  Eye,
+  Mail,
+  Phone,
+  MapPin,
+  Pencil,
+} from "lucide-react";
 import SuperAdminErrorFallback from "../_components/SuperAdminErrorFallback";
 import { toggleClinicStatusFromForm } from "../actions";
 import { Prisma } from "@prisma/client";
@@ -158,6 +166,11 @@ export default async function ClinicsPage() {
                             {clinic.isActive ? "Désactiver" : "Activer"}
                           </Button>
                         </form>
+                        <Link href={`/superadmin/clinics/${clinic.id}/edit`}>
+                          <Button variant="ghost" size="sm">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </Link>
                         <Link href={`/superadmin/clinics/${clinic.id}`}>
                           <Button variant="ghost" size="sm">
                             <Eye className="h-4 w-4" />

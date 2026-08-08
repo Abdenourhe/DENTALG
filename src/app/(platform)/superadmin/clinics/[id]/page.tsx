@@ -13,7 +13,9 @@ import {
   MapPin,
   ArrowLeft,
   Calendar,
+  Pencil,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export default async function ClinicDetailPage({
   params,
@@ -36,9 +38,10 @@ export default async function ClinicDetailPage({
   if (!clinic) notFound();
 
   const formatDA = (cents: number) =>
-    new Intl.NumberFormat("fr-DZ", { style: "currency", currency: "DZD" }).format(
-      cents / 100
-    );
+    new Intl.NumberFormat("fr-DZ", {
+      style: "currency",
+      currency: "DZD",
+    }).format(cents / 100);
 
   const revenue = await prisma.invoice
     .aggregate({
@@ -64,16 +67,41 @@ export default async function ClinicDetailPage({
           <ArrowLeft className="h-4 w-4" />
           Retour aux cabinets
         </Link>
-        <Badge variant={clinic.isActive ? "success" : "danger"} className="text-xs">
-          {clinic.isActive ? "Actif" : "Inactif"}
-        </Badge>
+        <div className="flex items-center gap-3">
+          <Link href={`/superadmin/clinics/${clinic.id}/edit`}>
+            <Button variant="secondary" size="sm">
+              <Pencil className="mr-2 h-4 w-4" />
+              Modifier
+            </Button>
+          </Link>
+          <Badge
+            variant={clinic.isActive ? "success" : "danger"}
+            className="text-xs"
+          >
+            {clinic.isActive ? "Actif" : "Inactif"}
+          </Badge>
+        </div>
       </div>
 
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          {clinic.name}
-        </h1>
-        <p className="mt-1 text-slate-500">{clinic.slug}</p>
+      <div className="flex items-center gap-4">
+        {clinic.logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={clinic.logoUrl}
+            alt={clinic.name}
+            className="h-16 w-16 rounded-lg border border-slate-200 bg-white object-contain p-1"
+          />
+        ) : (
+          <div className="flex h-16 w-16 items-center justify-center rounded-lg border border-slate-200 bg-slate-100">
+            <Building2 className="h-8 w-8 text-slate-400" />
+          </div>
+        )}
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+            {clinic.name}
+          </h1>
+          <p className="mt-1 text-slate-500">{clinic.slug}</p>
+        </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -86,8 +114,12 @@ export default async function ClinicDetailPage({
                   <Icon className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-slate-500">{stat.label}</p>
-                  <p className="text-2xl font-bold text-slate-900">{stat.value}</p>
+                  <p className="text-sm font-medium text-slate-500">
+                    {stat.label}
+                  </p>
+                  <p className="text-2xl font-bold text-slate-900">
+                    {stat.value}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -151,7 +183,10 @@ export default async function ClinicDetailPage({
           <CardContent className="p-0">
             <div className="divide-y">
               {clinic.users.map((user) => (
-                <div key={user.id} className="flex items-center justify-between px-6 py-3">
+                <div
+                  key={user.id}
+                  className="flex items-center justify-between px-6 py-3"
+                >
                   <div>
                     <p className="font-medium text-slate-900">
                       {user.firstName} {user.lastName}

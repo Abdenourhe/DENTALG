@@ -11,17 +11,27 @@ export default async function PrescriptionPrintPage({ params }: Props) {
 
   return (
     <div className="print-page">
-      <header className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-900">{p.clinic.name}</h1>
-        <p className="text-sm text-slate-600">
-          {p.clinic.address && <span>{p.clinic.address}</span>}
-          {p.clinic.phone && (
-            <span className="ml-4">Tél : {p.clinic.phone}</span>
-          )}
-          {p.clinic.email && (
-            <span className="ml-4">Email : {p.clinic.email}</span>
-          )}
-        </p>
+      <header className="mb-8 flex items-start gap-4">
+        {p.clinic.logoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={p.clinic.logoUrl}
+            alt={p.clinic.name}
+            className="h-16 w-16 rounded-lg border border-slate-200 bg-white object-contain p-1"
+          />
+        )}
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">{p.clinic.name}</h1>
+          <p className="text-sm text-slate-600">
+            {p.clinic.address && <span>{p.clinic.address}</span>}
+            {p.clinic.phone && (
+              <span className="ml-4">Tél : {p.clinic.phone}</span>
+            )}
+            {p.clinic.email && (
+              <span className="ml-4">Email : {p.clinic.email}</span>
+            )}
+          </p>
+        </div>
       </header>
 
       <section className="mb-8">

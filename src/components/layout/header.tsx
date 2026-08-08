@@ -4,6 +4,11 @@ import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { Bell } from "lucide-react";
 
+interface HeaderProps {
+  clinicName?: string | null;
+  clinicLogoUrl?: string | null;
+}
+
 function getInitials(name?: string | null) {
   if (!name) return "??";
   return name
@@ -14,7 +19,7 @@ function getInitials(name?: string | null) {
     .slice(0, 2);
 }
 
-export function Header() {
+export function Header({ clinicName, clinicLogoUrl }: HeaderProps) {
   const { data: session } = useSession();
 
   return (
@@ -24,9 +29,19 @@ export function Header() {
       transition={{ duration: 0.35, ease: "easeOut" }}
       className="flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/80 px-6 backdrop-blur-md"
     >
-      <h1 className="text-lg font-semibold tracking-tight text-slate-900">
-        {session?.user?.name ?? "Cabinet"}
-      </h1>
+      <div className="flex items-center gap-3">
+        {clinicLogoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={clinicLogoUrl}
+            alt="Logo cabinet"
+            className="hidden h-8 w-auto rounded-md object-contain sm:block"
+          />
+        )}
+        <h1 className="text-lg font-semibold tracking-tight text-slate-900">
+          {clinicName ?? session?.user?.name ?? "Cabinet"}
+        </h1>
+      </div>
 
       <div className="flex items-center gap-4">
         {/* Notification bell */}

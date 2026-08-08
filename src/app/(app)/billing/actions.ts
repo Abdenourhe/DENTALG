@@ -28,7 +28,16 @@ export async function getInvoice(id: string) {
   const invoice = await prisma.invoice.findFirst({
     where: { id, clinicId: ctx.clinicId, deletedAt: null },
     include: {
-      clinic: true,
+      clinic: {
+        select: {
+          id: true,
+          name: true,
+          address: true,
+          phone: true,
+          email: true,
+          logoUrl: true,
+        },
+      },
       patient: true,
       items: { include: { procedure: true } },
       payments: { orderBy: { paidAt: "desc" } },

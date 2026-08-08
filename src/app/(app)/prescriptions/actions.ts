@@ -240,7 +240,13 @@ export async function getPrescriptionForPrint(id: string) {
       createdBy: { select: { firstName: true, lastName: true } },
       items: { orderBy: { position: "asc" } },
       clinic: {
-        select: { name: true, email: true, phone: true, address: true },
+        select: {
+          name: true,
+          email: true,
+          phone: true,
+          address: true,
+          logoUrl: true,
+        },
       },
     },
   });

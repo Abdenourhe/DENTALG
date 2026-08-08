@@ -259,6 +259,8 @@ export async function updateClinic(data: unknown) {
     cleaned.wilaya = updateData.wilaya || undefined;
   if (updateData.plan !== undefined) cleaned.plan = updateData.plan;
   if (updateData.isActive !== undefined) cleaned.isActive = updateData.isActive;
+  if (updateData.logoUrl !== undefined)
+    cleaned.logoUrl = updateData.logoUrl || undefined;
 
   const clinic = await prisma.clinic.update({
     where: { id: clinicId },
@@ -268,6 +270,14 @@ export async function updateClinic(data: unknown) {
   revalidatePath("/superadmin/clinics");
   revalidatePath(`/superadmin/clinics/${clinicId}`);
   return { ok: true, clinic } as const;
+}
+
+export async function updateClinicFromForm(formData: FormData) {
+  const data = Object.fromEntries(formData.entries());
+  await updateClinic({
+    ...data,
+    isActive: data.isActive === "on",
+  });
 }
 
 export async function deleteClinic(data: unknown) {

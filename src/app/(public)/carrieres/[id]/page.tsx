@@ -74,7 +74,16 @@ export default async function JobOfferDetailPage({ params }: Props) {
           </h1>
           <div className="mt-3 flex flex-wrap items-center gap-4 text-sm text-slate-500">
             <span className="flex items-center gap-1.5">
-              <Building2 className="h-4 w-4 text-slate-400" />
+              {offer.clinic.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={offer.clinic.logoUrl}
+                  alt={offer.clinic.name}
+                  className="h-5 w-5 rounded object-contain"
+                />
+              ) : (
+                <Building2 className="h-4 w-4 text-slate-400" />
+              )}
               <strong className="text-slate-700">{offer.clinic.name}</strong>
             </span>
             <span className="flex items-center gap-1.5">
@@ -140,9 +149,23 @@ export default async function JobOfferDetailPage({ params }: Props) {
                 <CardTitle>À propos du cabinet</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm font-semibold text-slate-900">
-                  {offer.clinic.name}
-                </p>
+                <div className="flex items-center gap-3">
+                  {offer.clinic.logoUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={offer.clinic.logoUrl}
+                      alt={offer.clinic.name}
+                      className="h-10 w-10 rounded-lg border border-slate-100 bg-white object-contain p-1"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg border border-slate-100 bg-slate-50">
+                      <Building2 className="h-5 w-5 text-slate-400" />
+                    </div>
+                  )}
+                  <p className="text-sm font-semibold text-slate-900">
+                    {offer.clinic.name}
+                  </p>
+                </div>
                 <p className="flex items-center gap-2 text-sm text-slate-500">
                   <MapPin className="h-4 w-4 text-slate-400" />
                   {offer.clinic.city}, {offer.clinic.wilaya}

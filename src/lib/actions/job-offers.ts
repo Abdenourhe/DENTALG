@@ -29,7 +29,15 @@ export async function getPublicJobOffer(id: string) {
   return prisma.jobOffer.findFirst({
     where: { id, status: "PUBLISHED", deletedAt: null },
     include: {
-      clinic: { select: { name: true, city: true, wilaya: true, email: true } },
+      clinic: {
+        select: {
+          name: true,
+          city: true,
+          wilaya: true,
+          email: true,
+          logoUrl: true,
+        },
+      },
     },
   });
 }

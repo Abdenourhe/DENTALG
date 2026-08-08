@@ -35,11 +35,31 @@ export default async function InvoicePrintPage({ params }: Props) {
 
       <div className="mx-auto max-w-3xl p-8 print:p-0">
         <div className="mb-8 flex items-start justify-between border-b border-slate-200 pb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">DENTALG</h1>
-            <p className="text-sm text-slate-500">
-              Gestion de cabinet dentaire
-            </p>
+          <div className="flex items-start gap-4">
+            {invoice.clinic?.logoUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={invoice.clinic.logoUrl}
+                alt={invoice.clinic.name ?? "Cabinet"}
+                className="h-16 w-16 rounded-lg border border-slate-200 bg-white object-contain p-1"
+              />
+            )}
+            <div>
+              <h1 className="text-2xl font-bold text-slate-900">
+                {invoice.clinic?.name ?? "Cabinet"}
+              </h1>
+              <p className="text-sm text-slate-600">
+                {invoice.clinic?.address && (
+                  <span>{invoice.clinic.address}</span>
+                )}
+                {invoice.clinic?.phone && (
+                  <span className="ml-4">Tél : {invoice.clinic.phone}</span>
+                )}
+                {invoice.clinic?.email && (
+                  <span className="ml-4">Email : {invoice.clinic.email}</span>
+                )}
+              </p>
+            </div>
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-slate-900">

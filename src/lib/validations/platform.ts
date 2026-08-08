@@ -55,6 +55,7 @@ export const updateClinicSchema = z.object({
   wilaya: z.string().optional().or(z.literal("")),
   plan: z.enum(["FREE", "ESSENTIEL", "PRO", "PREMIUM"]).optional(),
   isActive: z.boolean().optional(),
+  logoUrl: z.string().optional().or(z.literal("")),
 });
 
 export const deleteClinicSchema = z.object({
