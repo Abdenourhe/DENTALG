@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Upload, X, Loader2, ImageIcon } from "lucide-react";
+import { Upload, X, Loader2 } from "lucide-react";
 
 interface ImageUploaderProps {
   photos: string[];
@@ -68,7 +68,7 @@ export default function ImageUploader({
       }
       setUploading(false);
     },
-    [photos, onChange, maxPhotos]
+    [photos, onChange, maxPhotos],
   );
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -96,7 +96,10 @@ export default function ImageUploader({
       {photos.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {photos.map((url, i) => (
-            <div key={`${url}-${i}`} className="relative aspect-square rounded-lg overflow-hidden border border-slate-200 group">
+            <div
+              key={`${url}-${i}`}
+              className="relative aspect-square rounded-lg overflow-hidden border border-slate-200 group"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={url} alt="" className="h-full w-full object-cover" />
               <button
@@ -134,7 +137,9 @@ export default function ImageUploader({
           {uploading ? (
             <>
               <Loader2 className="h-6 w-6 animate-spin text-primary" />
-              <span className="mt-2 text-xs text-slate-500">Upload en cours…</span>
+              <span className="mt-2 text-xs text-slate-500">
+                Upload en cours…
+              </span>
             </>
           ) : (
             <>
@@ -150,9 +155,7 @@ export default function ImageUploader({
         </label>
       )}
 
-      {error && (
-        <p className="text-xs text-red-500">{error}</p>
-      )}
+      {error && <p className="text-xs text-red-500">{error}</p>}
 
       {/* Hidden input for form submission */}
       <input type="hidden" name="photos" value={photos.join("\n")} />

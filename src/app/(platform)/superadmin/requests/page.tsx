@@ -12,9 +12,8 @@ import {
   Stethoscope,
   Users,
   Phone,
-  Eye,
 } from "lucide-react";
-import { Role, RequestStatus } from "@prisma/client";
+import { Role } from "@prisma/client";
 
 const roleConfig: Record<
   Role,

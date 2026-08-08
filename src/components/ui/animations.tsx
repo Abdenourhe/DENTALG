@@ -132,13 +132,11 @@ export function HoverLift({ children, className = "" }: HoverLiftProps) {
 interface AnimatedCounterProps {
   value: number;
   className?: string;
-  duration?: number;
 }
 
 export function AnimatedCounter({
   value,
   className = "",
-  duration = 1,
 }: AnimatedCounterProps) {
   return (
     <motion.span

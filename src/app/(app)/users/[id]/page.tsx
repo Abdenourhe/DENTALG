@@ -60,8 +60,6 @@ export default async function UserDetailPage({ params }: Props) {
   const user = await getUser(id);
   if (!user) notFound();
 
-  const selectedRole = roleOptions.find((r) => r.value === user.role)!;
-
   return (
     <PageWrapper className="mx-auto max-w-2xl space-y-6">
       <Link

@@ -1,10 +1,13 @@
 "use server";
 
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { requireClinicContext, withClinic } from "@/lib/tenant";
-import { jobOfferSchema, jobOfferUpdateSchema, jobApplicationSchema } from "@/lib/validations/job";
+import {
+  jobOfferSchema,
+  jobOfferUpdateSchema,
+  jobApplicationSchema,
+} from "@/lib/validations/job";
 import { revalidatePath } from "next/cache";
 
 // ------------------------------------------------------------------
@@ -37,17 +40,30 @@ export async function applyToJob(data: unknown) {
     return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
   }
 
-  const { jobOfferId, firstName, lastName, email, phone, coverLetter } = parsed.data;
+  const { jobOfferId, firstName, lastName, email, phone, coverLetter } =
+    parsed.data;
 
   const offer = await prisma.jobOffer.findFirst({
     where: { id: jobOfferId, status: "PUBLISHED", deletedAt: null },
   });
-  if (!offer) return { ok: false, errors: { global: ["Offre introuvable."] } } as const;
+  if (!offer)
+    return { ok: false, errors: { global: ["Offre introuvable."] } } as const;
 
   const profile = await prisma.candidateProfile.upsert({
     where: { email },
-    update: { firstName, lastName, phone: phone || undefined, coverLetter: coverLetter || undefined },
-    create: { firstName, lastName, email, phone: phone || undefined, coverLetter: coverLetter || undefined },
+    update: {
+      firstName,
+      lastName,
+      phone: phone || undefined,
+      coverLetter: coverLetter || undefined,
+    },
+    create: {
+      firstName,
+      lastName,
+      email,
+      phone: phone || undefined,
+      coverLetter: coverLetter || undefined,
+    },
   });
 
   const application = await prisma.jobApplication.create({
@@ -109,12 +125,17 @@ export async function updateJobOffer(id: string, data: unknown) {
   const existing = await prisma.jobOffer.findFirst({
     where: { id, clinicId: ctx.clinicId, deletedAt: null },
   });
-  if (!existing) return { ok: false, errors: { global: ["Offre introuvable."] } } as const;
+  if (!existing)
+    return { ok: false, errors: { global: ["Offre introuvable."] } } as const;
 
   const updateData: Record<string, unknown> = { ...parsed.data };
-  if (parsed.data.closesAt) updateData.closesAt = new Date(parsed.data.closesAt);
+  if (parsed.data.closesAt)
+    updateData.closesAt = new Date(parsed.data.closesAt);
 
-  const offer = await prisma.jobOffer.update({ where: { id }, data: updateData });
+  const offer = await prisma.jobOffer.update({
+    where: { id },
+    data: updateData,
+  });
   revalidatePath("/carrieres");
   return { ok: true, offer } as const;
 }
@@ -126,7 +147,8 @@ export async function publishJobOffer(id: string) {
   const existing = await prisma.jobOffer.findFirst({
     where: { id, clinicId: ctx.clinicId, deletedAt: null },
   });
-  if (!existing) return { ok: false, errors: { global: ["Offre introuvable."] } } as const;
+  if (!existing)
+    return { ok: false, errors: { global: ["Offre introuvable."] } } as const;
 
   const offer = await prisma.jobOffer.update({
     where: { id },
@@ -144,9 +166,13 @@ export async function deleteJobOffer(id: string) {
   const existing = await prisma.jobOffer.findFirst({
     where: { id, clinicId: ctx.clinicId, deletedAt: null },
   });
-  if (!existing) return { ok: false, errors: { global: ["Offre introuvable."] } } as const;
+  if (!existing)
+    return { ok: false, errors: { global: ["Offre introuvable."] } } as const;
 
-  await prisma.jobOffer.update({ where: { id }, data: { deletedAt: new Date() } });
+  await prisma.jobOffer.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
   revalidatePath("/carrieres");
   return { ok: true } as const;
 }

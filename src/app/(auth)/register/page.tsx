@@ -4,15 +4,7 @@ import { useActionState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { registerClinic } from "./actions";
-import {
-  Building2,
-  ArrowLeft,
-  User,
-  Mail,
-  Lock,
-  Hash,
-  MapPin,
-} from "lucide-react";
+import { Building2, ArrowLeft, User, Mail, Lock, Hash } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 

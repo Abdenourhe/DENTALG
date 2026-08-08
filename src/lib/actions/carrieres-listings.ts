@@ -1,6 +1,5 @@
 "use server";
 
-import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { requireClinicContext, withClinic } from "@/lib/tenant";
@@ -19,7 +18,15 @@ export async function listPublicClinicListings() {
     where: { status: "PUBLISHED", deletedAt: null },
     orderBy: { createdAt: "desc" },
     include: {
-      clinic: { select: { name: true, city: true, wilaya: true, email: true, phone: true } },
+      clinic: {
+        select: {
+          name: true,
+          city: true,
+          wilaya: true,
+          email: true,
+          phone: true,
+        },
+      },
     },
   });
 }
@@ -28,7 +35,15 @@ export async function getPublicClinicListing(id: string) {
   return prisma.clinicListing.findFirst({
     where: { id, status: "PUBLISHED", deletedAt: null },
     include: {
-      clinic: { select: { name: true, city: true, wilaya: true, email: true, phone: true } },
+      clinic: {
+        select: {
+          name: true,
+          city: true,
+          wilaya: true,
+          email: true,
+          phone: true,
+        },
+      },
     },
   });
 }
@@ -38,7 +53,15 @@ export async function listPublicEquipmentListings() {
     where: { status: "PUBLISHED", deletedAt: null },
     orderBy: { createdAt: "desc" },
     include: {
-      clinic: { select: { name: true, city: true, wilaya: true, email: true, phone: true } },
+      clinic: {
+        select: {
+          name: true,
+          city: true,
+          wilaya: true,
+          email: true,
+          phone: true,
+        },
+      },
     },
   });
 }
@@ -47,7 +70,15 @@ export async function getPublicEquipmentListing(id: string) {
   return prisma.equipmentListing.findFirst({
     where: { id, status: "PUBLISHED", deletedAt: null },
     include: {
-      clinic: { select: { name: true, city: true, wilaya: true, email: true, phone: true } },
+      clinic: {
+        select: {
+          name: true,
+          city: true,
+          wilaya: true,
+          email: true,
+          phone: true,
+        },
+      },
     },
   });
 }
@@ -101,9 +132,13 @@ export async function publishClinicListing(id: string) {
   const existing = await prisma.clinicListing.findFirst({
     where: { id, clinicId: ctx.clinicId, deletedAt: null },
   });
-  if (!existing) return { ok: false, errors: { global: ["Annonce introuvable."] } } as const;
+  if (!existing)
+    return { ok: false, errors: { global: ["Annonce introuvable."] } } as const;
 
-  await prisma.clinicListing.update({ where: { id }, data: { status: "PUBLISHED" } });
+  await prisma.clinicListing.update({
+    where: { id },
+    data: { status: "PUBLISHED" },
+  });
   revalidatePath("/carrieres");
   return { ok: true } as const;
 }
@@ -114,9 +149,13 @@ export async function deleteClinicListing(id: string) {
   const existing = await prisma.clinicListing.findFirst({
     where: { id, clinicId: ctx.clinicId, deletedAt: null },
   });
-  if (!existing) return { ok: false, errors: { global: ["Annonce introuvable."] } } as const;
+  if (!existing)
+    return { ok: false, errors: { global: ["Annonce introuvable."] } } as const;
 
-  await prisma.clinicListing.update({ where: { id }, data: { deletedAt: new Date() } });
+  await prisma.clinicListing.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
   revalidatePath("/carrieres");
   return { ok: true } as const;
 }
@@ -169,9 +208,13 @@ export async function publishEquipmentListing(id: string) {
   const existing = await prisma.equipmentListing.findFirst({
     where: { id, clinicId: ctx.clinicId, deletedAt: null },
   });
-  if (!existing) return { ok: false, errors: { global: ["Annonce introuvable."] } } as const;
+  if (!existing)
+    return { ok: false, errors: { global: ["Annonce introuvable."] } } as const;
 
-  await prisma.equipmentListing.update({ where: { id }, data: { status: "PUBLISHED" } });
+  await prisma.equipmentListing.update({
+    where: { id },
+    data: { status: "PUBLISHED" },
+  });
   revalidatePath("/carrieres");
   return { ok: true } as const;
 }
@@ -182,9 +225,13 @@ export async function deleteEquipmentListing(id: string) {
   const existing = await prisma.equipmentListing.findFirst({
     where: { id, clinicId: ctx.clinicId, deletedAt: null },
   });
-  if (!existing) return { ok: false, errors: { global: ["Annonce introuvable."] } } as const;
+  if (!existing)
+    return { ok: false, errors: { global: ["Annonce introuvable."] } } as const;
 
-  await prisma.equipmentListing.update({ where: { id }, data: { deletedAt: new Date() } });
+  await prisma.equipmentListing.update({
+    where: { id },
+    data: { deletedAt: new Date() },
+  });
   revalidatePath("/carrieres");
   return { ok: true } as const;
 }

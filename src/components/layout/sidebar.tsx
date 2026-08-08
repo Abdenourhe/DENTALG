@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { motion, Variants } from "framer-motion";
@@ -152,9 +153,11 @@ export function Sidebar() {
       {/* Logo */}
       <div className="flex h-16 items-center justify-center border-b border-slate-200/80 px-4">
         <Link href="/dashboard" className="flex items-center justify-center">
-          <img
+          <Image
             src="/logo.svg"
             alt="DENTALG"
+            width={160}
+            height={40}
             className="h-10 w-auto object-contain transition-transform duration-300 hover:scale-105"
           />
         </Link>

@@ -15,7 +15,6 @@ import {
   Users,
   Phone,
   Pencil,
-  Trash2,
   Mail,
   Clock,
 } from "lucide-react";

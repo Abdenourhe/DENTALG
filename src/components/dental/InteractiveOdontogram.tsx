@@ -65,14 +65,6 @@ const ALL_STATUSES: ToothStatus[] = [
   "ABCESS",
 ];
 
-const SURFACE_LABELS: Record<ToothSurface, string> = {
-  O: "Occlusale",
-  M: "Mésiale",
-  D: "Distale",
-  B: "Buccale",
-  L: "Linguale",
-};
-
 const UPPER_RIGHT = [18, 17, 16, 15, 14, 13, 12, 11];
 const UPPER_LEFT = [21, 22, 23, 24, 25, 26, 27, 28];
 const LOWER_LEFT = [31, 32, 33, 34, 35, 36, 37, 38];
@@ -190,14 +182,12 @@ interface InteractiveOdontogramProps {
   initialTeeth?: ToothState[];
   onChange?: (teeth: ToothState[]) => void;
   readOnly?: boolean;
-  compact?: boolean;
 }
 
 export default function InteractiveOdontogram({
   initialTeeth = [],
   onChange,
   readOnly = false,
-  compact = false,
 }: InteractiveOdontogramProps) {
   const [teeth, setTeeth] = useState<ToothState[]>(initialTeeth);
   const [selectedTooth, setSelectedTooth] = useState<number | null>(null);
@@ -205,7 +195,7 @@ export default function InteractiveOdontogram({
 
   const getTooth = useCallback(
     (n: number) => teeth.find((t) => t.tooth === n),
-    [teeth]
+    [teeth],
   );
 
   const updateSurface = useCallback(
@@ -222,16 +212,18 @@ export default function InteractiveOdontogram({
             { tooth: toothNum, surfaces: [{ surface, status: activeStatus }] },
           ];
         } else {
-          const surfaces = existing.surfaces.filter((s) => s.surface !== surface);
+          const surfaces = existing.surfaces.filter(
+            (s) => s.surface !== surface,
+          );
           if (
             !existing.surfaces.find(
-              (s) => s.surface === surface && s.status === activeStatus
+              (s) => s.surface === surface && s.status === activeStatus,
             )
           ) {
             surfaces.push({ surface, status: activeStatus });
           }
           next = prev.map((t) =>
-            t.tooth === toothNum ? { ...t, surfaces } : t
+            t.tooth === toothNum ? { ...t, surfaces } : t,
           );
         }
 
@@ -239,15 +231,8 @@ export default function InteractiveOdontogram({
         return next;
       });
     },
-    [readOnly, activeStatus, onChange]
+    [readOnly, activeStatus, onChange],
   );
-
-  const allTeethNumbers = [
-    ...UPPER_RIGHT,
-    ...UPPER_LEFT,
-    ...LOWER_LEFT,
-    ...LOWER_RIGHT,
-  ];
 
   const ToothRow = ({ teethNumbers }: { teethNumbers: number[] }) => (
     <div className="flex justify-center gap-1">

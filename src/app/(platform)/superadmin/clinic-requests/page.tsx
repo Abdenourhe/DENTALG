@@ -23,13 +23,12 @@ import {
   Phone,
   User,
   RotateCcw,
-  Pencil,
   Users,
   Stethoscope,
   Wrench,
 } from "lucide-react";
 import { RequestStatus } from "@prisma/client";
-import { reviewClinicRequest, updateClinicRequest } from "../actions";
+import { reviewClinicRequest } from "../actions";
 
 export default async function ClinicRequestsPage({
   searchParams,

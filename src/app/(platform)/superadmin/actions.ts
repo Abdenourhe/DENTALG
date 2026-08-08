@@ -350,7 +350,7 @@ export async function createClinicRequest(data: unknown) {
 }
 
 export async function updateClinicRequest(data: unknown) {
-  const admin = await requirePlatformAdmin();
+  await requirePlatformAdmin();
   const parsed = updateClinicRequestSchema.safeParse(data);
   if (!parsed.success) {
     return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;

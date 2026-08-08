@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { deleteUser } from "./actions";
-import { Trash2, AlertTriangle, X } from "lucide-react";
+import { Trash2, AlertTriangle } from "lucide-react";
 
 export function DeleteUserButton({
   userId,

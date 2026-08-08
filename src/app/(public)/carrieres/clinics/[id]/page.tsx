@@ -3,15 +3,7 @@ import { notFound } from "next/navigation";
 import { getPublicClinicListing } from "@/lib/actions/carrieres-listings";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  ArrowLeft,
-  MapPin,
-  Phone,
-  Mail,
-  Store,
-  ImageIcon,
-  Tag,
-} from "lucide-react";
+import { ArrowLeft, MapPin, Phone, Mail, Store, ImageIcon } from "lucide-react";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -67,7 +59,10 @@ export default async function ClinicListingDetailPage({ params }: Props) {
         {item.photos.length > 0 ? (
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
             {item.photos.map((photo, i) => (
-              <div key={i} className="relative aspect-square overflow-hidden rounded-xl bg-slate-100">
+              <div
+                key={i}
+                className="relative aspect-square overflow-hidden rounded-xl bg-slate-100"
+              >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={photo}
@@ -134,18 +129,23 @@ export default async function ClinicListingDetailPage({ params }: Props) {
                     {item.contactEmail}
                   </p>
                 )}
-                {!item.contactPhone && !item.contactEmail && item.clinic.phone && (
-                  <p className="flex items-center gap-2 text-sm text-slate-600">
-                    <Phone className="h-4 w-4 text-slate-400" />
-                    {item.clinic.phone}
-                  </p>
-                )}
-                {!item.contactPhone && !item.contactEmail && !item.clinic.phone && item.clinic.email && (
-                  <p className="flex items-center gap-2 text-sm text-slate-600">
-                    <Mail className="h-4 w-4 text-slate-400" />
-                    {item.clinic.email}
-                  </p>
-                )}
+                {!item.contactPhone &&
+                  !item.contactEmail &&
+                  item.clinic.phone && (
+                    <p className="flex items-center gap-2 text-sm text-slate-600">
+                      <Phone className="h-4 w-4 text-slate-400" />
+                      {item.clinic.phone}
+                    </p>
+                  )}
+                {!item.contactPhone &&
+                  !item.contactEmail &&
+                  !item.clinic.phone &&
+                  item.clinic.email && (
+                    <p className="flex items-center gap-2 text-sm text-slate-600">
+                      <Mail className="h-4 w-4 text-slate-400" />
+                      {item.clinic.email}
+                    </p>
+                  )}
               </CardContent>
             </Card>
           </div>

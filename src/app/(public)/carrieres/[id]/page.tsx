@@ -15,7 +15,6 @@ import {
   Stethoscope,
   Send,
   CheckCircle2,
-  Users,
 } from "lucide-react";
 import { formatDate } from "@/lib/date";
 

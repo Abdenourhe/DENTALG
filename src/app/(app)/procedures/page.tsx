@@ -58,7 +58,7 @@ export default async function ProceduresPage() {
                 </div>
               ) : (
                 <div className="divide-y divide-slate-100">
-                  {procedures.map((p, i) => (
+                  {procedures.map((p) => (
                     <div
                       key={p.id}
                       className="group flex flex-col gap-3 py-4 transition-colors hover:bg-slate-50/50 sm:flex-row sm:items-center sm:justify-between"

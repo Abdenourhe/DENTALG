@@ -12,7 +12,6 @@ import {
   RefreshCw,
   Send,
   Users,
-  Building2,
 } from "lucide-react";
 import { PlatformMessageType, Role } from "@prisma/client";
 

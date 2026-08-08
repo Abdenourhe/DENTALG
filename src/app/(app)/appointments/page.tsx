@@ -4,7 +4,6 @@ import {
   ChevronRight,
   CalendarDays,
   Clock,
-  User,
   Stethoscope,
   Pencil,
   CalendarPlus,

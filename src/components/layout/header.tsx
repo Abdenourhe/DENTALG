@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { Bell, User } from "lucide-react";
+import { Bell } from "lucide-react";
 
 function getInitials(name?: string | null) {
   if (!name) return "??";
