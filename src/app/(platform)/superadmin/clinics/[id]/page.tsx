@@ -69,9 +69,9 @@ export default async function ClinicDetailPage({
         </Link>
         <div className="flex items-center gap-3">
           <Link href={`/superadmin/clinics/${clinic.id}/edit`}>
-            <Button variant="secondary" size="sm">
+            <Button variant="primary" size="sm">
               <Pencil className="mr-2 h-4 w-4" />
-              Modifier
+              Modifier le cabinet
             </Button>
           </Link>
           <Badge

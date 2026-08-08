@@ -152,6 +152,18 @@ export default async function ClinicsPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <Link href={`/superadmin/clinics/${clinic.id}/edit`}>
+                          <Button variant="primary" size="sm">
+                            <Pencil className="mr-1.5 h-3.5 w-3.5" />
+                            Modifier
+                          </Button>
+                        </Link>
+                        <Link href={`/superadmin/clinics/${clinic.id}`}>
+                          <Button variant="secondary" size="sm">
+                            <Eye className="mr-1.5 h-3.5 w-3.5" />
+                            Voir
+                          </Button>
+                        </Link>
                         <form action={toggleClinicStatusFromForm}>
                           <input
                             type="hidden"
@@ -160,22 +172,13 @@ export default async function ClinicsPage() {
                           />
                           <Button
                             type="submit"
-                            variant={clinic.isActive ? "secondary" : "primary"}
+                            variant="ghost"
                             size="sm"
+                            className="text-slate-600 hover:text-slate-900"
                           >
                             {clinic.isActive ? "Désactiver" : "Activer"}
                           </Button>
                         </form>
-                        <Link href={`/superadmin/clinics/${clinic.id}/edit`}>
-                          <Button variant="ghost" size="sm">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link href={`/superadmin/clinics/${clinic.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
                       </div>
                     </td>
                   </tr>

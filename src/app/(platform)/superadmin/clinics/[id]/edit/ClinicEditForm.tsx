@@ -4,9 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import LogoUploader from "@/components/ui/logo-uploader";
 import { updateClinicFromForm } from "../../../actions";
 import { Plan } from "@prisma/client";
+import { Building2, Contact, ImageIcon, Save, Settings, X } from "lucide-react";
 
 interface ClinicEditFormProps {
   clinic: {
@@ -24,15 +29,24 @@ interface ClinicEditFormProps {
   };
 }
 
+const planOptions = [
+  { value: "FREE", label: "Gratuit" },
+  { value: "ESSENTIEL", label: "Essentiel" },
+  { value: "PRO", label: "Pro" },
+  { value: "PREMIUM", label: "Premium" },
+];
+
 export default function ClinicEditForm({ clinic }: ClinicEditFormProps) {
   const router = useRouter();
   const [logoUrl, setLogoUrl] = useState<string | null>(clinic.logoUrl);
+  const [isActive, setIsActive] = useState(clinic.isActive);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(formData: FormData) {
     setIsSubmitting(true);
     formData.set("clinicId", clinic.id);
     formData.set("logoUrl", logoUrl || "");
+    formData.set("isActive", isActive ? "on" : "");
     await updateClinicFromForm(formData);
     setIsSubmitting(false);
     router.push(`/superadmin/clinics/${clinic.id}`);
@@ -41,125 +55,155 @@ export default function ClinicEditForm({ clinic }: ClinicEditFormProps) {
 
   return (
     <form action={handleSubmit} className="space-y-6">
-      <div className="grid gap-6 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">
-            Nom du cabinet
-          </label>
-          <input
-            name="name"
-            defaultValue={clinic.name}
-            required
-            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Identité visuelle */}
+        <Card className="lg:col-span-1">
+          <CardHeader className="border-b px-5 py-4">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <ImageIcon className="h-4 w-4 text-violet-600" />
+              Identité visuelle
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 p-5">
+            <div className="flex justify-center rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6">
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logoUrl}
+                  alt={clinic.name}
+                  className="h-24 w-24 rounded-lg border border-slate-200 bg-white object-contain p-2 shadow-sm"
+                />
+              ) : (
+                <div className="flex h-24 w-24 flex-col items-center justify-center rounded-lg border border-slate-200 bg-white">
+                  <Building2 className="h-10 w-10 text-slate-300" />
+                  <span className="mt-1 text-[10px] text-slate-400">
+                    Aucun logo
+                  </span>
+                </div>
+              )}
+            </div>
+            <LogoUploader logoUrl={logoUrl} onChange={setLogoUrl} />
+            <p className="text-xs leading-relaxed text-slate-500">
+              Ce logo sera affiché dans le profil public du cabinet, les
+              ordonnances, les factures et l’interface des utilisateurs.
+            </p>
+          </CardContent>
+        </Card>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Slug</label>
-          <input
-            defaultValue={clinic.slug}
-            disabled
-            className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-500"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Email</label>
-          <input
-            name="email"
-            type="email"
-            defaultValue={clinic.email}
-            required
-            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">
-            Téléphone
-          </label>
-          <input
-            name="phone"
-            defaultValue={clinic.phone ?? ""}
-            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
-
-        <div className="space-y-2 sm:col-span-2">
-          <label className="text-sm font-medium text-slate-700">Adresse</label>
-          <input
-            name="address"
-            defaultValue={clinic.address ?? ""}
-            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Ville</label>
-          <input
-            name="city"
-            defaultValue={clinic.city ?? ""}
-            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Wilaya</label>
-          <input
-            name="wilaya"
-            defaultValue={clinic.wilaya ?? ""}
-            className="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-slate-700">Forfait</label>
-          <select
-            name="plan"
-            defaultValue={clinic.plan}
-            className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="FREE">Gratuit</option>
-            <option value="ESSENTIEL">Essentiel</option>
-            <option value="PRO">Pro</option>
-            <option value="PREMIUM">Premium</option>
-          </select>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <input
-            name="isActive"
-            type="checkbox"
-            defaultChecked={clinic.isActive}
-            className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
-          />
-          <label className="text-sm font-medium text-slate-700">
-            Cabinet actif
-          </label>
-        </div>
+        {/* Informations générales */}
+        <Card className="lg:col-span-2">
+          <CardHeader className="border-b px-5 py-4">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <Building2 className="h-4 w-4 text-blue-600" />
+              Informations générales
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5 p-5">
+            <div className="grid gap-5 sm:grid-cols-2">
+              <Input
+                name="name"
+                label="Nom du cabinet"
+                defaultValue={clinic.name}
+                required
+              />
+              <Input
+                label="Slug"
+                defaultValue={clinic.slug}
+                disabled
+                className="bg-slate-50"
+              />
+              <Input
+                name="email"
+                type="email"
+                label="Email"
+                defaultValue={clinic.email}
+                required
+              />
+              <Input
+                name="phone"
+                label="Téléphone"
+                defaultValue={clinic.phone ?? ""}
+              />
+              <Input
+                name="address"
+                label="Adresse"
+                defaultValue={clinic.address ?? ""}
+                className="sm:col-span-2"
+              />
+              <Input
+                name="city"
+                label="Ville"
+                defaultValue={clinic.city ?? ""}
+              />
+              <Input
+                name="wilaya"
+                label="Wilaya"
+                defaultValue={clinic.wilaya ?? ""}
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-slate-700">
-          Logo du cabinet
-        </label>
-        <LogoUploader logoUrl={logoUrl} onChange={setLogoUrl} />
-        <p className="text-xs text-slate-500">
-          Ce logo sera affiché sur le profil public du cabinet, les rapports,
-          les ordonnances et les factures.
-        </p>
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Forfait */}
+        <Card>
+          <CardHeader className="border-b px-5 py-4">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <Contact className="h-4 w-4 text-emerald-600" />
+              Forfait
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-5">
+            <Select
+              name="plan"
+              label="Forfait actuel"
+              defaultValue={clinic.plan}
+              options={planOptions}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Statut */}
+        <Card>
+          <CardHeader className="border-b px-5 py-4">
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <Settings className="h-4 w-4 text-amber-600" />
+              Paramètres
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-5">
+            <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div>
+                <p className="text-sm font-medium text-slate-900">
+                  Cabinet actif
+                </p>
+                <p className="text-xs text-slate-500">
+                  Un cabinet inactif ne peut plus se connecter à la plateforme.
+                </p>
+              </div>
+              <Switch
+                checked={isActive}
+                onCheckedChange={setIsActive}
+                label=""
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="flex items-center gap-3 pt-4">
-        <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Enregistrement…" : "Enregistrer les modifications"}
-        </Button>
+      <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href={`/superadmin/clinics/${clinic.id}`}
-          className="text-sm font-medium text-slate-600 hover:text-slate-900"
+          className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
         >
+          <X className="h-4 w-4" />
           Annuler
         </Link>
+        <Button type="submit" disabled={isSubmitting} className="gap-2">
+          <Save className="h-4 w-4" />
+          {isSubmitting ? "Enregistrement…" : "Enregistrer les modifications"}
+        </Button>
       </div>
     </form>
   );
