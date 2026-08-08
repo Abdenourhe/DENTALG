@@ -24,7 +24,7 @@ import {
   Building2,
 } from "lucide-react";
 import { Prisma, Role } from "@prisma/client";
-import { toggleUserStatus, updateUserRole } from "../actions";
+import { toggleUserStatusFromForm, setUserRoleFromForm } from "../actions";
 import SuperAdminErrorFallback from "../_components/SuperAdminErrorFallback";
 
 type UserWithClinic = Prisma.UserGetPayload<{
@@ -242,12 +242,8 @@ export default async function UsersPage({
                   <TableCell className="text-right">
                     <div className="flex flex-col items-end gap-2">
                       {/* Toggle active */}
-                      <form
-                        action={async () => {
-                          "use server";
-                          await toggleUserStatus({ userId: user.id });
-                        }}
-                      >
+                      <form action={toggleUserStatusFromForm}>
+                        <input type="hidden" name="userId" value={user.id} />
                         <button
                           type="submit"
                           className={`rounded-lg px-3 py-1.5 text-xs font-medium ring-1 transition-colors ${
@@ -264,15 +260,13 @@ export default async function UsersPage({
                       {user.role !== "PLATFORM_ADMIN" && (
                         <div className="flex gap-1">
                           {user.role !== "OWNER" && (
-                            <form
-                              action={async () => {
-                                "use server";
-                                await updateUserRole({
-                                  userId: user.id,
-                                  role: Role.OWNER,
-                                });
-                              }}
-                            >
+                            <form action={setUserRoleFromForm}>
+                              <input
+                                type="hidden"
+                                name="userId"
+                                value={user.id}
+                              />
+                              <input type="hidden" name="role" value="OWNER" />
                               <button
                                 type="submit"
                                 className="rounded-lg bg-violet-50 px-2 py-1 text-[10px] font-medium text-violet-700 ring-1 ring-violet-200 hover:bg-violet-100"
@@ -282,15 +276,17 @@ export default async function UsersPage({
                             </form>
                           )}
                           {user.role !== "DENTIST" && (
-                            <form
-                              action={async () => {
-                                "use server";
-                                await updateUserRole({
-                                  userId: user.id,
-                                  role: Role.DENTIST,
-                                });
-                              }}
-                            >
+                            <form action={setUserRoleFromForm}>
+                              <input
+                                type="hidden"
+                                name="userId"
+                                value={user.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="role"
+                                value="DENTIST"
+                              />
                               <button
                                 type="submit"
                                 className="rounded-lg bg-sky-50 px-2 py-1 text-[10px] font-medium text-sky-700 ring-1 ring-sky-200 hover:bg-sky-100"
@@ -300,15 +296,17 @@ export default async function UsersPage({
                             </form>
                           )}
                           {user.role !== "ASSISTANT" && (
-                            <form
-                              action={async () => {
-                                "use server";
-                                await updateUserRole({
-                                  userId: user.id,
-                                  role: Role.ASSISTANT,
-                                });
-                              }}
-                            >
+                            <form action={setUserRoleFromForm}>
+                              <input
+                                type="hidden"
+                                name="userId"
+                                value={user.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="role"
+                                value="ASSISTANT"
+                              />
                               <button
                                 type="submit"
                                 className="rounded-lg bg-teal-50 px-2 py-1 text-[10px] font-medium text-teal-700 ring-1 ring-teal-200 hover:bg-teal-100"
@@ -318,15 +316,17 @@ export default async function UsersPage({
                             </form>
                           )}
                           {user.role !== "SECRETARY" && (
-                            <form
-                              action={async () => {
-                                "use server";
-                                await updateUserRole({
-                                  userId: user.id,
-                                  role: Role.SECRETARY,
-                                });
-                              }}
-                            >
+                            <form action={setUserRoleFromForm}>
+                              <input
+                                type="hidden"
+                                name="userId"
+                                value={user.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="role"
+                                value="SECRETARY"
+                              />
                               <button
                                 type="submit"
                                 className="rounded-lg bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-100"

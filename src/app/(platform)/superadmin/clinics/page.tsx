@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Building2, ArrowLeft, Eye, Mail, Phone, MapPin } from "lucide-react";
 import SuperAdminErrorFallback from "../_components/SuperAdminErrorFallback";
+import { toggleClinicStatusFromForm } from "../actions";
 import { Prisma } from "@prisma/client";
 
 type ClinicWithCounts = Prisma.ClinicGetPayload<{
@@ -143,16 +144,7 @@ export default async function ClinicsPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <form
-                          action={async (formData: FormData) => {
-                            "use server";
-                            const { toggleClinicStatus } =
-                              await import("../actions");
-                            await toggleClinicStatus(
-                              Object.fromEntries(formData),
-                            );
-                          }}
-                        >
+                        <form action={toggleClinicStatusFromForm}>
                           <input
                             type="hidden"
                             name="clinicId"

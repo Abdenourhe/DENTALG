@@ -28,7 +28,11 @@ import {
   Wrench,
 } from "lucide-react";
 import { RequestStatus } from "@prisma/client";
-import { reviewClinicRequest } from "../actions";
+import {
+  approveClinicRequestFromForm,
+  returnClinicRequestFromForm,
+  rejectClinicRequestFromForm,
+} from "../actions";
 import SuperAdminErrorFallback from "../_components/SuperAdminErrorFallback";
 
 export default async function ClinicRequestsPage({
@@ -294,15 +298,12 @@ export default async function ClinicRequestsPage({
                     {(req.status === "PENDING" ||
                       req.status === "RETURNED") && (
                       <div className="flex flex-col items-end gap-2">
-                        <form
-                          action={async () => {
-                            "use server";
-                            await reviewClinicRequest({
-                              requestId: req.id,
-                              status: "APPROVED",
-                            });
-                          }}
-                        >
+                        <form action={approveClinicRequestFromForm}>
+                          <input
+                            type="hidden"
+                            name="requestId"
+                            value={req.id}
+                          />
                           <button
                             type="submit"
                             className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 transition-colors hover:bg-emerald-100"
@@ -310,17 +311,12 @@ export default async function ClinicRequestsPage({
                             Approuver
                           </button>
                         </form>
-                        <form
-                          action={async () => {
-                            "use server";
-                            await reviewClinicRequest({
-                              requestId: req.id,
-                              status: "RETURNED",
-                              adminComment:
-                                "Demande incomplète. Veuillez fournir plus de détails.",
-                            });
-                          }}
-                        >
+                        <form action={returnClinicRequestFromForm}>
+                          <input
+                            type="hidden"
+                            name="requestId"
+                            value={req.id}
+                          />
                           <button
                             type="submit"
                             className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200 transition-colors hover:bg-amber-100"
@@ -328,15 +324,12 @@ export default async function ClinicRequestsPage({
                             Retourner
                           </button>
                         </form>
-                        <form
-                          action={async () => {
-                            "use server";
-                            await reviewClinicRequest({
-                              requestId: req.id,
-                              status: "REJECTED",
-                            });
-                          }}
-                        >
+                        <form action={rejectClinicRequestFromForm}>
+                          <input
+                            type="hidden"
+                            name="requestId"
+                            value={req.id}
+                          />
                           <button
                             type="submit"
                             className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 ring-1 ring-red-200 transition-colors hover:bg-red-100"

@@ -59,6 +59,14 @@ export async function createPlatformMessage(data: unknown) {
   return { ok: true, message: msg } as const;
 }
 
+export async function createPlatformMessageFromForm(formData: FormData) {
+  const data = Object.fromEntries(formData.entries());
+  await createPlatformMessage({
+    ...data,
+    isBroadcast: data.isBroadcast === "on",
+  });
+}
+
 // ===================================================================
 // Support Tickets (Users → Admin)
 // ===================================================================
@@ -120,6 +128,11 @@ export async function replyToTicket(data: unknown) {
   return { ok: true, reply } as const;
 }
 
+export async function replyToTicketFromForm(formData: FormData) {
+  const data = Object.fromEntries(formData.entries());
+  await replyToTicket(data);
+}
+
 export async function updateTicketStatus(data: unknown) {
   await requirePlatformAdmin();
   const parsed = updateTicketStatusSchema.safeParse(data);
@@ -135,6 +148,12 @@ export async function updateTicketStatus(data: unknown) {
   revalidatePath("/superadmin/tickets");
   revalidatePath(`/superadmin/tickets/${parsed.data.ticketId}`);
   return { ok: true } as const;
+}
+
+export async function updateTicketStatusFromForm(formData: FormData) {
+  const ticketId = formData.get("ticketId") as string;
+  const status = formData.get("status") as TicketStatus;
+  await updateTicketStatus({ ticketId, status });
 }
 
 // ===================================================================
@@ -172,6 +191,12 @@ export async function reviewUserRequest(data: unknown) {
 
   revalidatePath("/superadmin/requests");
   return { ok: true, request: req } as const;
+}
+
+export async function reviewUserRequestFromForm(formData: FormData) {
+  const requestId = formData.get("requestId") as string;
+  const status = formData.get("status") as RequestStatus;
+  await reviewUserRequest({ requestId, status });
 }
 
 // ===================================================================
@@ -282,6 +307,11 @@ export async function toggleClinicStatus(data: unknown) {
 
   revalidatePath("/superadmin/clinics");
   return { ok: true } as const;
+}
+
+export async function toggleClinicStatusFromForm(formData: FormData) {
+  const clinicId = formData.get("clinicId") as string;
+  await toggleClinicStatus({ clinicId });
 }
 
 // ===================================================================
@@ -524,6 +554,25 @@ export async function reviewClinicRequest(data: unknown) {
   return { ok: true } as const;
 }
 
+export async function approveClinicRequestFromForm(formData: FormData) {
+  const requestId = formData.get("requestId") as string;
+  await reviewClinicRequest({ requestId, status: "APPROVED" });
+}
+
+export async function returnClinicRequestFromForm(formData: FormData) {
+  const requestId = formData.get("requestId") as string;
+  await reviewClinicRequest({
+    requestId,
+    status: "RETURNED",
+    adminComment: "Demande incomplète. Veuillez fournir plus de détails.",
+  });
+}
+
+export async function rejectClinicRequestFromForm(formData: FormData) {
+  const requestId = formData.get("requestId") as string;
+  await reviewClinicRequest({ requestId, status: "REJECTED" });
+}
+
 // ===================================================================
 // User management (superadmin)
 // ===================================================================
@@ -585,6 +634,11 @@ export async function toggleUserStatus(data: unknown) {
   return { ok: true, user: updated } as const;
 }
 
+export async function toggleUserStatusFromForm(formData: FormData) {
+  const userId = formData.get("userId") as string;
+  await toggleUserStatus({ userId });
+}
+
 export async function updateUserRole(data: unknown) {
   const admin = await requirePlatformAdmin();
   const parsed = updateUserRoleSchema.safeParse(data);
@@ -620,6 +674,12 @@ export async function updateUserRole(data: unknown) {
 
   revalidatePath("/superadmin/users");
   return { ok: true, user: updated } as const;
+}
+
+export async function setUserRoleFromForm(formData: FormData) {
+  const userId = formData.get("userId") as string;
+  const role = formData.get("role") as Role;
+  await updateUserRole({ userId, role });
 }
 
 // ===================================================================

@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { createPlatformMessage, listPlatformMessages } from "../actions";
+import {
+  createPlatformMessageFromForm,
+  listPlatformMessages,
+} from "../actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -86,17 +89,7 @@ export default async function MessagesPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <form
-              action={async (formData: FormData) => {
-                "use server";
-                const data = Object.fromEntries(formData.entries());
-                await createPlatformMessage({
-                  ...data,
-                  isBroadcast: data.isBroadcast === "on",
-                });
-              }}
-              className="space-y-4"
-            >
+            <form action={createPlatformMessageFromForm} className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-slate-700">
                   Type

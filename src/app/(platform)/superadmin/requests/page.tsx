@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listUserRequests, reviewUserRequest } from "../actions";
+import { listUserRequests, reviewUserRequestFromForm } from "../actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -228,15 +228,17 @@ export default async function RequestsPage({
                       <td className="px-6 py-4 text-right">
                         {req.status === "PENDING" && (
                           <div className="flex items-center justify-end gap-2">
-                            <form
-                              action={async () => {
-                                "use server";
-                                await reviewUserRequest({
-                                  requestId: req.id,
-                                  status: "APPROVED",
-                                });
-                              }}
-                            >
+                            <form action={reviewUserRequestFromForm}>
+                              <input
+                                type="hidden"
+                                name="requestId"
+                                value={req.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="status"
+                                value="APPROVED"
+                              />
                               <button
                                 type="submit"
                                 className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 transition-colors hover:bg-emerald-100"
@@ -244,15 +246,17 @@ export default async function RequestsPage({
                                 Approuver
                               </button>
                             </form>
-                            <form
-                              action={async () => {
-                                "use server";
-                                await reviewUserRequest({
-                                  requestId: req.id,
-                                  status: "REJECTED",
-                                });
-                              }}
-                            >
+                            <form action={reviewUserRequestFromForm}>
+                              <input
+                                type="hidden"
+                                name="requestId"
+                                value={req.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="status"
+                                value="REJECTED"
+                              />
                               <button
                                 type="submit"
                                 className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 ring-1 ring-red-200 transition-colors hover:bg-red-100"

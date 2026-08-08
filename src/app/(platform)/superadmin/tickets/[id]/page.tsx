@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
   getSupportTicket,
-  replyToTicket,
-  updateTicketStatus,
+  replyToTicketFromForm,
+  updateTicketStatusFromForm,
 } from "../../actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,15 +68,9 @@ export default async function TicketDetailPage({ params }: Props) {
         </Link>
         <div className="flex items-center gap-2">
           {ticket.status !== "RESOLVED" && ticket.status !== "CLOSED" && (
-            <form
-              action={async () => {
-                "use server";
-                await updateTicketStatus({
-                  ticketId: ticket.id,
-                  status: "RESOLVED",
-                });
-              }}
-            >
+            <form action={updateTicketStatusFromForm}>
+              <input type="hidden" name="ticketId" value={ticket.id} />
+              <input type="hidden" name="status" value="RESOLVED" />
               <Button type="submit" variant="secondary">
                 <CheckCircle2 className="mr-2 h-4 w-4" />
                 Marquer résolu
@@ -84,15 +78,9 @@ export default async function TicketDetailPage({ params }: Props) {
             </form>
           )}
           {(ticket.status === "RESOLVED" || ticket.status === "CLOSED") && (
-            <form
-              action={async () => {
-                "use server";
-                await updateTicketStatus({
-                  ticketId: ticket.id,
-                  status: "OPEN",
-                });
-              }}
-            >
+            <form action={updateTicketStatusFromForm}>
+              <input type="hidden" name="ticketId" value={ticket.id} />
+              <input type="hidden" name="status" value="OPEN" />
               <Button type="submit" variant="secondary">
                 Rouvrir
               </Button>
@@ -232,14 +220,7 @@ export default async function TicketDetailPage({ params }: Props) {
 
           {/* Reply form */}
           {ticket.status !== "CLOSED" && (
-            <form
-              action={async (formData: FormData) => {
-                "use server";
-                const data = Object.fromEntries(formData.entries());
-                await replyToTicket(data);
-              }}
-              className="mt-6 flex gap-3"
-            >
+            <form action={replyToTicketFromForm} className="mt-6 flex gap-3">
               <input type="hidden" name="ticketId" value={ticket.id} />
               <input
                 name="content"

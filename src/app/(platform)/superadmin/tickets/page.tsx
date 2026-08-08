@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { listSupportTickets, updateTicketStatus } from "../actions";
+import { listSupportTickets, updateTicketStatusFromForm } from "../actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -235,15 +235,17 @@ export default async function TicketsPage({
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
                           {ticket.status === "OPEN" && (
-                            <form
-                              action={async () => {
-                                "use server";
-                                await updateTicketStatus({
-                                  ticketId: ticket.id,
-                                  status: "IN_PROGRESS",
-                                });
-                              }}
-                            >
+                            <form action={updateTicketStatusFromForm}>
+                              <input
+                                type="hidden"
+                                name="ticketId"
+                                value={ticket.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="status"
+                                value="IN_PROGRESS"
+                              />
                               <button
                                 type="submit"
                                 className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200 transition-colors hover:bg-amber-100"
@@ -253,15 +255,17 @@ export default async function TicketsPage({
                             </form>
                           )}
                           {ticket.status === "IN_PROGRESS" && (
-                            <form
-                              action={async () => {
-                                "use server";
-                                await updateTicketStatus({
-                                  ticketId: ticket.id,
-                                  status: "RESOLVED",
-                                });
-                              }}
-                            >
+                            <form action={updateTicketStatusFromForm}>
+                              <input
+                                type="hidden"
+                                name="ticketId"
+                                value={ticket.id}
+                              />
+                              <input
+                                type="hidden"
+                                name="status"
+                                value="RESOLVED"
+                              />
                               <button
                                 type="submit"
                                 className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 transition-colors hover:bg-emerald-100"
