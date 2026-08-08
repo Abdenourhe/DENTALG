@@ -102,11 +102,7 @@ export default function PricingSection({ plans }: PricingSectionProps) {
                   <Link href="/register" className="mt-6">
                     <Button
                       variant={isPopular ? "primary" : "secondary"}
-                      className={`w-full ${
-                        isPopular
-                          ? "bg-primary hover:bg-primary-800"
-                          : "border-slate-300 text-slate-700 hover:bg-slate-50"
-                      }`}
+                      className="w-full"
                     >
                       {isFree ? "Commencer gratuit" : "Choisir ce forfait"}
                     </Button>

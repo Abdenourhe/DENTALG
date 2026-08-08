@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/auth";
 import PublicHeader from "../_components/PublicHeader";
+import PublicFooter from "../_components/PublicFooter";
 import JobOffersSection from "../_components/JobOffersSection";
 import { listPublicJobOffers } from "@/lib/actions/job-offers";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,8 @@ import {
   Stethoscope,
   Plus,
   ArrowRight,
+  Building2,
+  Wrench,
 } from "lucide-react";
 
 function isStageOffer(title: string) {
@@ -39,7 +42,7 @@ export default async function CarrieresPublicPage() {
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-lg text-slate-400">
             Postes proposés par les cabinets dentaires en Algérie. Trouvez votre
-            prochaine opportunité professionnelle.
+            prochaine opportunité professionnelle ou publiez vos besoins.
           </p>
 
           <div className="mx-auto mt-8 flex max-w-xl flex-wrap justify-center gap-3">
@@ -63,16 +66,72 @@ export default async function CarrieresPublicPage() {
             </div>
           </div>
 
-          {session?.user?.clinicId && (
-            <div className="mt-8">
+          <div className="mx-auto mt-8 flex flex-wrap justify-center gap-3">
+            {session?.user?.clinicId ? (
               <Link href="/carrieres/manage">
                 <Button className="bg-primary hover:bg-primary-800">
                   <Plus className="mr-2 h-4 w-4" />
                   Publier une offre
                 </Button>
               </Link>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button className="bg-primary hover:bg-primary-800">
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Espace recruteur
+                  </Button>
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center gap-2 rounded-xl bg-white/10 px-5 py-2.5 text-sm font-semibold text-white ring-1 ring-white/20 backdrop-blur-sm transition-all hover:bg-white/15"
+                >
+                  Créer un compte pro
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Categories teaser */}
+      <section className="border-b border-slate-200 bg-white px-6 py-8">
+        <div className="mx-auto max-w-6xl">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="flex items-start gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <div className="rounded-lg bg-blue-100 p-2.5 text-blue-600">
+                <Stethoscope className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900">Emplois</h3>
+                <p className="text-sm text-slate-500">
+                  Dentistes, assistants et secrétaires.
+                </p>
+              </div>
             </div>
-          )}
+            <div className="flex items-start gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <div className="rounded-lg bg-purple-100 p-2.5 text-purple-600">
+                <GraduationCap className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900">Stages</h3>
+                <p className="text-sm text-slate-500">
+                  Opportunités pour étudiants en dentisterie.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
+              <div className="rounded-lg bg-amber-100 p-2.5 text-amber-600">
+                <Wrench className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-slate-900">Matériel</h3>
+                <p className="text-sm text-slate-500">
+                  Équipements et fournitures dentaires.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -104,16 +163,7 @@ export default async function CarrieresPublicPage() {
         />
       </main>
 
-      <footer className="mt-auto border-t border-slate-200 bg-white py-6">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 sm:flex-row">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="DENTALG" className="h-5 w-auto" />
-          <p className="text-xs text-slate-400">
-            © {new Date().getFullYear()} DENTALG — Marketplace dentaire en
-            Algérie
-          </p>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
