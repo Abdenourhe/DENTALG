@@ -13,8 +13,12 @@ import {
   updateClinicSchema,
   deleteClinicSchema,
   clinicRequestSchema,
+  updateClinicRequestSchema,
   reviewClinicRequestSchema,
   updateFeaturesSchema,
+  toggleUserStatusSchema,
+  updateUserRoleSchema,
+  sendPaymentRequestSchema,
 } from "@/lib/validations/platform";
 import { Role, RequestStatus, TicketStatus } from "@prisma/client";
 import bcrypt from "bcrypt";
@@ -333,10 +337,80 @@ export async function createClinicRequest(data: unknown) {
       ownerLastName: parsed.data.ownerLastName,
       ownerEmail: parsed.data.ownerEmail,
       ownerPassword: passwordHash,
+      doctorCount: parsed.data.doctorCount || undefined,
+      assistantCount: parsed.data.assistantCount || undefined,
+      secretaryCount: parsed.data.secretaryCount || undefined,
+      specialty: parsed.data.specialty || undefined,
+      equipmentNeeds: parsed.data.equipmentNeeds || undefined,
+      requestedPlan: parsed.data.requestedPlan,
     },
   });
 
   return { ok: true, request: req } as const;
+}
+
+export async function updateClinicRequest(data: unknown) {
+  const admin = await requirePlatformAdmin();
+  const parsed = updateClinicRequestSchema.safeParse(data);
+  if (!parsed.success) {
+    return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
+  }
+
+  const req = await prisma.clinicRequest.findUnique({
+    where: { id: parsed.data.requestId },
+  });
+  if (!req) {
+    return {
+      ok: false,
+      errors: { requestId: ["Demande introuvable."] },
+    } as const;
+  }
+  if (req.status !== "PENDING" && req.status !== "RETURNED") {
+    return {
+      ok: false,
+      errors: { requestId: ["Cette demande ne peut plus être modifiée."] },
+    } as const;
+  }
+
+  const cleaned: Record<string, unknown> = {};
+  if (parsed.data.name !== undefined) cleaned.name = parsed.data.name;
+  if (parsed.data.email !== undefined) cleaned.email = parsed.data.email;
+  if (parsed.data.phone !== undefined)
+    cleaned.phone = parsed.data.phone || undefined;
+  if (parsed.data.address !== undefined)
+    cleaned.address = parsed.data.address || undefined;
+  if (parsed.data.city !== undefined)
+    cleaned.city = parsed.data.city || undefined;
+  if (parsed.data.wilaya !== undefined)
+    cleaned.wilaya = parsed.data.wilaya || undefined;
+  if (parsed.data.ownerFirstName !== undefined)
+    cleaned.ownerFirstName = parsed.data.ownerFirstName;
+  if (parsed.data.ownerLastName !== undefined)
+    cleaned.ownerLastName = parsed.data.ownerLastName;
+  if (parsed.data.ownerEmail !== undefined)
+    cleaned.ownerEmail = parsed.data.ownerEmail;
+  if (parsed.data.doctorCount !== undefined)
+    cleaned.doctorCount = parsed.data.doctorCount;
+  if (parsed.data.assistantCount !== undefined)
+    cleaned.assistantCount = parsed.data.assistantCount;
+  if (parsed.data.secretaryCount !== undefined)
+    cleaned.secretaryCount = parsed.data.secretaryCount;
+  if (parsed.data.specialty !== undefined)
+    cleaned.specialty = parsed.data.specialty || undefined;
+  if (parsed.data.equipmentNeeds !== undefined)
+    cleaned.equipmentNeeds = parsed.data.equipmentNeeds || undefined;
+  if (parsed.data.requestedPlan !== undefined)
+    cleaned.requestedPlan = parsed.data.requestedPlan;
+  if (parsed.data.adminComment !== undefined)
+    cleaned.adminComment = parsed.data.adminComment || undefined;
+
+  const updated = await prisma.clinicRequest.update({
+    where: { id: parsed.data.requestId },
+    data: cleaned,
+  });
+
+  revalidatePath("/superadmin/clinic-requests");
+  return { ok: true, request: updated } as const;
 }
 
 export async function reviewClinicRequest(data: unknown) {
@@ -367,7 +441,7 @@ export async function reviewClinicRequest(data: unknown) {
         address: req.address,
         city: req.city,
         wilaya: req.wilaya,
-        plan: "FREE",
+        plan: req.requestedPlan,
         features: {},
       },
     });
@@ -384,6 +458,34 @@ export async function reviewClinicRequest(data: unknown) {
       },
     });
 
+    // Initialize counters
+    const counterTypes = [
+      "PATIENT",
+      "INVOICE",
+      "QUOTE",
+      "PRESCRIPTION",
+      "LAB_ORDER",
+    ];
+    await prisma.counter.createMany({
+      data: counterTypes.map((type) => ({
+        clinicId: clinic.id,
+        type,
+        value: 0,
+      })),
+    });
+
+    // Audit log
+    await prisma.auditLog.create({
+      data: {
+        clinicId: clinic.id,
+        userId: admin.userId,
+        action: "CREATE",
+        entityType: "Clinic",
+        entityId: clinic.id,
+        metadata: { source: "clinicRequest", requestId: req.id },
+      },
+    });
+
     await prisma.clinicRequest.update({
       where: { id: parsed.data.requestId },
       data: {
@@ -391,6 +493,18 @@ export async function reviewClinicRequest(data: unknown) {
         reviewedById: admin.userId,
         reviewedAt: new Date(),
         notes: parsed.data.notes || undefined,
+        adminComment: parsed.data.adminComment || undefined,
+      },
+    });
+  } else if (parsed.data.status === "RETURNED") {
+    await prisma.clinicRequest.update({
+      where: { id: parsed.data.requestId },
+      data: {
+        status: "RETURNED",
+        reviewedById: admin.userId,
+        reviewedAt: new Date(),
+        notes: parsed.data.notes || undefined,
+        adminComment: parsed.data.adminComment || undefined,
       },
     });
   } else {
@@ -401,11 +515,178 @@ export async function reviewClinicRequest(data: unknown) {
         reviewedById: admin.userId,
         reviewedAt: new Date(),
         notes: parsed.data.notes || undefined,
+        adminComment: parsed.data.adminComment || undefined,
       },
     });
   }
 
   revalidatePath("/superadmin/clinic-requests");
+  return { ok: true } as const;
+}
+
+// ===================================================================
+// User management (superadmin)
+// ===================================================================
+
+export async function listAllUsers(search?: string) {
+  await requirePlatformAdmin();
+  return prisma.user.findMany({
+    where: search
+      ? {
+          OR: [
+            { firstName: { contains: search, mode: "insensitive" } },
+            { lastName: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+          ],
+        }
+      : undefined,
+    orderBy: { createdAt: "desc" },
+    take: 200,
+    include: {
+      clinic: { select: { name: true, slug: true, isActive: true } },
+    },
+  });
+}
+
+export async function toggleUserStatus(data: unknown) {
+  const admin = await requirePlatformAdmin();
+  const parsed = toggleUserStatusSchema.safeParse(data);
+  if (!parsed.success) {
+    return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: parsed.data.userId },
+  });
+  if (!user) {
+    return {
+      ok: false,
+      errors: { userId: ["Utilisateur introuvable."] },
+    } as const;
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: parsed.data.userId },
+    data: { isActive: !user.isActive },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      clinicId: user.clinicId ?? undefined,
+      userId: admin.userId,
+      action: "UPDATE",
+      entityType: "User",
+      entityId: user.id,
+      metadata: { isActive: updated.isActive },
+    },
+  });
+
+  revalidatePath("/superadmin/users");
+  return { ok: true, user: updated } as const;
+}
+
+export async function updateUserRole(data: unknown) {
+  const admin = await requirePlatformAdmin();
+  const parsed = updateUserRoleSchema.safeParse(data);
+  if (!parsed.success) {
+    return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: parsed.data.userId },
+  });
+  if (!user) {
+    return {
+      ok: false,
+      errors: { userId: ["Utilisateur introuvable."] },
+    } as const;
+  }
+
+  const updated = await prisma.user.update({
+    where: { id: parsed.data.userId },
+    data: { role: parsed.data.role },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      clinicId: user.clinicId ?? undefined,
+      userId: admin.userId,
+      action: "UPDATE",
+      entityType: "User",
+      entityId: user.id,
+      metadata: { oldRole: user.role, newRole: updated.role },
+    },
+  });
+
+  revalidatePath("/superadmin/users");
+  return { ok: true, user: updated } as const;
+}
+
+// ===================================================================
+// Payment requests
+// ===================================================================
+
+export async function sendPaymentRequest(data: unknown) {
+  const admin = await requirePlatformAdmin();
+  const parsed = sendPaymentRequestSchema.safeParse(data);
+  if (!parsed.success) {
+    return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
+  }
+
+  const clinic = await prisma.clinic.findUnique({
+    where: { id: parsed.data.clinicId },
+  });
+  if (!clinic) {
+    return {
+      ok: false,
+      errors: { clinicId: ["Cabinet introuvable."] },
+    } as const;
+  }
+
+  // Create subscription payment record
+  const now = new Date();
+  const expiresAt = new Date(
+    now.getFullYear() + 1,
+    now.getMonth(),
+    now.getDate(),
+  );
+
+  await prisma.subscriptionPayment.create({
+    data: {
+      clinicId: parsed.data.clinicId,
+      plan: parsed.data.plan,
+      amountCents: parsed.data.amountCents,
+      status: "ACTIVE",
+      startedAt: now,
+      expiresAt,
+    },
+  });
+
+  await prisma.clinic.update({
+    where: { id: parsed.data.clinicId },
+    data: {
+      plan: parsed.data.plan,
+      paymentStatus: "REQUESTED",
+      paymentRequestedAt: now,
+    },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      clinicId: parsed.data.clinicId,
+      userId: admin.userId,
+      action: "CREATE",
+      entityType: "SubscriptionPayment",
+      metadata: {
+        plan: parsed.data.plan,
+        amountCents: parsed.data.amountCents,
+        notes: parsed.data.notes,
+      },
+    },
+  });
+
+  revalidatePath("/superadmin/clinics");
+  revalidatePath(`/superadmin/clinics/${parsed.data.clinicId}`);
   return { ok: true } as const;
 }
 
@@ -441,6 +722,8 @@ export async function getSuperAdminStats() {
     totalMessages,
     recentMessages,
     pendingClinicRequests,
+    totalUsers,
+    totalClinics,
   ] = await Promise.all([
     prisma.supportTicket.count({ where: { status: "OPEN" } }),
     prisma.userRequest.count({ where: { status: "PENDING" } }),
@@ -450,6 +733,8 @@ export async function getSuperAdminStats() {
       take: 5,
     }),
     prisma.clinicRequest.count({ where: { status: "PENDING" } }),
+    prisma.user.count(),
+    prisma.clinic.count(),
   ]);
 
   return {
@@ -458,5 +743,7 @@ export async function getSuperAdminStats() {
     totalMessages,
     recentMessages,
     pendingClinicRequests,
+    totalUsers,
+    totalClinics,
   };
 }

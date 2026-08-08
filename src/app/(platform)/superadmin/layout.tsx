@@ -8,6 +8,7 @@ import {
   Ticket,
   UserPlus,
   Store,
+  Users,
 } from "lucide-react";
 import { SidebarLogout } from "@/components/sidebar-logout";
 
@@ -19,6 +20,7 @@ const navItems = [
     label: "Demandes cabinets",
     icon: Store,
   },
+  { href: "/superadmin/users", label: "Utilisateurs", icon: Users },
   { href: "/superadmin/messages", label: "Messagerie", icon: MessageSquare },
   { href: "/superadmin/tickets", label: "Tickets support", icon: Ticket },
   { href: "/superadmin/requests", label: "Demandes profils", icon: UserPlus },

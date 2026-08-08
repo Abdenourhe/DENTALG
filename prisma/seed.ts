@@ -22,8 +22,75 @@ async function main() {
   await prisma.patient.deleteMany();
   await prisma.user.deleteMany();
   await prisma.clinic.deleteMany();
+  await prisma.planDefinition.deleteMany();
+  await prisma.counter.deleteMany();
 
-  // Create demo clinic
+  // ── Plan definitions ──
+  const plans = [
+    {
+      plan: Plan.FREE,
+      name: "Gratuit",
+      description: "1 médecin, 50 patients max, calendrier de base.",
+      monthlyPriceCents: 0,
+      yearlyPriceCents: 0,
+      features: {
+        INVOICING: false,
+        PRESCRIPTIONS: false,
+        LAB_ORDERS: false,
+        JOB_OFFERS: false,
+        ADVANCED_REPORTS: false,
+      },
+    },
+    {
+      plan: Plan.ESSENTIEL,
+      name: "Essentiel",
+      description: "3 utilisateurs, patients illimités, facturation.",
+      monthlyPriceCents: 490000,
+      yearlyPriceCents: 4990000,
+      features: {
+        INVOICING: true,
+        PRESCRIPTIONS: true,
+        LAB_ORDERS: false,
+        JOB_OFFERS: false,
+        ADVANCED_REPORTS: false,
+      },
+    },
+    {
+      plan: Plan.PRO,
+      name: "Pro",
+      description: "10 utilisateurs, laboratoire, offres d'emploi.",
+      monthlyPriceCents: 990000,
+      yearlyPriceCents: 9990000,
+      features: {
+        INVOICING: true,
+        PRESCRIPTIONS: true,
+        LAB_ORDERS: true,
+        JOB_OFFERS: true,
+        ADVANCED_REPORTS: false,
+      },
+    },
+    {
+      plan: Plan.PREMIUM,
+      name: "Premium",
+      description: "Utilisateurs illimités, analytics avancés, API.",
+      monthlyPriceCents: 1990000,
+      yearlyPriceCents: 19990000,
+      features: {
+        INVOICING: true,
+        PRESCRIPTIONS: true,
+        LAB_ORDERS: true,
+        JOB_OFFERS: true,
+        ADVANCED_REPORTS: true,
+      },
+    },
+  ];
+
+  for (const p of plans) {
+    await prisma.planDefinition.create({ data: p });
+  }
+  console.log(`✅ Plan definitions created: ${plans.length}`);
+
+  // ── Create demo clinic ──
   const clinic = await prisma.clinic.create({
     data: {
       name: "Cabinet Dentaire Benali",
@@ -35,13 +102,38 @@ async function main() {
       wilaya: "Alger",
       plan: Plan.PRO,
       isActive: true,
+      features: {
+        INVOICING: true,
+        PRESCRIPTIONS: true,
+        LAB_ORDERS: true,
+        JOB_OFFERS: true,
+        ADVANCED_REPORTS: false,
+      },
     },
   });
 
   console.log(`✅ Clinic created: ${clinic.name}`);
 
-  // Create owner
+  // ── Initialize counters ──
+  const counterTypes = [
+    "PATIENT",
+    "INVOICE",
+    "QUOTE",
+    "PRESCRIPTION",
+    "LAB_ORDER",
+  ];
+  await prisma.counter.createMany({
+    data: counterTypes.map((type) => ({
+      clinicId: clinic.id,
+      type,
+      value: 0,
+    })),
+  });
+  console.log(`✅ Counters initialized: ${counterTypes.length}`);
+
+  // ── Create users ──
   const passwordHash = await bcrypt.hash("DemoPass123!", 10);
+
   const owner = await prisma.user.create({
     data: {
       clinicId: clinic.id,
@@ -54,7 +146,6 @@ async function main() {
     },
   });
 
-  // Create assistant
   const assistant = await prisma.user.create({
     data: {
       clinicId: clinic.id,
@@ -67,7 +158,6 @@ async function main() {
     },
   });
 
-  // Create secretary
   const secretary = await prisma.user.create({
     data: {
       clinicId: clinic.id,
@@ -80,10 +170,32 @@ async function main() {
     },
   });
 
-  console.log(`✅ Users created: ${owner.email}, ${assistant.email}, ${secretary.email}`);
+  console.log(
+    `✅ Users created: ${owner.email}, ${assistant.email}, ${secretary.email}`,
+  );
 
-  // Create patients
-  const patients = await prisma.patient.createMany({
+  // ── Optional platform admin ──
+  const platformAdminExists = await prisma.user.findUnique({
+    where: { email: "admin@dentalg.dz" },
+  });
+  if (!platformAdminExists) {
+    await prisma.user.create({
+      data: {
+        email: "admin@dentalg.dz",
+        passwordHash: await bcrypt.hash("SuperAdmin2024!", 12),
+        firstName: "Super",
+        lastName: "Admin",
+        role: Role.PLATFORM_ADMIN,
+        isActive: true,
+      },
+    });
+    console.log(
+      `✅ Platform admin created: admin@dentalg.dz / SuperAdmin2024!`,
+    );
+  }
+
+  // ── Create patients ──
+  await prisma.patient.createMany({
     data: [
       {
         clinicId: clinic.id,
@@ -136,29 +248,85 @@ async function main() {
     ],
   });
 
+  // Update patient counter
+  await prisma.counter.updateMany({
+    where: { clinicId: clinic.id, type: "PATIENT" },
+    data: { value: 4 },
+  });
+
   console.log(`✅ Patients created: 4`);
 
-  // Create procedures
-  const procedures = await prisma.procedure.createMany({
+  // ── Create procedures ──
+  await prisma.procedure.createMany({
     data: [
-      { clinicId: clinic.id, code: "CONSULT", name: "Consultation", priceCents: 200000, color: "#3b82f6", isActive: true },
-      { clinicId: clinic.id, code: "DETART", name: "Détartrage", priceCents: 300000, color: "#10b981", isActive: true },
-      { clinicId: clinic.id, code: "OBTUR", name: "Obturation composite", priceCents: 450000, color: "#f59e0b", isActive: true },
-      { clinicId: clinic.id, code: "EXTRAC", name: "Extraction simple", priceCents: 250000, color: "#ef4444", isActive: true },
-      { clinicId: clinic.id, code: "IMPLANT", name: "Implant + couronne", priceCents: 4500000, color: "#8b5cf6", isActive: true },
-      { clinicId: clinic.id, code: "DEVIT", name: "Dévitalisation", priceCents: 1200000, color: "#06b6d4", isActive: true },
-      { clinicId: clinic.id, code: "COURN", name: "Couronne céramique", priceCents: 1800000, color: "#a855f7", isActive: true },
+      {
+        clinicId: clinic.id,
+        code: "CONSULT",
+        name: "Consultation",
+        priceCents: 200000,
+        color: "#3b82f6",
+        isActive: true,
+      },
+      {
+        clinicId: clinic.id,
+        code: "DETART",
+        name: "Détartrage",
+        priceCents: 300000,
+        color: "#10b981",
+        isActive: true,
+      },
+      {
+        clinicId: clinic.id,
+        code: "OBTUR",
+        name: "Obturation composite",
+        priceCents: 450000,
+        color: "#f59e0b",
+        isActive: true,
+      },
+      {
+        clinicId: clinic.id,
+        code: "EXTRAC",
+        name: "Extraction simple",
+        priceCents: 250000,
+        color: "#ef4444",
+        isActive: true,
+      },
+      {
+        clinicId: clinic.id,
+        code: "IMPLANT",
+        name: "Implant + couronne",
+        priceCents: 4500000,
+        color: "#8b5cf6",
+        isActive: true,
+      },
+      {
+        clinicId: clinic.id,
+        code: "DEVIT",
+        name: "Dévitalisation",
+        priceCents: 1200000,
+        color: "#06b6d4",
+        isActive: true,
+      },
+      {
+        clinicId: clinic.id,
+        code: "COURN",
+        name: "Couronne céramique",
+        priceCents: 1800000,
+        color: "#a855f7",
+        isActive: true,
+      },
     ],
   });
 
   console.log(`✅ Procedures created: 7`);
 
-  // Create a published job offer
+  // ── Create a published job offer ──
   await prisma.jobOffer.create({
     data: {
       clinicId: clinic.id,
       title: "Assistant(e) dentaire — CDI",
-      description: "Nous recherchons un(e) assistant(e) dentaire qualifié(e) pour rejoindre notre équipe.\n\nMissions :\n- Accueil et gestion des patients\n- Assistance au fauteuil\n- Stérilisation du matériel\n- Gestion des stocks\n\nProfil recherché :\n- Diplôme d'assistant(e) dentaire\n- 2 ans d'expérience minimum\n- Maîtrise du français",
+      description:
+        "Nous recherchons un(e) assistant(e) dentaire qualifié(e) pour rejoindre notre équipe.\n\nMissions :\n- Accueil et gestion des patients\n- Assistance au fauteuil\n- Stérilisation du matériel\n- Gestion des stocks\n\nProfil recherché :\n- Diplôme d'assistant(e) dentaire\n- 2 ans d'expérience minimum\n- Maîtrise du français",
       location: "Alger Centre",
       requirements: "Diplôme assistant dentaire, 2 ans expérience",
       status: "PUBLISHED",
@@ -171,9 +339,10 @@ async function main() {
   console.log("🎉 Seed completed successfully!");
   console.log("");
   console.log("Login credentials:");
-  console.log("  Owner:    dr.benali@demo.dz / DemoPass123!");
+  console.log("  Owner:     dr.benali@demo.dz / DemoPass123!");
   console.log("  Assistant: assistant@demo.dz / DemoPass123!");
   console.log("  Secretary: secretary@demo.dz / DemoPass123!");
+  console.log("  SuperAdmin: admin@dentalg.dz / SuperAdmin2024!");
 }
 
 async function procedureDeleteMany() {

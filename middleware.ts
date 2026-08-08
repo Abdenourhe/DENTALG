@@ -1,40 +1,42 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-type AuthNextRequest = NextRequest & {
-  auth?: { user?: { role?: string } } | null;
-};
+const PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/register",
+  "/forgot-password",
+  "/carrieres",
+  "/superadmin/login",
+  "/api/auth",
+  "/request-clinic",
+  "/fonctionnalites",
+];
 
-export default auth((req: AuthNextRequest) => {
-  const { nextUrl } = req;
-  const isLoggedIn = !!req.auth;
-  const role = req.auth?.user?.role;
+const SESSION_COOKIE = "authjs.session-token";
 
-  const isPublic =
-    nextUrl.pathname === "/" ||
-    nextUrl.pathname.startsWith("/login") ||
-    nextUrl.pathname.startsWith("/register") ||
-    nextUrl.pathname.startsWith("/carrieres") ||
-    nextUrl.pathname.startsWith("/superadmin/login") ||
-    nextUrl.pathname.startsWith("/api/auth");
+export default function middleware(req: NextRequest) {
+  const { nextUrl, cookies } = req;
+  const sessionCookie = cookies.get(SESSION_COOKIE)?.value;
+  const isLoggedIn = !!sessionCookie;
+
+  const isPublic = PUBLIC_PATHS.some((p) =>
+    p === "/" ? nextUrl.pathname === "/" : nextUrl.pathname.startsWith(p),
+  );
 
   const isSuperadminRoute = nextUrl.pathname.startsWith("/superadmin");
+  const isApiRoute = nextUrl.pathname.startsWith("/api");
 
-  // Non authentifié sur une route privée -> rediriger vers le bon login
-  if (!isLoggedIn && !isPublic) {
+  if (isPublic || isApiRoute) return NextResponse.next();
+
+  if (!isLoggedIn) {
     const loginUrl = isSuperadminRoute ? "/superadmin/login" : "/login";
     return NextResponse.redirect(new URL(loginUrl, nextUrl));
   }
 
-  // Route superadmin (hors login) réservée au PLATFORM_ADMIN
-  if (isSuperadminRoute && !isPublic && role !== "PLATFORM_ADMIN") {
-    return NextResponse.redirect(new URL("/superadmin/login", nextUrl));
-  }
-
   return NextResponse.next();
-});
+}
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\..*).*))"],
 };

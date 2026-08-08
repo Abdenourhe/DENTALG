@@ -77,11 +77,58 @@ export const clinicRequestSchema = z.object({
   ownerLastName: z.string().min(1, "Nom requis."),
   ownerEmail: z.string().email("Email du propriétaire invalide."),
   ownerPassword: z.string().min(6, "Mot de passe min. 6 caractères."),
+  doctorCount: z.coerce.number().int().min(0).optional(),
+  assistantCount: z.coerce.number().int().min(0).optional(),
+  secretaryCount: z.coerce.number().int().min(0).optional(),
+  specialty: z.string().optional().or(z.literal("")),
+  equipmentNeeds: z.string().optional().or(z.literal("")),
+  requestedPlan: z
+    .enum(["FREE", "ESSENTIEL", "PRO", "PREMIUM"])
+    .default("FREE"),
+});
+
+export const updateClinicRequestSchema = z.object({
+  requestId: z.string().min(1),
+  name: z.string().min(1).optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional().or(z.literal("")),
+  address: z.string().optional().or(z.literal("")),
+  city: z.string().optional().or(z.literal("")),
+  wilaya: z.string().optional().or(z.literal("")),
+  ownerFirstName: z.string().min(1).optional(),
+  ownerLastName: z.string().min(1).optional(),
+  ownerEmail: z.string().email().optional(),
+  doctorCount: z.coerce.number().int().min(0).optional(),
+  assistantCount: z.coerce.number().int().min(0).optional(),
+  secretaryCount: z.coerce.number().int().min(0).optional(),
+  specialty: z.string().optional().or(z.literal("")),
+  equipmentNeeds: z.string().optional().or(z.literal("")),
+  requestedPlan: z.enum(["FREE", "ESSENTIEL", "PRO", "PREMIUM"]).optional(),
+  adminComment: z.string().optional().or(z.literal("")),
 });
 
 export const reviewClinicRequestSchema = z.object({
   requestId: z.string().min(1),
-  status: z.enum(["APPROVED", "REJECTED"]),
+  status: z.enum(["APPROVED", "REJECTED", "RETURNED"]),
+  notes: z.string().optional().or(z.literal("")),
+  adminComment: z.string().optional().or(z.literal("")),
+});
+
+// ── User management ──
+export const toggleUserStatusSchema = z.object({
+  userId: z.string().min(1),
+});
+
+export const updateUserRoleSchema = z.object({
+  userId: z.string().min(1),
+  role: z.nativeEnum(Role),
+});
+
+// ── Payment request ──
+export const sendPaymentRequestSchema = z.object({
+  clinicId: z.string().min(1),
+  plan: z.enum(["FREE", "ESSENTIEL", "PRO", "PREMIUM"]),
+  amountCents: z.coerce.number().int().min(0),
   notes: z.string().optional().or(z.literal("")),
 });
 

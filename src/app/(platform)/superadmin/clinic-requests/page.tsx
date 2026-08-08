@@ -6,17 +6,30 @@ import { prisma } from "@/lib/prisma";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "@/components/ui/table";
+import { Breadcrumb } from "@/components/ui/breadcrumb";
+import {
   Building2,
-  ArrowLeft,
   Clock,
   CheckCircle2,
   XCircle,
   Mail,
   Phone,
   User,
+  RotateCcw,
+  Pencil,
+  Users,
+  Stethoscope,
+  Wrench,
 } from "lucide-react";
 import { RequestStatus } from "@prisma/client";
-import { reviewClinicRequest } from "../actions";
+import { reviewClinicRequest, updateClinicRequest } from "../actions";
 
 export default async function ClinicRequestsPage({
   searchParams,
@@ -36,30 +49,68 @@ export default async function ClinicRequestsPage({
     pending: requests.filter((r) => r.status === "PENDING").length,
     approved: requests.filter((r) => r.status === "APPROVED").length,
     rejected: requests.filter((r) => r.status === "REJECTED").length,
+    returned: requests.filter((r) => r.status === "RETURNED").length,
+  };
+
+  const statusBadge = (s: RequestStatus) => {
+    switch (s) {
+      case "PENDING":
+        return (
+          <Badge variant="warning" pulse>
+            <Clock className="mr-1 h-3 w-3" />
+            En attente
+          </Badge>
+        );
+      case "APPROVED":
+        return (
+          <Badge variant="success">
+            <CheckCircle2 className="mr-1 h-3 w-3" />
+            Approuvé
+          </Badge>
+        );
+      case "REJECTED":
+        return (
+          <Badge variant="danger">
+            <XCircle className="mr-1 h-3 w-3" />
+            Rejeté
+          </Badge>
+        );
+      case "RETURNED":
+        return (
+          <Badge
+            variant="default"
+            className="bg-amber-100 text-amber-800 ring-amber-200"
+          >
+            <RotateCcw className="mr-1 h-3 w-3" />
+            Retourné
+          </Badge>
+        );
+    }
   };
 
   return (
     <div className="space-y-6">
+      <Breadcrumb items={[{ label: "Demandes de cabinets" }]} />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">
             Demandes de cabinets
           </h1>
           <p className="mt-1 text-slate-500">
-            Approuvez ou rejetez les demandes de création de cabinet.
+            Approuvez, retournez ou rejetez les demandes de création de cabinet.
           </p>
         </div>
         <Link
           href="/superadmin/clinics"
           className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Retour aux cabinets
+          ← Retour aux cabinets
         </Link>
       </div>
 
       {/* Stats */}
-      <div className="grid gap-4 sm:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-5">
         <Link href="/superadmin/clinic-requests">
           <Card className="transition-all hover:shadow-md">
             <CardContent className="flex items-center gap-3 py-4">
@@ -105,6 +156,21 @@ export default async function ClinicRequestsPage({
             </CardContent>
           </Card>
         </Link>
+        <Link href="/superadmin/clinic-requests?status=RETURNED">
+          <Card className="transition-all hover:shadow-md">
+            <CardContent className="flex items-center gap-3 py-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-50">
+                <RotateCcw className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-amber-600">
+                  {counts.returned}
+                </p>
+                <p className="text-xs text-slate-500">Retournées</p>
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
         <Link href="/superadmin/clinic-requests?status=REJECTED">
           <Card className="transition-all hover:shadow-md">
             <CardContent className="flex items-center gap-3 py-4">
@@ -130,135 +196,175 @@ export default async function ClinicRequestsPage({
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  <th className="px-6 py-3">Cabinet</th>
-                  <th className="px-6 py-3">Contact</th>
-                  <th className="px-6 py-3">Propriétaire</th>
-                  <th className="px-6 py-3">Statut</th>
-                  <th className="px-6 py-3">Date</th>
-                  <th className="px-6 py-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {requests.map((req) => (
-                  <tr
-                    key={req.id}
-                    className="transition-colors hover:bg-slate-50/80"
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Cabinet</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Propriétaire</TableHead>
+                <TableHead>Détails</TableHead>
+                <TableHead>Statut</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {requests.map((req) => (
+                <TableRow key={req.id}>
+                  <TableCell>
+                    <p className="font-semibold text-slate-900">{req.name}</p>
+                    <p className="text-xs text-slate-500">{req.slug}</p>
+                    <p className="text-xs text-slate-400">
+                      Plan: {req.requestedPlan}
+                    </p>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1 text-slate-600">
+                      <Mail className="h-3.5 w-3.5" />
+                      {req.email}
+                    </div>
+                    {req.phone && (
+                      <div className="flex items-center gap-1 text-xs text-slate-500">
+                        <Phone className="h-3.5 w-3.5" />
+                        {req.phone}
+                      </div>
+                    )}
+                    {req.wilaya && (
+                      <p className="text-xs text-slate-400">{req.wilaya}</p>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1 text-slate-900">
+                      <User className="h-3.5 w-3.5" />
+                      {req.ownerFirstName} {req.ownerLastName}
+                    </div>
+                    <p className="text-xs text-slate-500">{req.ownerEmail}</p>
+                  </TableCell>
+                  <TableCell>
+                    <div className="space-y-0.5 text-xs text-slate-600">
+                      {req.doctorCount !== null && (
+                        <div className="flex items-center gap-1">
+                          <Stethoscope className="h-3 w-3" />
+                          {req.doctorCount} médecin(s)
+                        </div>
+                      )}
+                      {req.assistantCount !== null && (
+                        <div className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {req.assistantCount} assistant(s)
+                        </div>
+                      )}
+                      {req.secretaryCount !== null && (
+                        <div className="flex items-center gap-1">
+                          <Users className="h-3 w-3" />
+                          {req.secretaryCount} secrétaire(s)
+                        </div>
+                      )}
+                      {req.specialty && (
+                        <div className="flex items-center gap-1">
+                          <Stethoscope className="h-3 w-3" />
+                          {req.specialty}
+                        </div>
+                      )}
+                      {req.equipmentNeeds && (
+                        <div className="flex items-center gap-1">
+                          <Wrench className="h-3 w-3" />
+                          {req.equipmentNeeds}
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>{statusBadge(req.status)}</TableCell>
+                  <TableCell className="text-xs text-slate-500">
+                    {new Date(req.createdAt).toLocaleDateString("fr-FR")}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {(req.status === "PENDING" ||
+                      req.status === "RETURNED") && (
+                      <div className="flex flex-col items-end gap-2">
+                        <form
+                          action={async () => {
+                            "use server";
+                            await reviewClinicRequest({
+                              requestId: req.id,
+                              status: "APPROVED",
+                            });
+                          }}
+                        >
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 transition-colors hover:bg-emerald-100"
+                          >
+                            Approuver
+                          </button>
+                        </form>
+                        <form
+                          action={async () => {
+                            "use server";
+                            await reviewClinicRequest({
+                              requestId: req.id,
+                              status: "RETURNED",
+                              adminComment:
+                                "Demande incomplète. Veuillez fournir plus de détails.",
+                            });
+                          }}
+                        >
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700 ring-1 ring-amber-200 transition-colors hover:bg-amber-100"
+                          >
+                            Retourner
+                          </button>
+                        </form>
+                        <form
+                          action={async () => {
+                            "use server";
+                            await reviewClinicRequest({
+                              requestId: req.id,
+                              status: "REJECTED",
+                            });
+                          }}
+                        >
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 ring-1 ring-red-200 transition-colors hover:bg-red-100"
+                          >
+                            Rejeter
+                          </button>
+                        </form>
+                      </div>
+                    )}
+                    {req.status === "APPROVED" && (
+                      <span className="text-xs text-emerald-600">
+                        Approuvé le{" "}
+                        {req.reviewedAt
+                          ? new Date(req.reviewedAt).toLocaleDateString("fr-FR")
+                          : "—"}
+                      </span>
+                    )}
+                    {req.status === "RETURNED" && req.adminComment && (
+                      <div className="mt-1 max-w-[200px] rounded bg-amber-50 p-2 text-xs text-amber-800">
+                        {req.adminComment}
+                      </div>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {requests.length === 0 && (
+                <TableRow>
+                  <TableCell
+                    colSpan={7}
+                    className="py-12 text-center text-slate-500"
                   >
-                    <td className="px-6 py-4">
-                      <p className="font-semibold text-slate-900">{req.name}</p>
-                      <p className="text-xs text-slate-500">{req.slug}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1 text-slate-600">
-                        <Mail className="h-3.5 w-3.5" />
-                        {req.email}
-                      </div>
-                      {req.phone && (
-                        <div className="flex items-center gap-1 text-xs text-slate-500">
-                          <Phone className="h-3.5 w-3.5" />
-                          {req.phone}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-1 text-slate-900">
-                        <User className="h-3.5 w-3.5" />
-                        {req.ownerFirstName} {req.ownerLastName}
-                      </div>
-                      <p className="text-xs text-slate-500">{req.ownerEmail}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      {req.status === "PENDING" && (
-                        <Badge variant="warning" pulse>
-                          <Clock className="mr-1 h-3 w-3" />
-                          En attente
-                        </Badge>
-                      )}
-                      {req.status === "APPROVED" && (
-                        <Badge variant="success">
-                          <CheckCircle2 className="mr-1 h-3 w-3" />
-                          Approuvé
-                        </Badge>
-                      )}
-                      {req.status === "REJECTED" && (
-                        <Badge variant="danger">
-                          <XCircle className="mr-1 h-3 w-3" />
-                          Rejeté
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-xs text-slate-500">
-                      {new Date(req.createdAt).toLocaleDateString("fr-FR")}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      {req.status === "PENDING" && (
-                        <div className="flex items-center justify-end gap-2">
-                          <form
-                            action={async () => {
-                              "use server";
-                              await reviewClinicRequest({
-                                requestId: req.id,
-                                status: "APPROVED",
-                              });
-                            }}
-                          >
-                            <button
-                              type="submit"
-                              className="rounded-lg bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200 transition-colors hover:bg-emerald-100"
-                            >
-                              Approuver
-                            </button>
-                          </form>
-                          <form
-                            action={async () => {
-                              "use server";
-                              await reviewClinicRequest({
-                                requestId: req.id,
-                                status: "REJECTED",
-                              });
-                            }}
-                          >
-                            <button
-                              type="submit"
-                              className="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 ring-1 ring-red-200 transition-colors hover:bg-red-100"
-                            >
-                              Rejeter
-                            </button>
-                          </form>
-                        </div>
-                      )}
-                      {req.status !== "PENDING" && (
-                        <span className="text-xs text-slate-400">
-                          {req.reviewedAt
-                            ? new Date(req.reviewedAt).toLocaleDateString(
-                                "fr-FR",
-                              )
-                            : "—"}
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {requests.length === 0 && (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-6 py-12 text-center text-slate-500"
-                    >
-                      <Building2 className="mx-auto h-10 w-10 text-slate-300" />
-                      <p className="mt-3 text-sm font-medium">
-                        Aucune demande trouvée.
-                      </p>
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                    <Building2 className="mx-auto h-10 w-10 text-slate-300" />
+                    <p className="mt-3 text-sm font-medium">
+                      Aucune demande trouvée.
+                    </p>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
     </div>

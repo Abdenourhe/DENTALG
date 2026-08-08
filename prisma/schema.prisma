@@ -6,7 +6,6 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-
 enum Role {
   OWNER
   DENTIST
@@ -14,14 +13,12 @@ enum Role {
   SECRETARY
   PLATFORM_ADMIN
 }
-
 enum Plan {
   FREE
   ESSENTIEL
   PRO
   PREMIUM
 }
-
 enum AppointmentStatus {
   SCHEDULED
   CONFIRMED
@@ -29,7 +26,6 @@ enum AppointmentStatus {
   NO_SHOW
   COMPLETED
 }
-
 enum InvoiceStatus {
   DRAFT
   ISSUED
@@ -37,7 +33,6 @@ enum InvoiceStatus {
   OVERDUE
   CREDIT_NOTE
 }
-
 enum QuoteStatus {
   DRAFT
   SENT
@@ -45,7 +40,6 @@ enum QuoteStatus {
   REJECTED
   EXPIRED
 }
-
 enum PaymentMethod {
   CASH
   CARD
@@ -53,20 +47,17 @@ enum PaymentMethod {
   CHEQUE
   OTHER
 }
-
 enum PaymentStatus {
   PENDING
   COMPLETED
   FAILED
   REFUNDED
 }
-
 enum JobOfferStatus {
   DRAFT
   PUBLISHED
   CLOSED
 }
-
 enum ApplicationStatus {
   PENDING
   REVIEWING
@@ -83,33 +74,28 @@ enum AuditAction {
   EXPORT
   VIEW
 }
-
 enum SubscriptionStatus {
   ACTIVE
   PAST_DUE
   CANCELLED
   EXPIRED
 }
-
 enum PrescriptionStatus {
   DRAFT
   ISSUED
 }
-
 enum LabOrderStatus {
   PENDING
   IN_PROGRESS
   COMPLETED
   CANCELLED
 }
-
 enum LabResultStatus {
   PENDING
   NORMAL
   ABNORMAL
   CRITICAL
 }
-
 enum GeneralCondition {
   RAS
   HYPERTENSION_ARTERIELLE
@@ -139,6 +125,8 @@ model Clinic {
   plan                 Plan                  @default(FREE)
   isActive             Boolean               @default(true)
   features             Json?                 @default("{}")
+  paymentStatus        String?               @default("PENDING")
+  paymentRequestedAt   DateTime?
   createdAt            DateTime              @default(now())
   updatedAt            DateTime              @updatedAt
   deletedAt            DateTime?
@@ -866,25 +854,23 @@ model Counter {
   @@unique([clinicId, type])
   @@index([clinicId])
 }
-
 enum TicketType {
   BUG
   COMMENT
   FEATURE_REQUEST
   SUGGESTION
 }
-
 enum TicketStatus {
   OPEN
   IN_PROGRESS
   RESOLVED
   CLOSED
 }
-
 enum RequestStatus {
   PENDING
   APPROVED
   REJECTED
+  RETURNED
 }
 
 enum PlatformMessageType {
@@ -985,10 +971,17 @@ model ClinicRequest {
   ownerLastName  String
   ownerEmail     String
   ownerPassword  String?
+  doctorCount    Int?
+  assistantCount Int?
+  secretaryCount Int?
+  specialty      String?
+  equipmentNeeds String?
+  requestedPlan  Plan      @default(FREE)
   status         RequestStatus @default(PENDING)
   reviewedById   String?
   reviewedAt     DateTime?
   notes          String?
+  adminComment   String?
   createdAt      DateTime      @default(now())
 
   @@index([status])
