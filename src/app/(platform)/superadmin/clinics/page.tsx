@@ -7,18 +7,38 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Building2, ArrowLeft, Eye, Mail, Phone, MapPin } from "lucide-react";
+import SuperAdminErrorFallback from "../_components/SuperAdminErrorFallback";
+import { Prisma } from "@prisma/client";
+
+type ClinicWithCounts = Prisma.ClinicGetPayload<{
+  include: {
+    _count: { select: { users: true; patients: true; invoices: true } };
+  };
+}>;
 
 export default async function ClinicsPage() {
   await requirePlatformAdmin();
 
-  const clinics = await prisma.clinic.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      _count: {
-        select: { users: true, patients: true, invoices: true },
+  let clinics: ClinicWithCounts[] = [];
+  let loadError: string | null = null;
+
+  try {
+    clinics = await prisma.clinic.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: {
+          select: { users: true, patients: true, invoices: true },
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : String(error);
+    console.error("ClinicsPage load failed:", error);
+  }
+
+  if (loadError) {
+    return <SuperAdminErrorFallback error={loadError} />;
+  }
 
   return (
     <div className="space-y-6">

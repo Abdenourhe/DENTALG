@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { RequestStatus } from "@prisma/client";
 import { reviewClinicRequest } from "../actions";
+import SuperAdminErrorFallback from "../_components/SuperAdminErrorFallback";
 
 export default async function ClinicRequestsPage({
   searchParams,
@@ -38,10 +39,22 @@ export default async function ClinicRequestsPage({
   await requirePlatformAdmin();
   const { status } = await searchParams;
 
-  const requests = await prisma.clinicRequest.findMany({
-    where: status ? { status: status as RequestStatus } : undefined,
-    orderBy: { createdAt: "desc" },
-  });
+  let requests: Awaited<ReturnType<typeof prisma.clinicRequest.findMany>> = [];
+  let loadError: string | null = null;
+
+  try {
+    requests = await prisma.clinicRequest.findMany({
+      where: status ? { status: status as RequestStatus } : undefined,
+      orderBy: { createdAt: "desc" },
+    });
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : String(error);
+    console.error("ClinicRequestsPage load failed:", error);
+  }
+
+  if (loadError) {
+    return <SuperAdminErrorFallback error={loadError} />;
+  }
 
   const counts = {
     all: requests.length,

@@ -23,8 +23,13 @@ import {
   Clock,
   Building2,
 } from "lucide-react";
-import { Role } from "@prisma/client";
+import { Prisma, Role } from "@prisma/client";
 import { toggleUserStatus, updateUserRole } from "../actions";
+import SuperAdminErrorFallback from "../_components/SuperAdminErrorFallback";
+
+type UserWithClinic = Prisma.UserGetPayload<{
+  include: { clinic: { select: { name: true; slug: true; isActive: true } } };
+}>;
 
 export default async function UsersPage({
   searchParams,
@@ -34,22 +39,34 @@ export default async function UsersPage({
   await requirePlatformAdmin();
   const { search } = await searchParams;
 
-  const users = await prisma.user.findMany({
-    where: search
-      ? {
-          OR: [
-            { firstName: { contains: search, mode: "insensitive" } },
-            { lastName: { contains: search, mode: "insensitive" } },
-            { email: { contains: search, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
-    orderBy: { createdAt: "desc" },
-    take: 200,
-    include: {
-      clinic: { select: { name: true, slug: true, isActive: true } },
-    },
-  });
+  let users: UserWithClinic[] = [];
+  let loadError: string | null = null;
+
+  try {
+    users = await prisma.user.findMany({
+      where: search
+        ? {
+            OR: [
+              { firstName: { contains: search, mode: "insensitive" } },
+              { lastName: { contains: search, mode: "insensitive" } },
+              { email: { contains: search, mode: "insensitive" } },
+            ],
+          }
+        : undefined,
+      orderBy: { createdAt: "desc" },
+      take: 200,
+      include: {
+        clinic: { select: { name: true, slug: true, isActive: true } },
+      },
+    });
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : String(error);
+    console.error("UsersPage load failed:", error);
+  }
+
+  if (loadError) {
+    return <SuperAdminErrorFallback error={loadError} />;
+  }
 
   const roleLabel = (role: Role) => {
     switch (role) {
