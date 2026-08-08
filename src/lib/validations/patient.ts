@@ -64,7 +64,14 @@ export const toothStatusSchema = z.object({
     "FRACTURE",
     "ABCESS",
   ]),
-  surfaces: z.record(z.string(), z.string()).optional(),
+  surfaces: z.preprocess((val) => {
+    if (!val || typeof val !== "object" || Array.isArray(val)) return undefined;
+    const result: Record<string, string> = {};
+    for (const [k, v] of Object.entries(val)) {
+      result[k] = String(v);
+    }
+    return result;
+  }, z.record(z.string(), z.string()).optional()),
   notes: z.string().optional().or(z.literal("")),
 });
 
