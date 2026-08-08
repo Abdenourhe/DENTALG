@@ -716,34 +716,56 @@ export async function updateClinicFeatures(data: unknown) {
 
 export async function getSuperAdminStats() {
   await requirePlatformAdmin();
-  const [
-    openTickets,
-    pendingRequests,
-    totalMessages,
-    recentMessages,
-    pendingClinicRequests,
-    totalUsers,
-    totalClinics,
-  ] = await Promise.all([
-    prisma.supportTicket.count({ where: { status: "OPEN" } }),
-    prisma.userRequest.count({ where: { status: "PENDING" } }),
-    prisma.platformMessage.count(),
-    prisma.platformMessage.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 5,
-    }),
-    prisma.clinicRequest.count({ where: { status: "PENDING" } }),
-    prisma.user.count(),
-    prisma.clinic.count(),
-  ]);
 
-  return {
-    openTickets,
-    pendingRequests,
-    totalMessages,
-    recentMessages,
-    pendingClinicRequests,
-    totalUsers,
-    totalClinics,
+  const defaults = {
+    openTickets: 0,
+    pendingRequests: 0,
+    totalMessages: 0,
+    recentMessages: [] as {
+      id: string;
+      title: string;
+      content: string;
+      type: string;
+      createdAt: Date;
+    }[],
+    pendingClinicRequests: 0,
+    totalUsers: 0,
+    totalClinics: 0,
   };
+
+  try {
+    const [
+      openTickets,
+      pendingRequests,
+      totalMessages,
+      recentMessages,
+      pendingClinicRequests,
+      totalUsers,
+      totalClinics,
+    ] = await Promise.all([
+      prisma.supportTicket.count({ where: { status: "OPEN" } }),
+      prisma.userRequest.count({ where: { status: "PENDING" } }),
+      prisma.platformMessage.count(),
+      prisma.platformMessage.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 5,
+      }),
+      prisma.clinicRequest.count({ where: { status: "PENDING" } }),
+      prisma.user.count(),
+      prisma.clinic.count(),
+    ]);
+
+    return {
+      openTickets,
+      pendingRequests,
+      totalMessages,
+      recentMessages,
+      pendingClinicRequests,
+      totalUsers,
+      totalClinics,
+    };
+  } catch (error) {
+    console.error("getSuperAdminStats failed:", error);
+    return defaults;
+  }
 }

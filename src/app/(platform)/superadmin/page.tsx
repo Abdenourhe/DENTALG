@@ -14,38 +14,58 @@ import {
   UserPlus,
   Megaphone,
   Store,
+  AlertTriangle,
 } from "lucide-react";
 import { getSuperAdminStats } from "./actions";
 
 export default async function SuperAdminDashboardPage() {
   await requirePlatformAdmin();
 
-  const [
-    clinicsCount,
-    usersCount,
-    patientsCount,
-    totalRevenue,
-    activeClinics,
-    stats,
-  ] = await Promise.all([
-    prisma.clinic.count(),
-    prisma.user.count({ where: { role: { not: "PLATFORM_ADMIN" } } }),
-    prisma.patient.count(),
-    prisma.invoice
-      .aggregate({
-        where: { status: "ISSUED" },
-        _sum: { totalCents: true },
-      })
-      .then((r) => r._sum.totalCents ?? 0),
-    prisma.clinic.count({ where: { isActive: true } }),
-    getSuperAdminStats(),
-  ]);
+  let clinicsCount = 0;
+  let usersCount = 0;
+  let patientsCount = 0;
+  let totalRevenue = 0;
+  let activeClinics = 0;
+  let recentClinics: Awaited<
+    ReturnType<
+      typeof prisma.clinic.findMany<{
+        include: { _count: { select: { users: true; patients: true } } };
+      }>
+    >
+  > = [];
+  let loadError: string | null = null;
 
-  const recentClinics = await prisma.clinic.findMany({
-    orderBy: { createdAt: "desc" },
-    take: 5,
-    include: { _count: { select: { users: true, patients: true } } },
-  });
+  try {
+    const results = await Promise.all([
+      prisma.clinic.count(),
+      prisma.user.count({ where: { role: { not: "PLATFORM_ADMIN" } } }),
+      prisma.patient.count(),
+      prisma.invoice
+        .aggregate({
+          where: { status: "ISSUED" },
+          _sum: { totalCents: true },
+        })
+        .then((r) => r._sum.totalCents ?? 0),
+      prisma.clinic.count({ where: { isActive: true } }),
+      prisma.clinic.findMany({
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        include: { _count: { select: { users: true, patients: true } } },
+      }),
+    ]);
+
+    clinicsCount = results[0];
+    usersCount = results[1];
+    patientsCount = results[2];
+    totalRevenue = results[3];
+    activeClinics = results[4];
+    recentClinics = results[5];
+  } catch (error) {
+    loadError = error instanceof Error ? error.message : String(error);
+    console.error("SuperAdmin dashboard data load failed:", error);
+  }
+
+  const stats = await getSuperAdminStats();
 
   const formatDA = (cents: number) =>
     new Intl.NumberFormat("fr-DZ", {
@@ -142,6 +162,19 @@ export default async function SuperAdminDashboardPage() {
           <ArrowUpRight className="h-4 w-4" />
         </Link>
       </div>
+
+      {loadError && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <div className="flex items-center gap-2 font-medium">
+            <AlertTriangle className="h-4 w-4" />
+            Certaines statistiques n&apos;ont pas pu être chargées
+          </div>
+          <p className="mt-1 text-xs text-amber-700">
+            Erreur : {loadError}. Vérifiez que les migrations Prisma sont à
+            jour.
+          </p>
+        </div>
+      )}
 
       {/* Main stats */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -256,16 +289,16 @@ export default async function SuperAdminDashboardPage() {
             <div className="divide-y">
               {stats.recentMessages.map((msg) => (
                 <div key={msg.id} className="px-6 py-3">
-                  <p className="text-sm font-medium text-slate-900 truncate">
+                  <p className="truncate text-sm font-medium text-slate-900">
                     {msg.title}
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-1">
+                  <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">
                     {msg.content}
                   </p>
-                  <div className="flex items-center gap-2 mt-1.5">
+                  <div className="mt-1.5 flex items-center gap-2">
                     <Badge
                       variant="default"
-                      className="text-[10px] px-1.5 py-0"
+                      className="px-1.5 py-0 text-[10px]"
                     >
                       {msg.type}
                     </Badge>
