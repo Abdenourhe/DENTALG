@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole } from "@/lib/rbac";
 import { requireClinicContext, withClinic } from "@/lib/tenant";
 import {
+  assignRoomSchema,
   checkInSchema,
   entryActionSchema,
   notifyStaffSchema,
@@ -60,6 +61,7 @@ export async function listWaitingRoom(date?: string) {
     include: {
       patient: true,
       appointment: true,
+      room: { select: { id: true, name: true } },
       dentist: { select: { id: true, firstName: true, lastName: true } },
       calledBy: { select: { id: true, firstName: true, lastName: true } },
       createdBy: { select: { id: true, firstName: true, lastName: true } },
@@ -90,6 +92,7 @@ export async function listActiveWaitingRoom() {
     include: {
       patient: true,
       appointment: true,
+      room: { select: { id: true, name: true } },
       dentist: { select: { id: true, firstName: true, lastName: true } },
       calledBy: { select: { id: true, firstName: true, lastName: true } },
     },
@@ -141,6 +144,7 @@ export async function checkInPatient(data: unknown) {
         patientId: parsed.data.patientId,
         appointmentId: parsed.data.appointmentId || null,
         dentistId: parsed.data.dentistId || null,
+        roomId: parsed.data.roomId || null,
         priority: parsed.data.priority,
         arrivalType: parsed.data.arrivalType,
         notes: parsed.data.notes || null,
@@ -395,6 +399,55 @@ export async function updatePriority(entryId: string, priority: string) {
       global: [
         "Une erreur est survenue lors de la mise à jour de la priorité.",
       ],
+    });
+  }
+}
+
+export async function assignRoom(entryId: string, roomId: string) {
+  await requireRole("waiting_room:write");
+  const ctx = await requireClinicContext();
+
+  const parsed = assignRoomSchema.safeParse({ entryId, roomId });
+  if (!parsed.success) {
+    return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
+  }
+
+  try {
+    if (parsed.data.roomId) {
+      const room = await prisma.room.findFirst({
+        where: {
+          id: parsed.data.roomId,
+          clinicId: ctx.clinicId,
+          isActive: true,
+          deletedAt: null,
+        },
+      });
+      if (!room) {
+        return prismaError({ global: ["Salle introuvable ou inactive."] });
+      }
+    }
+
+    const entry = await prisma.waitingRoomEntry.updateMany({
+      where: {
+        id: parsed.data.entryId,
+        clinicId: ctx.clinicId,
+        deletedAt: null,
+      },
+      data: {
+        roomId: parsed.data.roomId || null,
+      },
+    });
+
+    if (entry.count === 0) {
+      return prismaError({ global: ["Entrée introuvable."] });
+    }
+
+    revalidatePath("/waiting-room");
+    revalidatePath("/waiting-room/display");
+    return { ok: true } as const;
+  } catch {
+    return prismaError({
+      global: ["Une erreur est survenue lors de l'assignation de la salle."],
     });
   }
 }

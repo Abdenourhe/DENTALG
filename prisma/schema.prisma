@@ -181,6 +181,7 @@ model Clinic {
   userRequests         UserRequest[]
   clinicListings       ClinicListing[]
   equipmentListings    EquipmentListing[]
+  rooms                Room[]
 }
 
 model User {
@@ -517,6 +518,8 @@ model WaitingRoomEntry {
   appointment   Appointment?        @relation(fields: [appointmentId], references: [id])
   dentistId     String?
   dentist       User?               @relation(fields: [dentistId], references: [id], name: "WaitingRoomDentist")
+  roomId        String?
+  room          Room?               @relation(fields: [roomId], references: [id])
   status        WaitingRoomStatus   @default(WAITING)
   priority      WaitingRoomPriority @default(NORMAL)
   arrivalType   String              @default("WALK_IN")
@@ -537,6 +540,24 @@ model WaitingRoomEntry {
   @@index([clinicId, arrivedAt])
   @@index([patientId])
   @@index([appointmentId])
+  @@index([roomId])
+}
+
+model Room {
+  id              String             @id @default(cuid())
+  clinicId        String
+  clinic          Clinic             @relation(fields: [clinicId], references: [id])
+  name            String
+  order           Int                @default(0)
+  isActive        Boolean            @default(true)
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  deletedAt       DateTime?
+
+  waitingRoomEntries WaitingRoomEntry[]
+
+  @@index([clinicId])
+  @@index([clinicId, order])
 }
 
 model Quote {

@@ -8,7 +8,7 @@ export default async function WaitingRoomPage() {
   await requireRole("waiting_room:read");
   const ctx = await requireClinicContext();
 
-  const [entries, patients, dentists] = await Promise.all([
+  const [entries, patients, dentists, rooms] = await Promise.all([
     listWaitingRoom(),
     prisma.patient.findMany({
       where: { clinicId: ctx.clinicId, deletedAt: null, isActive: true },
@@ -25,6 +25,15 @@ export default async function WaitingRoomPage() {
       orderBy: { lastName: "asc" },
       select: { id: true, firstName: true, lastName: true },
     }),
+    prisma.room.findMany({
+      where: {
+        clinicId: ctx.clinicId,
+        deletedAt: null,
+        isActive: true,
+      },
+      orderBy: { order: "asc" },
+      select: { id: true, name: true },
+    }),
   ]);
 
   return (
@@ -33,6 +42,7 @@ export default async function WaitingRoomPage() {
         initialEntries={entries}
         patients={patients}
         dentists={dentists}
+        rooms={rooms}
       />
     </div>
   );

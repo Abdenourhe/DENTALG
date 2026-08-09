@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { checkInPatient } from "./actions";
-import type { Patient, User } from "@prisma/client";
+import type { Patient, User, Room } from "@prisma/client";
 import { ScanBarcode, UserPlus } from "lucide-react";
 
 interface CheckInDialogProps {
@@ -14,6 +14,7 @@ interface CheckInDialogProps {
   onClose: () => void;
   patients: Pick<Patient, "id" | "firstName" | "lastName" | "number">[];
   dentists: Pick<User, "id" | "firstName" | "lastName">[];
+  rooms: Pick<Room, "id" | "name">[];
 }
 
 export default function CheckInDialog({
@@ -21,6 +22,7 @@ export default function CheckInDialog({
   onClose,
   patients,
   dentists,
+  rooms,
 }: CheckInDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [barcode, setBarcode] = useState("");
@@ -38,6 +40,7 @@ export default function CheckInDialog({
         patientId: patient.id,
         arrivalType: "WALK_IN",
         priority: "NORMAL",
+        roomId: "",
       });
     } else {
       setErrors({ barcode: ["Aucun patient trouvé avec ce code."] });
@@ -112,18 +115,32 @@ export default function CheckInDialog({
             }))}
             error={errors?.patientId?.[0]}
           />
-          <Select
-            name="dentistId"
-            label="Dentiste (optionnel)"
-            options={[
-              { value: "", label: "— Aucun —" },
-              ...dentists.map((d) => ({
-                value: d.id,
-                label: `Dr. ${d.lastName} ${d.firstName}`,
-              })),
-            ]}
-            error={errors?.dentistId?.[0]}
-          />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select
+              name="dentistId"
+              label="Dentiste (optionnel)"
+              options={[
+                { value: "", label: "— Aucun —" },
+                ...dentists.map((d) => ({
+                  value: d.id,
+                  label: `Dr. ${d.lastName} ${d.firstName}`,
+                })),
+              ]}
+              error={errors?.dentistId?.[0]}
+            />
+            <Select
+              name="roomId"
+              label="Salle (optionnel)"
+              options={[
+                { value: "", label: "— Aucune —" },
+                ...rooms.map((r) => ({
+                  value: r.id,
+                  label: r.name,
+                })),
+              ]}
+              error={errors?.roomId?.[0]}
+            />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Select
               name="priority"

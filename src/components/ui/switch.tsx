@@ -3,8 +3,9 @@
 import React from "react";
 
 interface SwitchProps {
-  checked: boolean;
-  onCheckedChange: (checked: boolean) => void;
+  checked?: boolean;
+  defaultChecked?: boolean;
+  onCheckedChange?: (checked: boolean) => void;
   label?: string;
   disabled?: boolean;
   id?: string;
@@ -13,6 +14,7 @@ interface SwitchProps {
 
 export function Switch({
   checked,
+  defaultChecked,
   onCheckedChange,
   label,
   disabled,
@@ -37,8 +39,9 @@ export function Switch({
           type="checkbox"
           className="sr-only"
           checked={checked}
+          defaultChecked={defaultChecked}
           disabled={disabled}
-          onChange={(e) => onCheckedChange(e.target.checked)}
+          onChange={(e) => onCheckedChange?.(e.target.checked)}
         />
         <span
           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${

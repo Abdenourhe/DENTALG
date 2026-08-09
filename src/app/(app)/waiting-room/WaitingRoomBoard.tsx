@@ -11,6 +11,7 @@ import WaitingRoomCard from "./WaitingRoomCard";
 import CheckInDialog from "./CheckInDialog";
 import PatientFileDrawer from "./PatientFileDrawer";
 import {
+  assignRoom,
   callPatient,
   completeVisit,
   listWaitingRoom,
@@ -22,6 +23,7 @@ import {
 import type {
   Appointment,
   Patient,
+  Room,
   User,
   WaitingRoomEntry,
   WaitingRoomPriority,
@@ -40,6 +42,7 @@ import Link from "next/link";
 interface EntryWithRelations extends WaitingRoomEntry {
   patient: Patient;
   appointment: Appointment | null;
+  room: Pick<Room, "id" | "name"> | null;
   dentist: Pick<User, "id" | "firstName" | "lastName"> | null;
   calledBy: Pick<User, "id" | "firstName" | "lastName"> | null;
   createdBy: Pick<User, "id" | "firstName" | "lastName"> | null;
@@ -49,6 +52,7 @@ interface WaitingRoomBoardProps {
   initialEntries: EntryWithRelations[];
   patients: Pick<Patient, "id" | "firstName" | "lastName" | "number">[];
   dentists: Pick<User, "id" | "firstName" | "lastName">[];
+  rooms: Pick<Room, "id" | "name">[];
 }
 
 const columns: { status: WaitingRoomStatus; label: string }[] = [
@@ -101,6 +105,7 @@ export default function WaitingRoomBoard({
   initialEntries,
   patients,
   dentists,
+  rooms,
 }: WaitingRoomBoardProps) {
   const [entries, setEntries] = useState<EntryWithRelations[]>(initialEntries);
   const [isPending, startTransition] = useTransition();
@@ -196,6 +201,23 @@ export default function WaitingRoomBoard({
   function handleNotify(entryId: string) {
     startTransition(async () => {
       await notifyStaff({ entryId, message: "" });
+    });
+  }
+
+  function handleAssignRoom(entryId: string, roomId: string) {
+    startTransition(async () => {
+      await assignRoom(entryId, roomId);
+      setEntries((prev) =>
+        prev.map((e) =>
+          e.id === entryId
+            ? {
+                ...e,
+                roomId: roomId || null,
+                room: rooms.find((r) => r.id === roomId) || null,
+              }
+            : e,
+        ),
+      );
     });
   }
 
@@ -332,10 +354,11 @@ export default function WaitingRoomBoard({
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 space-y-3 p-3">
-              {sortedEntries(column.status).map((entry) => (
+              {sortedEntries(column.status).map((entry, idx) => (
                 <WaitingRoomCard
                   key={entry.id}
                   entry={entry}
+                  rooms={rooms}
                   onCall={handleCall}
                   onStart={handleStart}
                   onComplete={handleComplete}
@@ -343,7 +366,10 @@ export default function WaitingRoomBoard({
                   onPriority={handlePriority}
                   onNotify={handleNotify}
                   onViewFile={setSelectedPatientId}
+                  onAssignRoom={handleAssignRoom}
                   isPending={isPending}
+                  index={column.status === "WAITING" ? idx : undefined}
+                  isNext={column.status === "WAITING" && idx === 0}
                 />
               ))}
               {sortedEntries(column.status).length === 0 && (
@@ -372,6 +398,7 @@ export default function WaitingRoomBoard({
                 <WaitingRoomCard
                   key={entry.id}
                   entry={entry}
+                  rooms={rooms}
                   onCall={handleCall}
                   onStart={handleStart}
                   onComplete={handleComplete}
@@ -392,6 +419,7 @@ export default function WaitingRoomBoard({
         onClose={() => setCheckInOpen(false)}
         patients={patients}
         dentists={dentists}
+        rooms={rooms}
       />
 
       <PatientFileDrawer

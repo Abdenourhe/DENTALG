@@ -5,6 +5,7 @@ import { listActiveWaitingRoom, getClinicInfoForDisplay } from "../actions";
 import type {
   Appointment,
   Patient,
+  Room,
   User,
   WaitingRoomEntry,
 } from "@prisma/client";
@@ -13,6 +14,7 @@ import { Volume2, Clock, Maximize, Minimize } from "lucide-react";
 interface EntryWithRelations extends WaitingRoomEntry {
   patient: Patient;
   appointment: Appointment | null;
+  room: Pick<Room, "id" | "name"> | null;
   dentist: Pick<User, "id" | "firstName" | "lastName"> | null;
   calledBy: Pick<User, "id" | "firstName" | "lastName"> | null;
 }
@@ -187,9 +189,11 @@ export default function WaitingRoomDisplayPage() {
                       {called[0].dentist.firstName}
                     </span>
                   )}
-                  <span className="rounded-full bg-emerald-500/20 px-4 py-1 text-lg font-semibold text-emerald-300">
-                    Salle 1
-                  </span>
+                  {called[0].room && (
+                    <span className="rounded-full bg-emerald-500/20 px-4 py-1 text-lg font-semibold text-emerald-300">
+                      {called[0].room.name}
+                    </span>
+                  )}
                 </div>
               </>
             ) : (
@@ -223,11 +227,16 @@ export default function WaitingRoomDisplayPage() {
                       <p className="truncate text-lg font-semibold">
                         {entry.patient.lastName} {entry.patient.firstName}
                       </p>
-                      {entry.dentist && (
-                        <p className="text-sm text-slate-400">
-                          Dr. {entry.dentist.lastName}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-2 text-sm text-slate-400">
+                        {entry.dentist && (
+                          <span>Dr. {entry.dentist.lastName}</span>
+                        )}
+                        {entry.room && (
+                          <span className="text-emerald-300">
+                            · {entry.room.name}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {entry.priority === "HIGH" && (

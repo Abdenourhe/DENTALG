@@ -20,6 +20,7 @@ import {
   FileText,
   Settings,
   Megaphone,
+  DoorOpen,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FeatureKey } from "@/lib/features";
@@ -101,6 +102,13 @@ const allNavItems = [
     href: "/settings/features",
     label: "Fonctionnalités",
     icon: Settings,
+    feature: null as FeatureKey | null,
+    ownerOnly: true,
+  },
+  {
+    href: "/settings/rooms",
+    label: "Salles",
+    icon: DoorOpen,
     feature: null as FeatureKey | null,
     ownerOnly: true,
   },
