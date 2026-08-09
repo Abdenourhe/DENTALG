@@ -93,7 +93,7 @@ export default function RoomList({ initialRooms }: RoomListProps) {
         <CardContent className="p-6">
           <form action={handleCreate}>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-12">
-              <div className="sm:col-span-7">
+              <div className="sm:col-span-6">
                 <Input
                   name="name"
                   label="Nom"
@@ -111,7 +111,16 @@ export default function RoomList({ initialRooms }: RoomListProps) {
                   disabled={pending}
                 />
               </div>
-              <div className="flex items-end sm:col-span-3">
+              <div className="flex items-center sm:col-span-2">
+                <Switch
+                  name="isActive"
+                  label="Active"
+                  defaultChecked
+                  disabled={pending}
+                  onCheckedChange={() => {}}
+                />
+              </div>
+              <div className="flex items-end sm:col-span-2">
                 <Button
                   type="submit"
                   disabled={pending}
