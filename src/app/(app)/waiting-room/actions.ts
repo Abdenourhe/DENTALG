@@ -20,16 +20,26 @@ function prismaError(errors: Record<string, string[]>): {
   return { ok: false, errors } as const;
 }
 
-function startOfDay(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+function getAlgiersDateParts(date: Date): [number, number, number] {
+  const formatted = new Intl.DateTimeFormat("fr-CA", {
+    timeZone: "Africa/Algiers",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+  return formatted.split("-").map(Number) as [number, number, number];
 }
 
-function endOfDay(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(23, 59, 59, 999);
-  return d;
+function startOfDayInAlgiers(date: Date): Date {
+  const [year, month, day] = getAlgiersDateParts(date);
+  // 00:00 en Algérie (UTC+1) = 23:00 UTC la veille
+  return new Date(Date.UTC(year, month - 1, day - 1, 23, 0, 0, 0));
+}
+
+function endOfDayInAlgiers(date: Date): Date {
+  const [year, month, day] = getAlgiersDateParts(date);
+  // 23:59:59.999 en Algérie (UTC+1) = 22:59:59.999 UTC le jour même
+  return new Date(Date.UTC(year, month - 1, day, 22, 59, 59, 999));
 }
 
 export async function listWaitingRoom(date?: string) {
@@ -42,7 +52,10 @@ export async function listWaitingRoom(date?: string) {
     where: {
       clinicId: ctx.clinicId,
       deletedAt: null,
-      arrivedAt: { gte: startOfDay(baseDate), lte: endOfDay(baseDate) },
+      arrivedAt: {
+        gte: startOfDayInAlgiers(baseDate),
+        lte: endOfDayInAlgiers(baseDate),
+      },
     },
     include: {
       patient: true,

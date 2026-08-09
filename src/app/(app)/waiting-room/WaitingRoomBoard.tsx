@@ -1,17 +1,19 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import WaitingRoomCard from "./WaitingRoomCard";
 import CheckInDialog from "./CheckInDialog";
 import PatientFileDrawer from "./PatientFileDrawer";
 import {
   callPatient,
   completeVisit,
+  listWaitingRoom,
   markNoShow,
   notifyStaff,
   startConsultation,
@@ -62,6 +64,39 @@ const priorityOrder: Record<WaitingRoomPriority, number> = {
   LOW: 2,
 };
 
+function playNotificationSound() {
+  try {
+    const audioCtx = new (
+      window.AudioContext ||
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).webkitAudioContext
+    )();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+    oscillator.frequency.exponentialRampToValueAtTime(
+      440,
+      audioCtx.currentTime + 0.2,
+    );
+
+    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(
+      0.01,
+      audioCtx.currentTime + 0.3,
+    );
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.3);
+  } catch {
+    // Son non supporté — ignorer silencieusement.
+  }
+}
+
 export default function WaitingRoomBoard({
   initialEntries,
   patients,
@@ -73,6 +108,43 @@ export default function WaitingRoomBoard({
     null,
   );
   const [checkInOpen, setCheckInOpen] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const previousEntriesRef = useRef<EntryWithRelations[]>(initialEntries);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("dentalg_waiting_room_sound");
+    setSoundEnabled(stored === "true");
+  }, []);
+
+  useEffect(() => {
+    function tick() {
+      startTransition(async () => {
+        const fresh = await listWaitingRoom();
+        const previousIds = new Set(
+          previousEntriesRef.current.map((e) => e.id),
+        );
+        const hasNewEntry = fresh.some((e) => !previousIds.has(e.id));
+
+        setEntries(fresh as EntryWithRelations[]);
+        setLastUpdated(new Date());
+        previousEntriesRef.current = fresh as EntryWithRelations[];
+
+        if (hasNewEntry && soundEnabled) {
+          playNotificationSound();
+        }
+      });
+    }
+
+    tick();
+    const interval = setInterval(tick, 5000);
+    return () => clearInterval(interval);
+  }, [soundEnabled]);
+
+  function toggleSound(enabled: boolean) {
+    setSoundEnabled(enabled);
+    localStorage.setItem("dentalg_waiting_room_sound", String(enabled));
+  }
 
   function refreshEntries() {
     window.location.reload();
@@ -150,12 +222,27 @@ export default function WaitingRoomBoard({
           <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Salle d’attente
           </h1>
-          <p className="mt-1 flex items-center gap-2 text-sm text-slate-500">
-            <Calendar className="h-4 w-4" />
-            {format(new Date(), "EEEE d MMMM yyyy", { locale: fr })}
+          <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
+            <span className="flex items-center gap-2">
+              <Calendar className="h-4 w-4" />
+              {format(new Date(), "EEEE d MMMM yyyy", { locale: fr })}
+            </span>
+            <span className="flex items-center gap-2">
+              <span
+                className={`inline-block h-2 w-2 rounded-full ${
+                  isPending ? "bg-amber-400" : "bg-emerald-500"
+                }`}
+              />
+              Mis à jour à {format(lastUpdated, "HH:mm:ss", { locale: fr })}
+            </span>
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Switch
+            label="Son"
+            checked={soundEnabled}
+            onCheckedChange={toggleSound}
+          />
           <Link href="/waiting-room/display" target="_blank">
             <Button variant="secondary" className="gap-2">
               <Monitor className="h-4 w-4" />

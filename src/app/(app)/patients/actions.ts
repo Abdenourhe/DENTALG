@@ -39,28 +39,47 @@ export async function createPatient(data: unknown) {
     const number = await nextNumber(ctx.clinicId, "PATIENT", { pad: 4 });
     const d = parsed.data;
 
-    const patient = await prisma.patient.create({
-      data: withClinic(ctx, {
-        number,
-        firstName: d.firstName,
-        lastName: d.lastName,
-        nationalId: normalizeOptional(d.nationalId),
-        sex: normalizeOptional(d.sex),
-        bloodGroup: normalizeOptional(d.bloodGroup),
-        generalCondition: d.generalCondition || null,
-        dateOfBirth: d.dateOfBirth ? new Date(d.dateOfBirth) : null,
-        phone: normalizeOptional(d.phone),
-        email: normalizeOptional(d.email),
-        address: normalizeOptional(d.address),
-        city: normalizeOptional(d.city),
-        wilaya: normalizeOptional(d.wilaya),
-        emergencyContactName: normalizeOptional(d.emergencyContactName),
-        emergencyContactPhone: normalizeOptional(d.emergencyContactPhone),
-        medicalHistory: normalizeOptional(d.medicalHistory),
-        allergies: normalizeOptional(d.allergies),
-        currentMedications: normalizeOptional(d.currentMedications),
-        notes: normalizeOptional(d.notes),
-      }),
+    const { patient, entry } = await prisma.$transaction(async (tx) => {
+      const patient = await tx.patient.create({
+        data: withClinic(ctx, {
+          number,
+          firstName: d.firstName,
+          lastName: d.lastName,
+          nationalId: normalizeOptional(d.nationalId),
+          sex: normalizeOptional(d.sex),
+          bloodGroup: normalizeOptional(d.bloodGroup),
+          generalCondition: d.generalCondition || null,
+          dateOfBirth: d.dateOfBirth ? new Date(d.dateOfBirth) : null,
+          phone: normalizeOptional(d.phone),
+          email: normalizeOptional(d.email),
+          address: normalizeOptional(d.address),
+          city: normalizeOptional(d.city),
+          wilaya: normalizeOptional(d.wilaya),
+          emergencyContactName: normalizeOptional(d.emergencyContactName),
+          emergencyContactPhone: normalizeOptional(d.emergencyContactPhone),
+          medicalHistory: normalizeOptional(d.medicalHistory),
+          allergies: normalizeOptional(d.allergies),
+          currentMedications: normalizeOptional(d.currentMedications),
+          notes: normalizeOptional(d.notes),
+        }),
+      });
+
+      let entry = null;
+      if (d.addToWaitingRoom === "on") {
+        entry = await tx.waitingRoomEntry.create({
+          data: withClinic(ctx, {
+            patientId: patient.id,
+            dentistId: d.waitingRoomDentistId || null,
+            priority:
+              (d.waitingRoomPriority as "LOW" | "NORMAL" | "HIGH") || "NORMAL",
+            arrivalType: "WALK_IN",
+            notes: d.waitingRoomReason || null,
+            createdById: ctx.userId,
+          }),
+        });
+      }
+
+      return { patient, entry };
     });
 
     await logAudit({
@@ -71,17 +90,14 @@ export async function createPatient(data: unknown) {
       userId: ctx.userId,
     });
 
-    if (d.addToWaitingRoom === "on") {
-      await prisma.waitingRoomEntry.create({
-        data: withClinic(ctx, {
-          patientId: patient.id,
-          dentistId: d.waitingRoomDentistId || null,
-          priority:
-            (d.waitingRoomPriority as "LOW" | "NORMAL" | "HIGH") || "NORMAL",
-          arrivalType: "WALK_IN",
-          notes: d.waitingRoomReason || null,
-          createdById: ctx.userId,
-        }),
+    if (entry) {
+      await logAudit({
+        action: AuditAction.CREATE,
+        entityType: "WaitingRoomEntry",
+        entityId: entry.id,
+        clinicId: ctx.clinicId,
+        userId: ctx.userId,
+        metadata: { patientId: entry.patientId, status: entry.status },
       });
       revalidatePath("/waiting-room");
       revalidatePath("/waiting-room/display");
