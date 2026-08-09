@@ -93,6 +93,18 @@ export async function listActiveWaitingRoom() {
   return entries;
 }
 
+export async function getClinicInfoForDisplay() {
+  await requireRole("waiting_room:read");
+  const ctx = await requireClinicContext();
+
+  const clinic = await prisma.clinic.findUnique({
+    where: { id: ctx.clinicId },
+    select: { id: true, name: true, logoUrl: true, phone: true },
+  });
+
+  return clinic;
+}
+
 export async function checkInPatient(data: unknown) {
   await requireRole("waiting_room:write");
   const ctx = await requireClinicContext();
