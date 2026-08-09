@@ -133,26 +133,24 @@ export default function NewPatientPage() {
                   error={errors.wilaya?.[0]}
                 />
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Personne à contacter en cas d&apos;urgence</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input
-                name="emergencyContactName"
-                label="Nom et prénom"
-                error={errors.emergencyContactName?.[0]}
-              />
-              <Input
-                name="emergencyContactPhone"
-                label="Téléphone"
-                error={errors.emergencyContactPhone?.[0]}
-              />
+              <div className="border-t pt-4">
+                <h3 className="mb-3 text-sm font-semibold text-slate-700">
+                  Contact d&apos;urgence
+                </h3>
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Input
+                    name="emergencyContactName"
+                    label="Nom et prénom"
+                    error={errors.emergencyContactName?.[0]}
+                  />
+                  <Input
+                    name="emergencyContactPhone"
+                    label="Téléphone"
+                    error={errors.emergencyContactPhone?.[0]}
+                  />
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
