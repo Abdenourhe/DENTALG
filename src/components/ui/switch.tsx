@@ -8,6 +8,7 @@ interface SwitchProps {
   label?: string;
   disabled?: boolean;
   id?: string;
+  name?: string;
 }
 
 export function Switch({
@@ -16,6 +17,7 @@ export function Switch({
   label,
   disabled,
   id,
+  name,
 }: SwitchProps) {
   const generatedId = React.useId();
   const switchId = id || generatedId;
@@ -31,6 +33,7 @@ export function Switch({
       >
         <input
           id={switchId}
+          name={name}
           type="checkbox"
           className="sr-only"
           checked={checked}

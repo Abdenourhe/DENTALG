@@ -71,6 +71,22 @@ export async function createPatient(data: unknown) {
       userId: ctx.userId,
     });
 
+    if (d.addToWaitingRoom === "on") {
+      await prisma.waitingRoomEntry.create({
+        data: withClinic(ctx, {
+          patientId: patient.id,
+          dentistId: d.waitingRoomDentistId || null,
+          priority:
+            (d.waitingRoomPriority as "LOW" | "NORMAL" | "HIGH") || "NORMAL",
+          arrivalType: "WALK_IN",
+          notes: d.waitingRoomReason || null,
+          createdById: ctx.userId,
+        }),
+      });
+      revalidatePath("/waiting-room");
+      revalidatePath("/waiting-room/display");
+    }
+
     revalidatePath("/patients");
     return { ok: true, patient } as const;
   } catch (err) {
@@ -83,6 +99,24 @@ export async function createPatient(data: unknown) {
       ],
     });
   }
+}
+
+export async function listDentists() {
+  await requireRole("patients:write");
+  const ctx = await requireClinicContext();
+
+  const dentists = await prisma.user.findMany({
+    where: {
+      clinicId: ctx.clinicId,
+      role: { in: ["DENTIST", "OWNER"] },
+      isActive: true,
+      deletedAt: null,
+    },
+    select: { id: true, firstName: true, lastName: true },
+    orderBy: [{ lastName: "asc" }, { firstName: "asc" }],
+  });
+
+  return dentists;
 }
 
 export async function updatePatient(id: string, data: unknown) {

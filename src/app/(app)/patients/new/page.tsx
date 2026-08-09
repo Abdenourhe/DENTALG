@@ -1,18 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createPatient } from "../actions";
+import { createPatient, listDentists } from "../actions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { TextArea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+
+interface DentistOption {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
 
 export default function NewPatientPage() {
   const router = useRouter();
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [pending, setPending] = useState(false);
+  const [addToWaitingRoom, setAddToWaitingRoom] = useState(false);
+  const [dentists, setDentists] = useState<DentistOption[]>([]);
+
+  useEffect(() => {
+    listDentists().then(setDentists);
+  }, []);
 
   async function handleSubmit(formData: FormData) {
     setPending(true);
@@ -220,6 +233,54 @@ export default function NewPatientPage() {
               <TextArea name="notes" label="Notes libres" rows={3} />
             </div>
           </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Salle d&apos;attente</span>
+              <Switch
+                name="addToWaitingRoom"
+                label="Ajouter à la salle d'attente"
+                checked={addToWaitingRoom}
+                onCheckedChange={setAddToWaitingRoom}
+              />
+            </CardTitle>
+          </CardHeader>
+          {addToWaitingRoom && (
+            <CardContent className="pt-0">
+              <div className="space-y-4">
+                <Input
+                  name="waitingRoomReason"
+                  label="Motif de visite"
+                  placeholder="Ex : douleur, contrôle, extraction..."
+                  error={errors.waitingRoomReason?.[0]}
+                />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Select
+                    name="waitingRoomPriority"
+                    label="Priorité"
+                    defaultValue="NORMAL"
+                    options={[
+                      { value: "LOW", label: "Basse" },
+                      { value: "NORMAL", label: "Normale" },
+                      { value: "HIGH", label: "Haute" },
+                    ]}
+                  />
+                  <Select
+                    name="waitingRoomDentistId"
+                    label="Dentiste"
+                    defaultValue=""
+                    placeholder="Choisir un dentiste..."
+                    options={dentists.map((d) => ({
+                      value: d.id,
+                      label: `Dr ${d.lastName} ${d.firstName}`,
+                    }))}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          )}
         </Card>
       </div>
 

@@ -40,6 +40,13 @@ export const patientSchema = z.object({
   allergies: z.string().optional().or(z.literal("")),
   currentMedications: z.string().optional().or(z.literal("")),
   notes: z.string().optional().or(z.literal("")),
+  addToWaitingRoom: z.enum(["on", ""]).optional().or(z.literal("")).default(""),
+  waitingRoomReason: z.string().optional().or(z.literal("")),
+  waitingRoomPriority: z
+    .enum(["LOW", "NORMAL", "HIGH"])
+    .optional()
+    .or(z.literal("")),
+  waitingRoomDentistId: z.string().optional().or(z.literal("")),
 });
 
 export const patientUpdateSchema = patientSchema.partial();
