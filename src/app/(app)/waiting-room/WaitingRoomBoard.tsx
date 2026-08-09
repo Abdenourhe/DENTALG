@@ -68,34 +68,51 @@ const priorityOrder: Record<WaitingRoomPriority, number> = {
   LOW: 2,
 };
 
-function playNotificationSound() {
+type SoundType = "ding" | "chime" | "bell";
+
+function playNotificationSound(type: SoundType = "ding") {
   try {
-    const audioCtx = new (
+    const AudioCtx =
       window.AudioContext ||
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).webkitAudioContext
-    )();
+      (window as any).webkitAudioContext;
+    if (!AudioCtx) return;
+    const audioCtx = new AudioCtx();
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
-
     oscillator.connect(gainNode);
     gainNode.connect(audioCtx.destination);
 
-    oscillator.type = "sine";
-    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-    oscillator.frequency.exponentialRampToValueAtTime(
-      440,
-      audioCtx.currentTime + 0.2,
-    );
+    const now = audioCtx.currentTime;
+    gainNode.gain.setValueAtTime(0.3, now);
 
-    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-    gainNode.gain.exponentialRampToValueAtTime(
-      0.01,
-      audioCtx.currentTime + 0.3,
-    );
-
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.3);
+    switch (type) {
+      case "ding":
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(880, now);
+        oscillator.frequency.exponentialRampToValueAtTime(440, now + 0.2);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        oscillator.start(now);
+        oscillator.stop(now + 0.3);
+        break;
+      case "chime":
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(523.25, now);
+        oscillator.frequency.setValueAtTime(659.25, now + 0.1);
+        oscillator.frequency.setValueAtTime(783.99, now + 0.2);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+        oscillator.start(now);
+        oscillator.stop(now + 0.6);
+        break;
+      case "bell":
+        oscillator.type = "triangle";
+        oscillator.frequency.setValueAtTime(523.25, now);
+        gainNode.gain.setValueAtTime(0.4, now);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.8);
+        oscillator.start(now);
+        oscillator.stop(now + 0.8);
+        break;
+    }
   } catch {
     // Son non supporté — ignorer silencieusement.
   }
@@ -114,12 +131,20 @@ export default function WaitingRoomBoard({
   );
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [soundType, setSoundType] = useState<SoundType>("ding");
+  const [refreshRate, setRefreshRate] = useState<number>(5);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const previousEntriesRef = useRef<EntryWithRelations[]>(initialEntries);
 
   useEffect(() => {
     const stored = localStorage.getItem("dentalg_waiting_room_sound");
+    const storedType = localStorage.getItem("dentalg_waiting_room_sound_type");
+    const storedRate = localStorage.getItem(
+      "dentalg_waiting_room_refresh_rate",
+    );
     setSoundEnabled(stored === "true");
+    setSoundType((storedType as SoundType) || "ding");
+    setRefreshRate(storedRate ? Number(storedRate) : 5);
   }, []);
 
   useEffect(() => {
@@ -136,15 +161,15 @@ export default function WaitingRoomBoard({
         previousEntriesRef.current = fresh as EntryWithRelations[];
 
         if (hasNewEntry && soundEnabled) {
-          playNotificationSound();
+          playNotificationSound(soundType);
         }
       });
     }
 
     tick();
-    const interval = setInterval(tick, 5000);
+    const interval = setInterval(tick, refreshRate * 1000);
     return () => clearInterval(interval);
-  }, [soundEnabled]);
+  }, [soundEnabled, soundType, refreshRate]);
 
   function toggleSound(enabled: boolean) {
     setSoundEnabled(enabled);

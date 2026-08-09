@@ -3,6 +3,8 @@
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
 import { NotificationBell } from "./notifications";
+import Link from "next/link";
+import { Settings } from "lucide-react";
 
 interface HeaderProps {
   clinicName?: string | null;
@@ -44,6 +46,15 @@ export function Header({ clinicName, clinicLogoUrl }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
+        {/* Settings */}
+        <Link
+          href="/settings/account"
+          className="rounded-lg p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900"
+          aria-label="Paramètres"
+        >
+          <Settings className="h-5 w-5" />
+        </Link>
+
         {/* Notification bell */}
         <NotificationBell />
 

@@ -47,6 +47,7 @@ export const patientSchema = z.object({
     .optional()
     .or(z.literal("")),
   waitingRoomDentistId: z.string().optional().or(z.literal("")),
+  waitingRoomRoomId: z.string().optional().or(z.literal("")),
 });
 
 export const patientUpdateSchema = patientSchema.partial();

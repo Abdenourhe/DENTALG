@@ -70,6 +70,7 @@ export async function createPatient(data: unknown) {
           data: withClinic(ctx, {
             patientId: patient.id,
             dentistId: d.waitingRoomDentistId || null,
+            roomId: d.waitingRoomRoomId || null,
             priority:
               (d.waitingRoomPriority as "LOW" | "NORMAL" | "HIGH") || "NORMAL",
             arrivalType: "WALK_IN",
@@ -104,7 +105,7 @@ export async function createPatient(data: unknown) {
     }
 
     revalidatePath("/patients");
-    return { ok: true, patient } as const;
+    return { ok: true, patient, entry } as const;
   } catch (err) {
     console.error("createPatient error", err);
     return prismaError({
@@ -115,6 +116,23 @@ export async function createPatient(data: unknown) {
       ],
     });
   }
+}
+
+export async function listRooms() {
+  await requireRole("patients:write");
+  const ctx = await requireClinicContext();
+
+  const rooms = await prisma.room.findMany({
+    where: {
+      clinicId: ctx.clinicId,
+      isActive: true,
+      deletedAt: null,
+    },
+    orderBy: [{ order: "asc" }, { createdAt: "asc" }],
+    select: { id: true, name: true },
+  });
+
+  return rooms;
 }
 
 export async function listDentists() {

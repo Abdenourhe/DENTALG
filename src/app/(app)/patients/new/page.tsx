@@ -2,13 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { createPatient, listDentists } from "../actions";
+import { createPatient, listDentists, listRooms } from "../actions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { TextArea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { DoorOpen, UserPlus, CheckCircle2 } from "lucide-react";
 
 interface DentistOption {
   id: string;
@@ -16,20 +17,29 @@ interface DentistOption {
   lastName: string;
 }
 
+interface RoomOption {
+  id: string;
+  name: string;
+}
+
 export default function NewPatientPage() {
   const router = useRouter();
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [pending, setPending] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
   const [addToWaitingRoom, setAddToWaitingRoom] = useState(false);
   const [dentists, setDentists] = useState<DentistOption[]>([]);
+  const [rooms, setRooms] = useState<RoomOption[]>([]);
 
   useEffect(() => {
     listDentists().then(setDentists);
+    listRooms().then(setRooms);
   }, []);
 
   async function handleSubmit(formData: FormData) {
     setPending(true);
     setErrors({});
+    setSuccess(null);
 
     const data = Object.fromEntries(formData.entries());
     const res = await createPatient(data);
@@ -40,14 +50,33 @@ export default function NewPatientPage() {
       return;
     }
 
+    if (res.entry) {
+      setSuccess(
+        `${res.patient.firstName} ${res.patient.lastName} a été ajouté à la salle d’attente.`,
+      );
+      setTimeout(() => {
+        router.push("/waiting-room");
+      }, 600);
+      return;
+    }
+
     router.push(`/patients/${res.patient.id}`);
   }
 
   return (
     <form action={handleSubmit} className="space-y-6">
-      <h2 className="text-2xl font-bold text-slate-900">Nouveau patient</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold text-slate-900">Nouveau patient</h2>
+        {success && (
+          <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
+            <CheckCircle2 className="h-4 w-4" />
+            {success}
+          </div>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Identité */}
         <Card>
           <CardHeader>
             <CardTitle>Identité</CardTitle>
@@ -114,6 +143,7 @@ export default function NewPatientPage() {
           </CardContent>
         </Card>
 
+        {/* Coordonnées */}
         <Card>
           <CardHeader>
             <CardTitle>Coordonnées</CardTitle>
@@ -147,19 +177,19 @@ export default function NewPatientPage() {
                 />
               </div>
 
-              <div className="border-t pt-4">
-                <h3 className="mb-3 text-sm font-semibold text-slate-700">
+              <div className="border-t pt-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
                   Contact d&apos;urgence
-                </h3>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Input
                     name="emergencyContactName"
-                    label="Nom et prénom"
+                    placeholder="Nom et prénom"
                     error={errors.emergencyContactName?.[0]}
                   />
                   <Input
                     name="emergencyContactPhone"
-                    label="Téléphone"
+                    placeholder="Téléphone"
                     error={errors.emergencyContactPhone?.[0]}
                   />
                 </div>
@@ -168,6 +198,7 @@ export default function NewPatientPage() {
           </CardContent>
         </Card>
 
+        {/* Informations médicales */}
         <Card>
           <CardHeader>
             <CardTitle>Informations médicales</CardTitle>
@@ -219,29 +250,27 @@ export default function NewPatientPage() {
                 placeholder="Maladies chroniques, chirurgies, antécédents familiaux..."
               />
               <TextArea
-                name="allergies"
-                label="Allergies"
-                rows={2}
-                placeholder="Médicaments, aliments, produits..."
-              />
-              <TextArea
                 name="currentMedications"
                 label="Médicaments en cours"
                 rows={2}
                 placeholder="Traitements réguliers..."
               />
-              <TextArea name="notes" label="Notes libres" rows={3} />
+              <TextArea name="notes" label="Notes libres" rows={2} />
             </div>
           </CardContent>
         </Card>
 
+        {/* Salle d'attente */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Salle d&apos;attente</span>
+              <span className="flex items-center gap-2">
+                <DoorOpen className="h-5 w-5 text-violet-600" />
+                Salle d&apos;attente
+              </span>
               <Switch
                 name="addToWaitingRoom"
-                label="Ajouter à la salle d'attente"
+                label="Ajouter directement"
                 checked={addToWaitingRoom}
                 onCheckedChange={setAddToWaitingRoom}
               />
@@ -256,7 +285,7 @@ export default function NewPatientPage() {
                   placeholder="Ex : douleur, contrôle, extraction..."
                   error={errors.waitingRoomReason?.[0]}
                 />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <Select
                     name="waitingRoomPriority"
                     label="Priorité"
@@ -271,11 +300,30 @@ export default function NewPatientPage() {
                     name="waitingRoomDentistId"
                     label="Dentiste"
                     defaultValue=""
-                    placeholder="Choisir un dentiste..."
-                    options={dentists.map((d) => ({
-                      value: d.id,
-                      label: `Dr ${d.lastName} ${d.firstName}`,
-                    }))}
+                    placeholder="Choisir..."
+                    options={[
+                      { value: "", label: "— Aucun —" },
+                      ...dentists.map((d) => ({
+                        value: d.id,
+                        label: `Dr ${d.lastName} ${d.firstName}`,
+                      })),
+                    ]}
+                  />
+                  <Select
+                    name="waitingRoomRoomId"
+                    label="Salle"
+                    defaultValue=""
+                    placeholder={
+                      rooms.length ? "Choisir..." : "Aucune salle active"
+                    }
+                    disabled={rooms.length === 0}
+                    options={[
+                      { value: "", label: "— Aucune —" },
+                      ...rooms.map((r) => ({
+                        value: r.id,
+                        label: r.name,
+                      })),
+                    ]}
                   />
                 </div>
               </div>
@@ -296,7 +344,8 @@ export default function NewPatientPage() {
         >
           Annuler
         </Button>
-        <Button type="submit" isLoading={pending}>
+        <Button type="submit" isLoading={pending} className="gap-2">
+          <UserPlus className="h-4 w-4" />
           Enregistrer
         </Button>
       </div>

@@ -39,8 +39,7 @@ export async function createRoom(data: unknown) {
       data: withClinic(ctx, {
         name: parsed.data.name,
         order: parsed.data.order,
-        isActive:
-          parsed.data.isActive === "" ? true : parsed.data.isActive === "on",
+        isActive: parsed.data.isActive === "on",
       }),
     });
 

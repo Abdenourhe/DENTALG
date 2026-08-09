@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireClinicContext } from "@/lib/tenant";
 import { requireRole } from "@/lib/rbac";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/date";
 import { formatDA } from "@/lib/money";
@@ -16,6 +17,9 @@ import {
   Receipt,
   TrendingUp,
   ArrowRight,
+  Clock,
+  DoorOpen,
+  Building2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -52,6 +56,15 @@ const stats = [
     bg: "bg-emerald-50",
     ring: "ring-emerald-200",
   },
+  {
+    label: "En salle d'attente",
+    key: "waitingRoomCount" as const,
+    icon: Clock,
+    color: "text-violet-600",
+    bg: "bg-violet-50",
+    ring: "ring-violet-200",
+    href: "/waiting-room",
+  },
 ];
 
 export default async function DashboardPage() {
@@ -63,14 +76,22 @@ export default async function DashboardPage() {
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
 
+  const firstDayOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
   const [
+    clinic,
     patientCount,
     todayAppointments,
     pendingInvoices,
     monthlyRevenue,
+    waitingRoomCount,
     recentPatients,
     upcomingAppointments,
   ] = await Promise.all([
+    prisma.clinic.findUnique({
+      where: { id: ctx.clinicId },
+      select: { name: true, logoUrl: true, city: true, phone: true },
+    }),
     prisma.patient.count({
       where: { clinicId: ctx.clinicId, deletedAt: null },
     }),
@@ -91,9 +112,17 @@ export default async function DashboardPage() {
     prisma.payment.aggregate({
       where: {
         clinicId: ctx.clinicId,
-        paidAt: { gte: new Date(today.getFullYear(), today.getMonth(), 1) },
+        paidAt: { gte: firstDayOfMonth },
       },
       _sum: { amountCents: true },
+    }),
+    prisma.waitingRoomEntry.count({
+      where: {
+        clinicId: ctx.clinicId,
+        deletedAt: null,
+        status: { in: ["WAITING", "CALLED", "IN_PROGRESS"] },
+        arrivedAt: { gte: today, lt: tomorrow },
+      },
     }),
     prisma.patient.findMany({
       where: { clinicId: ctx.clinicId, deletedAt: null },
@@ -121,10 +150,53 @@ export default async function DashboardPage() {
     todayAppointments,
     pendingInvoices,
     monthlyRevenue: formatDA(monthlyRevenue._sum.amountCents ?? 0),
+    waitingRoomCount,
   };
 
   return (
     <PageWrapper className="space-y-8">
+      {/* Clinic header */}
+      <FadeUp>
+        <Card className="overflow-hidden">
+          <CardContent className="p-0">
+            <div className="flex flex-col gap-4 bg-gradient-to-r from-slate-900 to-slate-800 px-6 py-5 text-white sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                {clinic?.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={clinic.logoUrl}
+                    alt="Logo cabinet"
+                    className="h-14 w-auto rounded-lg bg-white/10 object-contain p-1"
+                  />
+                ) : (
+                  <div className="flex h-14 w-14 items-center justify-center rounded-lg bg-white/10">
+                    <Building2 className="h-7 w-7 text-white/80" />
+                  </div>
+                )}
+                <div>
+                  <h1 className="text-xl font-bold">
+                    {clinic?.name ?? "Cabinet"}
+                  </h1>
+                  <p className="text-sm text-slate-300">
+                    {clinic?.city ?? "Ville non renseignée"}
+                    {clinic?.phone && ` · ${clinic.phone}`}
+                  </p>
+                </div>
+              </div>
+              <Link href="/waiting-room">
+                <Button
+                  variant="secondary"
+                  className="gap-2 bg-white/10 text-white hover:bg-white/20"
+                >
+                  <DoorOpen className="h-4 w-4" />
+                  Salle d&apos;attente
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </FadeUp>
+
       {/* Title */}
       <div className="flex items-center justify-between">
         <div>
@@ -141,34 +213,40 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stat cards */}
-      <StaggerContainer className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <StaggerContainer className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {stats.map((stat) => {
           const Icon = stat.icon;
           const value = values[stat.key];
-          return (
-            <FadeUp key={stat.key}>
-              <Card className="group">
-                <CardContent className="pt-5">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-slate-500">
-                        {stat.label}
-                      </p>
-                      <p
-                        className={`mt-2 text-3xl font-bold tracking-tight ${stat.color}`}
-                      >
-                        {value}
-                      </p>
-                    </div>
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg} ring-1 ${stat.ring} transition-transform duration-300 group-hover:scale-110`}
+          const card = (
+            <Card className="group h-full transition-all hover:border-slate-300 hover:shadow-sm">
+              <CardContent className="pt-5">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-slate-500">
+                      {stat.label}
+                    </p>
+                    <p
+                      className={`mt-2 text-3xl font-bold tracking-tight ${stat.color}`}
                     >
-                      <Icon className={`h-5 w-5 ${stat.color}`} />
-                    </div>
+                      {value}
+                    </p>
                   </div>
-                </CardContent>
-              </Card>
-            </FadeUp>
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bg} ring-1 ${stat.ring} transition-transform duration-300 group-hover:scale-110`}
+                  >
+                    <Icon className={`h-5 w-5 ${stat.color}`} />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          );
+
+          return stat.href ? (
+            <Link key={stat.key} href={stat.href}>
+              {card}
+            </Link>
+          ) : (
+            <FadeUp key={stat.key}>{card}</FadeUp>
           );
         })}
       </StaggerContainer>

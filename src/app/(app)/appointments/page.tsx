@@ -8,7 +8,10 @@ import {
   Pencil,
   CalendarPlus,
   CalendarCheck,
+  DoorOpen,
+  Users,
 } from "lucide-react";
+import { prisma } from "@/lib/prisma";
 import { listAppointments, getDentists } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -76,10 +79,31 @@ export default async function AppointmentsPage({
     currentDate.getMonth() === today.getMonth() &&
     currentDate.getDate() === today.getDate();
 
-  const [appointments, dentists] = await Promise.all([
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(todayStart);
+  todayEnd.setDate(todayEnd.getDate() + 1);
+
+  const [appointments, dentists, waitingRoomStats] = await Promise.all([
     listAppointments(date),
     getDentists(),
+    prisma.waitingRoomEntry.groupBy({
+      by: ["status"],
+      where: {
+        deletedAt: null,
+        arrivedAt: { gte: todayStart, lt: todayEnd },
+      },
+      _count: { status: true },
+    }),
   ]);
+
+  const waitingByStatus = Object.fromEntries(
+    waitingRoomStats.map((s) => [s.status, s._count.status]),
+  );
+  const waitingTotal = Object.values(waitingByStatus).reduce(
+    (a, b) => a + (b || 0),
+    0,
+  );
 
   const dateParam = (d: Date) => d.toISOString().slice(0, 10);
 
@@ -266,21 +290,62 @@ export default async function AppointmentsPage({
                     ))}
                     {appointments.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="py-16 text-center">
+                        <td colSpan={6} className="py-10 text-center">
                           <CalendarDays className="mx-auto h-12 w-12 text-slate-300" />
                           <p className="mt-3 text-sm font-medium text-slate-500">
                             Aucun rendez-vous pour cette date.
                           </p>
-                          <Link href="/appointments/new">
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className="mt-4"
-                            >
-                              <CalendarPlus className="mr-2 h-4 w-4" />
-                              Planifier un rendez-vous
-                            </Button>
-                          </Link>
+
+                          {/* Mini waiting room preview */}
+                          <div className="mx-auto mt-6 max-w-md rounded-xl border border-slate-200 bg-slate-50 p-4 text-left">
+                            <div className="mb-3 flex items-center justify-between">
+                              <p className="flex items-center gap-2 text-sm font-semibold text-slate-900">
+                                <DoorOpen className="h-4 w-4 text-violet-600" />
+                                Salle d&apos;attente aujourd&apos;hui
+                              </p>
+                              <Badge variant="default">{waitingTotal}</Badge>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-center">
+                              <div className="rounded-lg bg-white p-2">
+                                <p className="text-lg font-bold text-amber-600">
+                                  {waitingByStatus["WAITING"] || 0}
+                                </p>
+                                <p className="text-[10px] uppercase tracking-wide text-slate-500">
+                                  En attente
+                                </p>
+                              </div>
+                              <div className="rounded-lg bg-white p-2">
+                                <p className="text-lg font-bold text-blue-600">
+                                  {waitingByStatus["CALLED"] || 0}
+                                </p>
+                                <p className="text-[10px] uppercase tracking-wide text-slate-500">
+                                  Appelés
+                                </p>
+                              </div>
+                              <div className="rounded-lg bg-white p-2">
+                                <p className="text-lg font-bold text-violet-600">
+                                  {waitingByStatus["IN_PROGRESS"] || 0}
+                                </p>
+                                <p className="text-[10px] uppercase tracking-wide text-slate-500">
+                                  En consultation
+                                </p>
+                              </div>
+                            </div>
+                            <div className="mt-3 flex items-center justify-center gap-2">
+                              <Link href="/waiting-room">
+                                <Button size="sm" variant="secondary">
+                                  <Users className="mr-2 h-4 w-4" />
+                                  Salle d&apos;attente
+                                </Button>
+                              </Link>
+                              <Link href="/appointments/new">
+                                <Button size="sm">
+                                  <CalendarPlus className="mr-2 h-4 w-4" />
+                                  Planifier
+                                </Button>
+                              </Link>
+                            </div>
+                          </div>
                         </td>
                       </tr>
                     )}
