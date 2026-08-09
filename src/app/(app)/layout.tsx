@@ -1,6 +1,5 @@
 import { SessionProvider } from "next-auth/react";
-import { Sidebar } from "@/components/layout/sidebar";
-import { Header } from "@/components/layout/header";
+import { AppShell } from "@/components/layout/app-shell";
 import { BugReporter } from "@/components/bug-reporter";
 import { prisma } from "@/lib/prisma";
 import { getClinicContext } from "@/lib/tenant";
@@ -27,15 +26,9 @@ export default async function AppLayout({
 
   return (
     <SessionProvider>
-      <div className="flex h-screen">
-        <Sidebar clinicLogoUrl={clinicLogoUrl} />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <Header clinicName={clinicName} clinicLogoUrl={clinicLogoUrl} />
-          <main className="flex-1 overflow-y-auto bg-slate-50 p-6">
-            {children}
-          </main>
-        </div>
-      </div>
+      <AppShell clinicLogoUrl={clinicLogoUrl} clinicName={clinicName}>
+        {children}
+      </AppShell>
       <BugReporter />
     </SessionProvider>
   );

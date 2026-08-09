@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { listActiveWaitingRoom } from "../actions";
 import type {
   Appointment,
@@ -8,7 +8,7 @@ import type {
   User,
   WaitingRoomEntry,
 } from "@prisma/client";
-import { Volume2, Clock } from "lucide-react";
+import { Volume2, Clock, Maximize, Minimize } from "lucide-react";
 
 interface EntryWithRelations extends WaitingRoomEntry {
   patient: Patient;
@@ -21,6 +21,27 @@ export default function WaitingRoomDisplayPage() {
   const [entries, setEntries] = useState<EntryWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = useCallback(() => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {
+        // ignore
+      });
+    } else {
+      document.exitFullscreen().catch(() => {
+        // ignore
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    function handleChange() {
+      setIsFullscreen(!!document.fullscreenElement);
+    }
+    document.addEventListener("fullscreenchange", handleChange);
+    return () => document.removeEventListener("fullscreenchange", handleChange);
+  }, []);
 
   async function load() {
     try {
@@ -67,20 +88,33 @@ export default function WaitingRoomDisplayPage() {
             </p>
           </div>
         </div>
-        <div className="text-right">
-          <p className="text-4xl font-bold tabular-nums">
-            {currentTime.toLocaleTimeString("fr-FR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </p>
-          <p className="text-sm text-slate-400">
-            {currentTime.toLocaleDateString("fr-FR", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-            })}
-          </p>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={toggleFullscreen}
+            className="rounded-lg border border-slate-700 bg-slate-800 p-2.5 text-slate-300 transition-colors hover:bg-slate-700 hover:text-white"
+            title={isFullscreen ? "Quitter le plein écran" : "Plein écran"}
+          >
+            {isFullscreen ? (
+              <Minimize className="h-5 w-5" />
+            ) : (
+              <Maximize className="h-5 w-5" />
+            )}
+          </button>
+          <div className="text-right">
+            <p className="text-4xl font-bold tabular-nums">
+              {currentTime.toLocaleTimeString("fr-FR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
+            <p className="text-sm text-slate-400">
+              {currentTime.toLocaleDateString("fr-FR", {
+                weekday: "long",
+                day: "numeric",
+                month: "long",
+              })}
+            </p>
+          </div>
         </div>
       </header>
 
