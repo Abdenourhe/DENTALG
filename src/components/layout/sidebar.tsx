@@ -10,6 +10,7 @@ import {
   Users,
   UserPlus,
   CalendarDays,
+  Clock,
   CreditCard,
   Stethoscope,
   Briefcase,
@@ -46,6 +47,12 @@ const allNavItems = [
     href: "/appointments",
     label: "Rendez-vous",
     icon: CalendarDays,
+    feature: null as FeatureKey | null,
+  },
+  {
+    href: "/waiting-room",
+    label: "Salle d’attente",
+    icon: Clock,
     feature: null as FeatureKey | null,
   },
   {

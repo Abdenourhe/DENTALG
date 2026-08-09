@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { motion } from "framer-motion";
-import { Bell } from "lucide-react";
+import { NotificationBell } from "./notifications";
 
 interface HeaderProps {
   clinicName?: string | null;
@@ -45,10 +45,7 @@ export function Header({ clinicName, clinicLogoUrl }: HeaderProps) {
 
       <div className="flex items-center gap-4">
         {/* Notification bell */}
-        <button className="relative rounded-full p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-700">
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-        </button>
+        <NotificationBell />
 
         {/* User profile */}
         <div className="flex items-center gap-3">

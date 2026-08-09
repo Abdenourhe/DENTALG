@@ -10,6 +10,18 @@ export const PERMISSIONS: Record<string, Role[]> = {
     Role.SECRETARY,
   ],
   "appointments:write": [Role.OWNER, Role.DENTIST, Role.SECRETARY],
+  "waiting_room:read": [
+    Role.OWNER,
+    Role.DENTIST,
+    Role.ASSISTANT,
+    Role.SECRETARY,
+  ],
+  "waiting_room:write": [
+    Role.OWNER,
+    Role.DENTIST,
+    Role.ASSISTANT,
+    Role.SECRETARY,
+  ],
   "billing:read": [Role.OWNER, Role.SECRETARY],
   "billing:write": [Role.OWNER, Role.SECRETARY],
   "procedures:manage": [Role.OWNER, Role.DENTIST],

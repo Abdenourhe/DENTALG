@@ -22,6 +22,7 @@ import { getPatient } from "../actions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Barcode } from "@/components/ui/barcode";
 import { formatDate, formatDateTime } from "@/lib/date";
 import { formatDA } from "@/lib/money";
 import OdontogramWrapper from "./odontogram-wrapper";
@@ -93,19 +94,22 @@ export default async function PatientDetailPage({ params }: Props) {
             )}
           </div>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Link href={`/patients/${id}/edit`}>
-            <Button variant="secondary">Modifier</Button>
-          </Link>
-          <Link href={`/appointments/new?patientId=${id}`}>
-            <Button variant="secondary">Nouveau RDV</Button>
-          </Link>
-          <Link href={`/billing/new?patientId=${id}`}>
-            <Button variant="secondary">Nouvelle facture</Button>
-          </Link>
-          <Link href={`/patients/${id}/prescriptions/new`}>
-            <Button>Ordonnance</Button>
-          </Link>
+        <div className="flex flex-col items-end gap-2">
+          <Barcode value={patient.number} width={1.2} height={32} />
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/patients/${id}/edit`}>
+              <Button variant="secondary">Modifier</Button>
+            </Link>
+            <Link href={`/appointments/new?patientId=${id}`}>
+              <Button variant="secondary">Nouveau RDV</Button>
+            </Link>
+            <Link href={`/billing/new?patientId=${id}`}>
+              <Button variant="secondary">Nouvelle facture</Button>
+            </Link>
+            <Link href={`/patients/${id}/prescriptions/new`}>
+              <Button>Ordonnance</Button>
+            </Link>
+          </div>
         </div>
       </div>
 

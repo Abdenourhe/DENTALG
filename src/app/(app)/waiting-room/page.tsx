@@ -1,0 +1,39 @@
+import { prisma } from "@/lib/prisma";
+import { requireRole } from "@/lib/rbac";
+import { requireClinicContext } from "@/lib/tenant";
+import { listWaitingRoom } from "./actions";
+import WaitingRoomBoard from "./WaitingRoomBoard";
+
+export default async function WaitingRoomPage() {
+  await requireRole("waiting_room:read");
+  const ctx = await requireClinicContext();
+
+  const [entries, patients, dentists] = await Promise.all([
+    listWaitingRoom(),
+    prisma.patient.findMany({
+      where: { clinicId: ctx.clinicId, deletedAt: null, isActive: true },
+      orderBy: { lastName: "asc" },
+      select: { id: true, firstName: true, lastName: true, number: true },
+    }),
+    prisma.user.findMany({
+      where: {
+        clinicId: ctx.clinicId,
+        deletedAt: null,
+        isActive: true,
+        role: { in: ["DENTIST", "OWNER"] },
+      },
+      orderBy: { lastName: "asc" },
+      select: { id: true, firstName: true, lastName: true },
+    }),
+  ]);
+
+  return (
+    <div className="space-y-6">
+      <WaitingRoomBoard
+        initialEntries={entries}
+        patients={patients}
+        dentists={dentists}
+      />
+    </div>
+  );
+}
