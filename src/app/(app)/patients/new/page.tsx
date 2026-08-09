@@ -31,7 +31,7 @@ export default function NewPatientPage() {
   }
 
   return (
-    <form action={handleSubmit} className="mx-auto max-w-6xl space-y-6">
+    <form action={handleSubmit} className="space-y-6">
       <h2 className="text-2xl font-bold text-slate-900">Nouveau patient</h2>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
