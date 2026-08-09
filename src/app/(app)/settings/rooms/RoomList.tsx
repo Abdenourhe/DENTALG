@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
+import { Select } from "@/components/ui/select";
 import { createRoom, updateRoom, deleteRoom } from "./actions";
 import { Room } from "@prisma/client";
 import {
@@ -111,13 +111,16 @@ export default function RoomList({ initialRooms }: RoomListProps) {
                   disabled={pending}
                 />
               </div>
-              <div className="flex items-center sm:col-span-2">
-                <Switch
+              <div className="sm:col-span-2">
+                <Select
                   name="isActive"
-                  label="Active"
-                  defaultChecked
+                  label="État"
+                  defaultValue="on"
                   disabled={pending}
-                  onCheckedChange={() => {}}
+                  options={[
+                    { value: "on", label: "Active" },
+                    { value: "", label: "Inactive" },
+                  ]}
                 />
               </div>
               <div className="flex items-end sm:col-span-2">
@@ -181,12 +184,15 @@ export default function RoomList({ initialRooms }: RoomListProps) {
                           />
                         </div>
                         <div className="sm:col-span-2">
-                          <Switch
+                          <Select
                             name="isActive"
-                            label="Active"
-                            defaultChecked={room.isActive}
+                            label="État"
+                            defaultValue={room.isActive ? "on" : ""}
                             disabled={pending}
-                            onCheckedChange={() => {}}
+                            options={[
+                              { value: "on", label: "Active" },
+                              { value: "", label: "Inactive" },
+                            ]}
                           />
                         </div>
                         <div className="flex gap-2 sm:col-span-3">

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 
 interface SwitchProps {
   checked?: boolean;
@@ -13,8 +13,8 @@ interface SwitchProps {
 }
 
 export function Switch({
-  checked,
-  defaultChecked,
+  checked: controlledChecked,
+  defaultChecked = false,
   onCheckedChange,
   label,
   disabled,
@@ -23,6 +23,18 @@ export function Switch({
 }: SwitchProps) {
   const generatedId = React.useId();
   const switchId = id || generatedId;
+  const isControlled = controlledChecked !== undefined;
+  const [internalChecked, setInternalChecked] = useState(defaultChecked);
+  const checked = isControlled ? controlledChecked : internalChecked;
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const newChecked = e.target.checked;
+    if (!isControlled) {
+      setInternalChecked(newChecked);
+    }
+    onCheckedChange?.(newChecked);
+  }
+
   return (
     <label
       htmlFor={switchId}
@@ -31,7 +43,7 @@ export function Switch({
       <span
         className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 ${
           checked ? "bg-violet-600" : "bg-slate-300"
-        } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+        } ${disabled ? "cursor-not-allowed opacity-50" : ""}`}
       >
         <input
           id={switchId}
@@ -39,9 +51,8 @@ export function Switch({
           type="checkbox"
           className="sr-only"
           checked={checked}
-          defaultChecked={defaultChecked}
           disabled={disabled}
-          onChange={(e) => onCheckedChange?.(e.target.checked)}
+          onChange={handleChange}
         />
         <span
           className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${

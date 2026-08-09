@@ -128,25 +128,18 @@ export default function CheckInDialog({
               ]}
               error={errors?.dentistId?.[0]}
             />
-            <div>
-              <Select
-                name="roomId"
-                label="Salle (optionnel)"
-                options={[
-                  { value: "", label: "— Aucune —" },
-                  ...rooms.map((r) => ({
-                    value: r.id,
-                    label: r.name,
-                  })),
-                ]}
-                error={errors?.roomId?.[0]}
-              />
-              {rooms.length === 0 && (
-                <p className="mt-1 text-xs text-amber-600">
-                  Aucune salle active. Activez-en une dans Paramètres → Salles.
-                </p>
-              )}
-            </div>
+            <Select
+              name="roomId"
+              label="Salle (optionnel)"
+              options={[
+                { value: "", label: "— Aucune —" },
+                ...rooms.map((r) => ({
+                  value: r.id,
+                  label: r.name,
+                })),
+              ]}
+              error={errors?.roomId?.[0]}
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Select
