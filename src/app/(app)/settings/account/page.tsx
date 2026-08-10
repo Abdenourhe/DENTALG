@@ -69,27 +69,18 @@ function playSound(type: SoundType) {
 export default function AccountSettingsPage() {
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [soundType, setSoundType] = useState<SoundType>("ding");
-  const [refreshRate, setRefreshRate] = useState<number>(5);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     const storedEnabled = localStorage.getItem("dentalg_waiting_room_sound");
     const storedType = localStorage.getItem("dentalg_waiting_room_sound_type");
-    const storedRate = localStorage.getItem(
-      "dentalg_waiting_room_refresh_rate",
-    );
     setSoundEnabled(storedEnabled === "true");
     setSoundType((storedType as SoundType) || "ding");
-    setRefreshRate(storedRate ? Number(storedRate) : 5);
   }, []);
 
   function save() {
     localStorage.setItem("dentalg_waiting_room_sound", String(soundEnabled));
     localStorage.setItem("dentalg_waiting_room_sound_type", soundType);
-    localStorage.setItem(
-      "dentalg_waiting_room_refresh_rate",
-      String(refreshRate),
-    );
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -129,24 +120,13 @@ export default function AccountSettingsPage() {
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="max-w-sm">
             <Select
               label="Type de son"
               value={soundType}
               onChange={(e) => setSoundType(e.target.value as SoundType)}
               disabled={!soundEnabled}
               options={soundOptions}
-            />
-            <Select
-              label="Fréquence de rafraîchissement"
-              value={String(refreshRate)}
-              onChange={(e) => setRefreshRate(Number(e.target.value))}
-              options={[
-                { value: "3", label: "3 secondes" },
-                { value: "5", label: "5 secondes" },
-                { value: "10", label: "10 secondes" },
-                { value: "30", label: "30 secondes" },
-              ]}
             />
           </div>
 

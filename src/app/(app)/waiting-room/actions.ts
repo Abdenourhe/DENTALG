@@ -12,6 +12,7 @@ import {
 } from "@/lib/validations/waiting-room";
 import { revalidatePath } from "next/cache";
 import { logAudit } from "@/lib/audit";
+import { broadcastWaitingRoomUpdate } from "@/lib/waiting-room-events";
 import { AuditAction } from "@prisma/client";
 
 function prismaError(errors: Record<string, string[]>): {
@@ -167,6 +168,7 @@ export async function checkInPatient(data: unknown) {
 
     revalidatePath("/waiting-room");
     revalidatePath("/waiting-room/display");
+    broadcastWaitingRoomUpdate(ctx.clinicId);
     return { ok: true, entry } as const;
   } catch {
     return prismaError({
@@ -215,6 +217,7 @@ export async function callPatient(entryId: string) {
 
     revalidatePath("/waiting-room");
     revalidatePath("/waiting-room/display");
+    broadcastWaitingRoomUpdate(ctx.clinicId);
 
     // Notification automatique à l'assistant / secrétaire
     try {
@@ -268,6 +271,7 @@ export async function startConsultation(entryId: string) {
 
     revalidatePath("/waiting-room");
     revalidatePath("/waiting-room/display");
+    broadcastWaitingRoomUpdate(ctx.clinicId);
     return { ok: true } as const;
   } catch {
     return prismaError({
@@ -313,6 +317,7 @@ export async function completeVisit(entryId: string) {
 
     revalidatePath("/waiting-room");
     revalidatePath("/waiting-room/display");
+    broadcastWaitingRoomUpdate(ctx.clinicId);
     return { ok: true } as const;
   } catch {
     return prismaError({
@@ -358,6 +363,7 @@ export async function markNoShow(entryId: string) {
 
     revalidatePath("/waiting-room");
     revalidatePath("/waiting-room/display");
+    broadcastWaitingRoomUpdate(ctx.clinicId);
     return { ok: true } as const;
   } catch {
     return prismaError({
@@ -393,6 +399,7 @@ export async function updatePriority(entryId: string, priority: string) {
 
     revalidatePath("/waiting-room");
     revalidatePath("/waiting-room/display");
+    broadcastWaitingRoomUpdate(ctx.clinicId);
     return { ok: true } as const;
   } catch {
     return prismaError({
@@ -444,6 +451,7 @@ export async function assignRoom(entryId: string, roomId: string) {
 
     revalidatePath("/waiting-room");
     revalidatePath("/waiting-room/display");
+    broadcastWaitingRoomUpdate(ctx.clinicId);
     return { ok: true } as const;
   } catch {
     return prismaError({

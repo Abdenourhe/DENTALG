@@ -13,6 +13,7 @@ import { revalidatePath } from "next/cache";
 import { notFound } from "next/navigation";
 import { nextNumber } from "@/lib/billing/numbering";
 import { logAudit } from "@/lib/audit";
+import { broadcastWaitingRoomUpdate } from "@/lib/waiting-room-events";
 import { AuditAction, Prisma } from "@prisma/client";
 
 function prismaError(errors: Record<string, string[]>): {
@@ -102,6 +103,7 @@ export async function createPatient(data: unknown) {
       });
       revalidatePath("/waiting-room");
       revalidatePath("/waiting-room/display");
+      broadcastWaitingRoomUpdate(ctx.clinicId);
     }
 
     revalidatePath("/patients");

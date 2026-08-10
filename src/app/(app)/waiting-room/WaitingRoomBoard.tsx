@@ -132,44 +132,74 @@ export default function WaitingRoomBoard({
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [soundType, setSoundType] = useState<SoundType>("ding");
-  const [refreshRate, setRefreshRate] = useState<number>(5);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const previousEntriesRef = useRef<EntryWithRelations[]>(initialEntries);
 
   useEffect(() => {
     const stored = localStorage.getItem("dentalg_waiting_room_sound");
     const storedType = localStorage.getItem("dentalg_waiting_room_sound_type");
-    const storedRate = localStorage.getItem(
-      "dentalg_waiting_room_refresh_rate",
-    );
     setSoundEnabled(stored === "true");
     setSoundType((storedType as SoundType) || "ding");
-    setRefreshRate(storedRate ? Number(storedRate) : 5);
   }, []);
 
+  async function refreshEntriesFromServer() {
+    startTransition(async () => {
+      const fresh = await listWaitingRoom();
+      const previousIds = new Set(previousEntriesRef.current.map((e) => e.id));
+      const hasNewEntry = fresh.some((e) => !previousIds.has(e.id));
+
+      setEntries(fresh as EntryWithRelations[]);
+      setLastUpdated(new Date());
+      previousEntriesRef.current = fresh as EntryWithRelations[];
+
+      if (hasNewEntry && soundEnabled) {
+        playNotificationSound(soundType);
+      }
+    });
+  }
+
   useEffect(() => {
-    function tick() {
-      startTransition(async () => {
-        const fresh = await listWaitingRoom();
-        const previousIds = new Set(
-          previousEntriesRef.current.map((e) => e.id),
-        );
-        const hasNewEntry = fresh.some((e) => !previousIds.has(e.id));
+    refreshEntriesFromServer();
 
-        setEntries(fresh as EntryWithRelations[]);
-        setLastUpdated(new Date());
-        previousEntriesRef.current = fresh as EntryWithRelations[];
+    let eventSource: EventSource | null = null;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
-        if (hasNewEntry && soundEnabled) {
-          playNotificationSound(soundType);
+    function connect() {
+      if (eventSource) {
+        try {
+          eventSource.close();
+        } catch {
+          // ignore
         }
+      }
+
+      eventSource = new EventSource("/api/waiting-room/stream");
+
+      eventSource.addEventListener("connected", () => {
+        // Connexion établie — rien à faire, le heartbeat garde la connexion ouverte.
+      });
+
+      eventSource.addEventListener("update", () => {
+        refreshEntriesFromServer();
+      });
+
+      eventSource.addEventListener("error", () => {
+        // La connexion a été coupée : reconnexion après un court délai.
+        if (reconnectTimeout) clearTimeout(reconnectTimeout);
+        reconnectTimeout = setTimeout(connect, 3000);
       });
     }
 
-    tick();
-    const interval = setInterval(tick, refreshRate * 1000);
-    return () => clearInterval(interval);
-  }, [soundEnabled, soundType, refreshRate]);
+    connect();
+
+    return () => {
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (eventSource) {
+        eventSource.onerror = null;
+        eventSource.close();
+      }
+    };
+  }, [soundEnabled, soundType]);
 
   function toggleSound(enabled: boolean) {
     setSoundEnabled(enabled);
