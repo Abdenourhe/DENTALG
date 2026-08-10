@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/select";
 import { TextArea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { useDictionary } from "@/lib/i18n/use-dictionary";
 import { DoorOpen, UserPlus, CheckCircle2 } from "lucide-react";
 
 interface DentistOption {
@@ -24,6 +25,7 @@ interface RoomOption {
 
 export default function NewPatientPage() {
   const router = useRouter();
+  const { t, dir } = useDictionary();
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [pending, setPending] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
@@ -64,9 +66,9 @@ export default function NewPatientPage() {
   }
 
   return (
-    <form action={handleSubmit} className="space-y-6">
+    <form action={handleSubmit} className="space-y-6" dir={dir}>
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-slate-900">Nouveau patient</h2>
+        <h2 className="text-2xl font-bold text-slate-900">{t.patient.title}</h2>
         {success && (
           <div className="flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700">
             <CheckCircle2 className="h-4 w-4" />
@@ -79,20 +81,20 @@ export default function NewPatientPage() {
         {/* Identité */}
         <Card>
           <CardHeader>
-            <CardTitle>Identité</CardTitle>
+            <CardTitle>{t.patient.identity}</CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input
                   name="firstName"
-                  label="Prénom *"
+                  label={`${t.patient.firstName} *`}
                   error={errors.firstName?.[0]}
                   required
                 />
                 <Input
                   name="lastName"
-                  label="Nom *"
+                  label={`${t.patient.lastName} *`}
                   error={errors.lastName?.[0]}
                   required
                 />
@@ -101,25 +103,25 @@ export default function NewPatientPage() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <Input
                   name="nationalId"
-                  label="N° carte nationale d'identité"
+                  label={t.patient.nationalId}
                   placeholder="Ex : 12345678901234567890"
                   error={errors.nationalId?.[0]}
                 />
                 <Select
                   name="sex"
-                  label="Sexe"
+                  label={t.patient.sex}
                   defaultValue=""
-                  placeholder="Choisir..."
+                  placeholder={t.common.choose}
                   options={[
-                    { value: "M", label: "Masculin" },
-                    { value: "F", label: "Féminin" },
+                    { value: "M", label: t.patient.male },
+                    { value: "F", label: t.patient.female },
                   ]}
                 />
                 <Select
                   name="bloodGroup"
-                  label="Groupe sanguin"
+                  label={t.patient.bloodGroup}
                   defaultValue=""
-                  placeholder="Choisir..."
+                  placeholder={t.common.choose}
                   options={[
                     { value: "A+", label: "A+" },
                     { value: "A-", label: "A-" },
@@ -135,7 +137,7 @@ export default function NewPatientPage() {
 
               <Input
                 name="dateOfBirth"
-                label="Date de naissance"
+                label={t.patient.dateOfBirth}
                 type="date"
                 error={errors.dateOfBirth?.[0]}
               />
@@ -146,50 +148,54 @@ export default function NewPatientPage() {
         {/* Coordonnées */}
         <Card>
           <CardHeader>
-            <CardTitle>Coordonnées</CardTitle>
+            <CardTitle>{t.patient.contact}</CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-4">
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <Input
                   name="phone"
-                  label="Téléphone"
+                  label={t.patient.phone}
                   error={errors.phone?.[0]}
                 />
                 <Input
                   name="email"
-                  label="Email"
+                  label={t.patient.email}
                   type="email"
                   error={errors.email?.[0]}
                 />
               </div>
               <Input
                 name="address"
-                label="Adresse"
+                label={t.patient.address}
                 error={errors.address?.[0]}
               />
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Input name="city" label="Ville" error={errors.city?.[0]} />
+                <Input
+                  name="city"
+                  label={t.patient.city}
+                  error={errors.city?.[0]}
+                />
                 <Input
                   name="wilaya"
-                  label="Wilaya"
+                  label={t.patient.wilaya}
                   error={errors.wilaya?.[0]}
                 />
               </div>
 
               <div className="border-t pt-3">
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Contact d&apos;urgence
+                  {t.patient.emergencyContact}
                 </p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <Input
                     name="emergencyContactName"
-                    placeholder="Nom et prénom"
+                    placeholder={t.patient.emergencyContactName}
                     error={errors.emergencyContactName?.[0]}
                   />
                   <Input
                     name="emergencyContactPhone"
-                    placeholder="Téléphone"
+                    placeholder={t.patient.emergencyContactPhone}
                     error={errors.emergencyContactPhone?.[0]}
                   />
                 </div>
@@ -201,17 +207,17 @@ export default function NewPatientPage() {
         {/* Informations médicales */}
         <Card>
           <CardHeader>
-            <CardTitle>Informations médicales</CardTitle>
+            <CardTitle>{t.patient.medicalInfo}</CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             <div className="space-y-4">
               <Select
                 name="generalCondition"
-                label="État général"
+                label={t.patient.generalCondition}
                 defaultValue=""
-                placeholder="Choisir..."
+                placeholder={t.common.choose}
                 options={[
-                  { value: "", label: "Choisir..." },
+                  { value: "", label: t.common.choose },
                   { value: "RAS", label: "RAS" },
                   {
                     value: "HYPERTENSION_ARTERIELLE",
@@ -245,17 +251,17 @@ export default function NewPatientPage() {
               />
               <TextArea
                 name="medicalHistory"
-                label="Antécédents médicaux"
+                label={t.patient.medicalHistory}
                 rows={3}
                 placeholder="Maladies chroniques, chirurgies, antécédents familiaux..."
               />
               <TextArea
                 name="currentMedications"
-                label="Médicaments en cours"
+                label={t.patient.currentMedications}
                 rows={2}
                 placeholder="Traitements réguliers..."
               />
-              <TextArea name="notes" label="Notes libres" rows={2} />
+              <TextArea name="notes" label={t.patient.notes} rows={2} />
             </div>
           </CardContent>
         </Card>
@@ -266,11 +272,11 @@ export default function NewPatientPage() {
             <CardTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <DoorOpen className="h-5 w-5 text-violet-600" />
-                Salle d&apos;attente
+                {t.patient.waitingRoom}
               </span>
               <Switch
                 name="addToWaitingRoom"
-                label="Ajouter directement"
+                label={t.patient.addToWaitingRoom}
                 checked={addToWaitingRoom}
                 onCheckedChange={setAddToWaitingRoom}
               />
@@ -281,28 +287,28 @@ export default function NewPatientPage() {
               <div className="space-y-4">
                 <Input
                   name="waitingRoomReason"
-                  label="Motif de visite"
+                  label={t.patient.waitingReason}
                   placeholder="Ex : douleur, contrôle, extraction..."
                   error={errors.waitingRoomReason?.[0]}
                 />
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <Select
                     name="waitingRoomPriority"
-                    label="Priorité"
+                    label={t.patient.priority}
                     defaultValue="NORMAL"
                     options={[
-                      { value: "LOW", label: "Basse" },
-                      { value: "NORMAL", label: "Normale" },
-                      { value: "HIGH", label: "Haute" },
+                      { value: "LOW", label: t.patient.priorityLow },
+                      { value: "NORMAL", label: t.patient.priorityNormal },
+                      { value: "HIGH", label: t.patient.priorityHigh },
                     ]}
                   />
                   <Select
                     name="waitingRoomDentistId"
-                    label="Dentiste"
+                    label={t.patient.dentist}
                     defaultValue=""
-                    placeholder="Choisir..."
+                    placeholder={t.common.choose}
                     options={[
-                      { value: "", label: "— Aucun —" },
+                      { value: "", label: t.common.none },
                       ...dentists.map((d) => ({
                         value: d.id,
                         label: `Dr ${d.lastName} ${d.firstName}`,
@@ -311,14 +317,14 @@ export default function NewPatientPage() {
                   />
                   <Select
                     name="waitingRoomRoomId"
-                    label="Salle"
+                    label={t.patient.room}
                     defaultValue=""
                     placeholder={
-                      rooms.length ? "Choisir..." : "Aucune salle active"
+                      rooms.length ? t.common.choose : "Aucune salle active"
                     }
                     disabled={rooms.length === 0}
                     options={[
-                      { value: "", label: "— Aucune —" },
+                      { value: "", label: t.common.noneF },
                       ...rooms.map((r) => ({
                         value: r.id,
                         label: r.name,

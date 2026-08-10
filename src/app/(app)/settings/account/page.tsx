@@ -5,7 +5,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Volume2, VolumeX, Save, UserCog } from "lucide-react";
+import { useDictionary } from "@/lib/i18n/use-dictionary";
+import { Volume2, VolumeX, Save, UserCog, Languages } from "lucide-react";
 
 type SoundType = "ding" | "chime" | "bell" | "none";
 
@@ -14,6 +15,11 @@ const soundOptions = [
   { value: "chime", label: "Carillon" },
   { value: "bell", label: "Cloche" },
   { value: "none", label: "Aucun" },
+];
+
+const localeOptions = [
+  { value: "fr", label: "Français" },
+  { value: "ar", label: "العربية" },
 ];
 
 function playSound(type: SoundType) {
@@ -67,6 +73,7 @@ function playSound(type: SoundType) {
 }
 
 export default function AccountSettingsPage() {
+  const { locale, setLocale } = useDictionary();
   const [soundEnabled, setSoundEnabled] = useState(false);
   const [soundType, setSoundType] = useState<SoundType>("ding");
   const [saved, setSaved] = useState(false);
@@ -96,6 +103,25 @@ export default function AccountSettingsPage() {
           Personnalisez votre expérience dans l&apos;application.
         </p>
       </div>
+
+      <Card>
+        <CardHeader className="border-b px-6 py-4">
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <Languages className="h-5 w-5 text-blue-600" />
+            Langue
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6 p-6">
+          <div className="max-w-sm">
+            <Select
+              label="Langue de l’interface"
+              value={locale}
+              onChange={(e) => setLocale(e.target.value as "fr" | "ar")}
+              options={localeOptions}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader className="border-b px-6 py-4">
