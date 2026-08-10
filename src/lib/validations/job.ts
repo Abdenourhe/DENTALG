@@ -25,4 +25,5 @@ export const jobApplicationSchema = z.object({
   email: z.string().email("Email invalide."),
   phone: z.string().optional().or(z.literal("")),
   coverLetter: z.string().optional().or(z.literal("")),
+  cvUrl: z.string().optional().or(z.literal("")),
 });

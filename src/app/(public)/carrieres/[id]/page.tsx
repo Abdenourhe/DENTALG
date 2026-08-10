@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getPublicJobOffer, applyToJob } from "@/lib/actions/job-offers";
+import { getPublicJobOffer } from "@/lib/actions/job-offers";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
@@ -13,10 +11,10 @@ import {
   Mail,
   GraduationCap,
   Stethoscope,
-  Send,
   CheckCircle2,
 } from "lucide-react";
 import { formatDate } from "@/lib/date";
+import ApplyForm from "./apply-form";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -183,37 +181,7 @@ export default async function JobOfferDetailPage({ params }: Props) {
                 <CardTitle>Postuler</CardTitle>
               </CardHeader>
               <CardContent>
-                <form
-                  action={async (formData: FormData) => {
-                    "use server";
-                    const data = Object.fromEntries(formData.entries());
-                    await applyToJob(data);
-                  }}
-                  className="space-y-4"
-                >
-                  <input type="hidden" name="jobOfferId" value={offer.id} />
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input name="firstName" label="Prénom *" required />
-                    <Input name="lastName" label="Nom *" required />
-                  </div>
-                  <Input name="email" label="Email *" type="email" required />
-                  <Input name="phone" label="Téléphone" />
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-700">
-                      Lettre de motivation
-                    </label>
-                    <textarea
-                      name="coverLetter"
-                      rows={4}
-                      className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm transition-all placeholder:text-slate-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-                      placeholder="Présentez-vous brièvement..."
-                    />
-                  </div>
-                  <Button type="submit" className="w-full">
-                    <Send className="mr-2 h-4 w-4" />
-                    Envoyer ma candidature
-                  </Button>
-                </form>
+                <ApplyForm jobOfferId={offer.id} />
               </CardContent>
             </Card>
 

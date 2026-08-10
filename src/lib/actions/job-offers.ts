@@ -48,7 +48,7 @@ export async function applyToJob(data: unknown) {
     return { ok: false, errors: parsed.error.flatten().fieldErrors } as const;
   }
 
-  const { jobOfferId, firstName, lastName, email, phone, coverLetter } =
+  const { jobOfferId, firstName, lastName, email, phone, coverLetter, cvUrl } =
     parsed.data;
 
   const offer = await prisma.jobOffer.findFirst({
@@ -64,6 +64,7 @@ export async function applyToJob(data: unknown) {
       lastName,
       phone: phone || undefined,
       coverLetter: coverLetter || undefined,
+      cvUrl: cvUrl || undefined,
     },
     create: {
       firstName,
@@ -71,6 +72,7 @@ export async function applyToJob(data: unknown) {
       email,
       phone: phone || undefined,
       coverLetter: coverLetter || undefined,
+      cvUrl: cvUrl || undefined,
     },
   });
 
