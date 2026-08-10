@@ -32,10 +32,12 @@ import type {
 import {
   Calendar,
   Clock,
+  DoorOpen,
   Monitor,
   Plus,
   RefreshCw,
   UserPlus,
+  Volume2,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -73,14 +75,30 @@ const priorityOrder: Record<WaitingRoomPriority, number> = {
 
 type SoundType = "ding" | "chime" | "bell";
 
-function playNotificationSound(type: SoundType = "ding") {
-  try {
-    const AudioCtx =
-      window.AudioContext ||
+let sharedAudioContext: AudioContext | null = null;
+
+function getAudioContext(): AudioContext | null {
+  const AudioCtx =
+    typeof window !== "undefined" &&
+    (window.AudioContext ||
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).webkitAudioContext;
-    if (!AudioCtx) return;
-    const audioCtx = new AudioCtx();
+      (window as any).webkitAudioContext);
+  if (!AudioCtx) return null;
+  if (!sharedAudioContext || sharedAudioContext.state === "closed") {
+    sharedAudioContext = new AudioCtx();
+  }
+  return sharedAudioContext;
+}
+
+async function playNotificationSound(type: SoundType = "ding") {
+  try {
+    const audioCtx = getAudioContext();
+    if (!audioCtx) return;
+
+    if (audioCtx.state === "suspended") {
+      await audioCtx.resume();
+    }
+
     const oscillator = audioCtx.createOscillator();
     const gainNode = audioCtx.createGain();
     oscillator.connect(gainNode);
@@ -148,14 +166,22 @@ export default function WaitingRoomBoard({
   async function refreshEntriesFromServer() {
     startTransition(async () => {
       const fresh = await listWaitingRoom();
-      const previousIds = new Set(previousEntriesRef.current.map((e) => e.id));
-      const hasNewEntry = fresh.some((e) => !previousIds.has(e.id));
+      const previousMap = new Map(
+        previousEntriesRef.current.map((e) => [e.id, e]),
+      );
+      const hasNewEntry = fresh.some((e) => !previousMap.has(e.id));
+      const hasNewlyCalled = fresh.some(
+        (e) =>
+          e.status === "CALLED" &&
+          (!previousMap.has(e.id) ||
+            previousMap.get(e.id)?.status !== "CALLED"),
+      );
 
       setEntries(fresh as EntryWithRelations[]);
       setLastUpdated(new Date());
       previousEntriesRef.current = fresh as EntryWithRelations[];
 
-      if (hasNewEntry && soundEnabled) {
+      if (soundEnabled && (hasNewEntry || hasNewlyCalled)) {
         playNotificationSound(soundType);
       }
     });
@@ -204,9 +230,13 @@ export default function WaitingRoomBoard({
     };
   }, [soundEnabled, soundType]);
 
-  function toggleSound(enabled: boolean) {
+  async function toggleSound(enabled: boolean) {
     setSoundEnabled(enabled);
     localStorage.setItem("dentalg_waiting_room_sound", String(enabled));
+    if (enabled) {
+      // Réveille l’AudioContext (nécessite un geste utilisateur) et joue un son test.
+      await playNotificationSound(soundType);
+    }
   }
 
   function refreshEntries() {
@@ -279,13 +309,23 @@ export default function WaitingRoomBoard({
     });
   }
 
-  function sortedEntries(status: WaitingRoomStatus) {
+  function sortedEntries(status: WaitingRoomStatus, excludeId?: string) {
     return entries
-      .filter((e) => e.status === status)
+      .filter((e) => e.status === status && e.id !== excludeId)
       .sort(
         (a, b) =>
           priorityOrder[a.priority] - priorityOrder[b.priority] ||
           new Date(a.arrivedAt).getTime() - new Date(b.arrivedAt).getTime(),
+      );
+  }
+
+  function sortedCalledEntries() {
+    return entries
+      .filter((e) => e.status === "CALLED")
+      .sort(
+        (a, b) =>
+          new Date(b.calledAt ?? b.arrivedAt).getTime() -
+          new Date(a.calledAt ?? a.arrivedAt).getTime(),
       );
   }
 
@@ -294,6 +334,9 @@ export default function WaitingRoomBoard({
   const inProgressCount = entries.filter(
     (e) => e.status === "IN_PROGRESS",
   ).length;
+
+  const calledEntries = sortedCalledEntries();
+  const latestCalled = calledEntries[0];
 
   return (
     <div className="space-y-6">
@@ -400,44 +443,101 @@ export default function WaitingRoomBoard({
         </Card>
       </div>
 
+      {latestCalled && (
+        <Card className="overflow-hidden border-2 border-blue-500/30 bg-gradient-to-r from-blue-50 to-white">
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-blue-100">
+                  <Volume2 className="h-7 w-7 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold uppercase tracking-wide text-blue-600">
+                    Patient appelé
+                  </p>
+                  <h2 className="mt-1 text-3xl font-bold text-slate-900">
+                    {latestCalled.patient.lastName}{" "}
+                    {latestCalled.patient.firstName}
+                  </h2>
+                  {latestCalled.patient.arabicName && (
+                    <p className="text-lg font-medium text-slate-600" dir="rtl">
+                      {latestCalled.patient.arabicName}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col items-start gap-2 sm:items-end">
+                <div className="flex items-center gap-2 text-sm text-slate-500">
+                  <Clock className="h-4 w-4" />
+                  Appelé à{" "}
+                  {format(
+                    new Date(latestCalled.calledAt ?? latestCalled.arrivedAt),
+                    "HH:mm",
+                    { locale: fr },
+                  )}
+                </div>
+                {latestCalled.room && (
+                  <Badge variant="default" className="gap-1">
+                    <DoorOpen className="h-3 w-3" />
+                    {latestCalled.room.name}
+                  </Badge>
+                )}
+                {latestCalled.dentist && (
+                  <p className="text-sm text-slate-600">
+                    Dr. {latestCalled.dentist.lastName}{" "}
+                    {latestCalled.dentist.firstName}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-3">
-        {columns.slice(0, 3).map((column) => (
-          <Card key={column.status} className="flex flex-col">
-            <CardHeader className="border-b px-4 py-3">
-              <CardTitle className="flex items-center justify-between text-sm font-semibold">
-                <span>{column.label}</span>
-                <Badge variant="default">
-                  {sortedEntries(column.status).length}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 space-y-3 p-3">
-              {sortedEntries(column.status).map((entry, idx) => (
-                <WaitingRoomCard
-                  key={entry.id}
-                  entry={entry}
-                  rooms={rooms}
-                  onCall={handleCall}
-                  onStart={handleStart}
-                  onComplete={handleComplete}
-                  onNoShow={handleNoShow}
-                  onPriority={handlePriority}
-                  onNotify={handleNotify}
-                  onViewFile={setSelectedPatientId}
-                  onAssignRoom={handleAssignRoom}
-                  isPending={isPending}
-                  index={column.status === "WAITING" ? idx : undefined}
-                  isNext={column.status === "WAITING" && idx === 0}
-                />
-              ))}
-              {sortedEntries(column.status).length === 0 && (
-                <p className="py-8 text-center text-sm text-slate-400">
-                  Aucun patient.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+        {columns.slice(0, 3).map((column) => {
+          const columnEntries = sortedEntries(
+            column.status,
+            column.status === "CALLED" && latestCalled
+              ? latestCalled.id
+              : undefined,
+          );
+          return (
+            <Card key={column.status} className="flex flex-col">
+              <CardHeader className="border-b px-4 py-3">
+                <CardTitle className="flex items-center justify-between text-sm font-semibold">
+                  <span>{column.label}</span>
+                  <Badge variant="default">{columnEntries.length}</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex-1 space-y-3 p-3">
+                {columnEntries.map((entry, idx) => (
+                  <WaitingRoomCard
+                    key={entry.id}
+                    entry={entry}
+                    rooms={rooms}
+                    onCall={handleCall}
+                    onStart={handleStart}
+                    onComplete={handleComplete}
+                    onNoShow={handleNoShow}
+                    onPriority={handlePriority}
+                    onNotify={handleNotify}
+                    onViewFile={setSelectedPatientId}
+                    onAssignRoom={handleAssignRoom}
+                    isPending={isPending}
+                    index={column.status === "WAITING" ? idx : undefined}
+                    isNext={column.status === "WAITING" && idx === 0}
+                  />
+                ))}
+                {columnEntries.length === 0 && (
+                  <p className="py-8 text-center text-sm text-slate-400">
+                    Aucun patient.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       {entries.some(

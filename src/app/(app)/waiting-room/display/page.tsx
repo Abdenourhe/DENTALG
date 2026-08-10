@@ -10,6 +10,7 @@ import type {
   WaitingRoomEntry,
 } from "@prisma/client";
 import { Volume2, Clock, Maximize, Minimize } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface EntryWithRelations extends WaitingRoomEntry {
   patient: Patient;
@@ -82,8 +83,22 @@ export default function WaitingRoomDisplayPage() {
         (a.priority === "HIGH" ? 0 : 1) - (b.priority === "HIGH" ? 0 : 1) ||
         new Date(a.arrivedAt).getTime() - new Date(b.arrivedAt).getTime(),
     );
-  const called = entries.filter((e) => e.status === "CALLED");
+  const called = entries
+    .filter((e) => e.status === "CALLED")
+    .sort(
+      (a, b) =>
+        new Date(b.calledAt ?? b.arrivedAt).getTime() -
+        new Date(a.calledAt ?? a.arrivedAt).getTime(),
+    );
   const inProgress = entries.filter((e) => e.status === "IN_PROGRESS");
+  const hasCalled = called.length > 0;
+
+  function formatWaitEstimate(position: number) {
+    const avgMinutesPerPatient = 15;
+    const minutes = (position + 1) * avgMinutesPerPatient;
+    if (minutes <= 15) return "Prochainement";
+    return `~${minutes} min`;
+  }
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-slate-950 text-white">
@@ -142,139 +157,219 @@ export default function WaitingRoomDisplayPage() {
         </div>
       </header>
 
-      {/* Stats */}
-      <div className="grid shrink-0 grid-cols-3 gap-px border-b border-slate-800 bg-slate-800">
-        <div className="flex items-center justify-center gap-3 bg-slate-950 py-3">
-          <span className="text-3xl font-bold text-amber-400">
-            {waiting.length}
-          </span>
-          <span className="text-sm font-medium text-slate-300">En attente</span>
-        </div>
-        <div className="flex items-center justify-center gap-3 bg-slate-950 py-3">
-          <span className="text-3xl font-bold text-blue-400">
-            {called.length}
-          </span>
-          <span className="text-sm font-medium text-slate-300">Appelés</span>
-        </div>
-        <div className="flex items-center justify-center gap-3 bg-slate-950 py-3">
-          <span className="text-3xl font-bold text-violet-400">
-            {inProgress.length}
-          </span>
-          <span className="text-sm font-medium text-slate-300">
-            En consultation
-          </span>
-        </div>
-      </div>
-
       {/* Main content */}
-      <main className="flex min-h-0 flex-1 gap-6 p-6">
-        {/* Called patient */}
-        <section className="flex min-w-0 flex-[2] flex-col">
-          <h2 className="mb-4 text-xl font-semibold text-emerald-400">
-            Patient appelé
-          </h2>
-          <div className="flex min-h-0 flex-1 flex-col justify-center rounded-3xl border-2 border-emerald-500/30 bg-emerald-950/30 p-10 text-center">
-            {called.length > 0 ? (
+      <main className="flex min-h-0 flex-1 flex-col gap-6 p-6">
+        <div className="flex min-h-0 flex-1 gap-6">
+          {/* Primary panel : patient appelé ou liste d’attente principale */}
+          <motion.section
+            layout
+            className={`flex min-w-0 flex-col transition-all duration-700 ease-in-out ${
+              hasCalled ? "flex-[2]" : "flex-1"
+            }`}
+          >
+            {hasCalled ? (
               <>
-                <p className="text-lg font-medium uppercase tracking-widest text-emerald-300">
-                  Veuillez vous rendre au cabinet
-                </p>
-                <h3 className="mt-6 truncate text-6xl font-extrabold text-white md:text-8xl">
-                  {called[0].patient.lastName} {called[0].patient.firstName}
-                </h3>
-                <div className="mt-8 flex items-center justify-center gap-6 text-2xl text-emerald-200">
-                  {called[0].dentist && (
-                    <span>
-                      Dr. {called[0].dentist.lastName}{" "}
-                      {called[0].dentist.firstName}
-                    </span>
+                <h2 className="mb-4 flex items-center gap-3 text-xl font-semibold text-emerald-400">
+                  <span className="relative flex h-3 w-3">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500" />
+                  </span>
+                  Patient appelé
+                </h2>
+                <motion.div
+                  key={called[0].id}
+                  layoutId="called-patient"
+                  initial={{ opacity: 0, scale: 0.92 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 120, damping: 18 }}
+                  className="flex min-h-0 flex-1 flex-col justify-center rounded-3xl border-2 border-emerald-500/40 bg-gradient-to-br from-emerald-950/40 to-slate-900/60 p-10 text-center shadow-[0_0_60px_-12px_rgba(16,185,129,0.25)]"
+                >
+                  <p className="text-lg font-medium uppercase tracking-[0.2em] text-emerald-300">
+                    Veuillez vous rendre au cabinet
+                  </p>
+                  <h3 className="mt-6 truncate text-6xl font-extrabold text-white md:text-8xl">
+                    {called[0].patient.lastName} {called[0].patient.firstName}
+                  </h3>
+                  {called[0].patient.arabicName && (
+                    <p
+                      className="mt-4 truncate text-4xl font-semibold text-emerald-200 md:text-6xl"
+                      dir="rtl"
+                    >
+                      {called[0].patient.arabicName}
+                    </p>
                   )}
-                  {called[0].room && (
-                    <span className="rounded-full bg-emerald-500/20 px-4 py-1 text-lg font-semibold text-emerald-300">
-                      {called[0].room.name}
-                    </span>
-                  )}
-                </div>
+                  <div className="mt-10 flex flex-wrap items-center justify-center gap-4 text-2xl text-emerald-100">
+                    {called[0].dentist && (
+                      <span className="rounded-2xl bg-slate-800/60 px-5 py-2">
+                        Dr. {called[0].dentist.lastName}{" "}
+                        {called[0].dentist.firstName}
+                      </span>
+                    )}
+                    {called[0].room && (
+                      <span className="rounded-2xl bg-emerald-500/20 px-5 py-2 font-semibold text-emerald-300">
+                        {called[0].room.name}
+                      </span>
+                    )}
+                  </div>
+                  <p className="mt-8 text-sm text-emerald-400/70">
+                    Appelé à{" "}
+                    {new Date(
+                      called[0].calledAt ?? called[0].arrivedAt,
+                    ).toLocaleTimeString("fr-FR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </motion.div>
               </>
             ) : (
               <>
-                <Volume2 className="mx-auto h-20 w-20 text-slate-700" />
-                <p className="mt-6 text-3xl text-slate-500">
-                  En attente du prochain appel
-                </p>
-              </>
-            )}
-          </div>
-        </section>
-
-        {/* Side panels */}
-        <aside className="flex w-full max-w-md flex-col gap-6">
-          <section className="flex min-h-0 flex-1 flex-col">
-            <h2 className="mb-4 text-lg font-semibold text-slate-300">
-              Prochains patients
-            </h2>
-            <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
-              {waiting.slice(0, 8).map((entry, index) => (
-                <div
-                  key={entry.id}
-                  className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900 p-4"
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800 text-lg font-bold text-slate-300">
-                      {index + 1}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="truncate text-lg font-semibold">
-                        {entry.patient.lastName} {entry.patient.firstName}
-                      </p>
-                      <div className="flex items-center gap-2 text-sm text-slate-400">
-                        {entry.dentist && (
-                          <span>Dr. {entry.dentist.lastName}</span>
-                        )}
-                        {entry.room && (
-                          <span className="text-emerald-300">
-                            · {entry.room.name}
+                <h2 className="mb-4 text-xl font-semibold text-slate-300">
+                  Prochains patients
+                </h2>
+                <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto rounded-3xl border border-slate-800 bg-slate-900/50 p-6">
+                  {waiting.length > 0 ? (
+                    waiting.slice(0, 12).map((entry, index) => (
+                      <div
+                        key={entry.id}
+                        className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 p-5 transition-colors hover:bg-slate-800/60"
+                      >
+                        <div className="flex items-center gap-5">
+                          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-slate-800 text-xl font-bold text-slate-300">
+                            {index + 1}
                           </span>
-                        )}
+                          <div className="min-w-0">
+                            <p className="truncate text-2xl font-semibold">
+                              {entry.patient.lastName} {entry.patient.firstName}
+                            </p>
+                            {entry.patient.arabicName && (
+                              <p
+                                className="truncate text-lg text-slate-400"
+                                dir="rtl"
+                              >
+                                {entry.patient.arabicName}
+                              </p>
+                            )}
+                            <div className="flex items-center gap-2 text-sm text-slate-400">
+                              {entry.dentist && (
+                                <span>Dr. {entry.dentist.lastName}</span>
+                              )}
+                              {entry.room && (
+                                <span className="text-emerald-300">
+                                  · {entry.room.name}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          {entry.priority === "HIGH" ? (
+                            <span className="shrink-0 rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-400">
+                              Prioritaire
+                            </span>
+                          ) : (
+                            <p className="text-sm text-slate-500">
+                              {formatWaitEstimate(index)}
+                            </p>
+                          )}
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="flex flex-1 flex-col items-center justify-center text-center">
+                      <Volume2 className="h-20 w-20 text-slate-700" />
+                      <p className="mt-6 text-3xl text-slate-500">
+                        En attente du prochain appel
+                      </p>
                     </div>
-                  </div>
-                  {entry.priority === "HIGH" && (
-                    <span className="shrink-0 rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-400">
-                      Prioritaire
-                    </span>
                   )}
                 </div>
-              ))}
-              {waiting.length === 0 && (
-                <p className="py-10 text-center text-slate-500">
-                  Aucun patient en attente.
-                </p>
-              )}
-            </div>
-          </section>
+              </>
+            )}
+          </motion.section>
 
-          {inProgress.length > 0 && (
-            <section className="shrink-0">
-              <h2 className="mb-3 text-lg font-semibold text-slate-400">
-                En consultation
+          {/* Secondary panel : file compacte quand un patient est appelé */}
+          <motion.aside
+            layout
+            className={`flex min-w-0 flex-col gap-6 transition-all duration-700 ease-in-out ${
+              hasCalled
+                ? "w-full max-w-md opacity-100"
+                : "w-0 opacity-0 overflow-hidden"
+            }`}
+          >
+            <section className="flex min-h-0 flex-1 flex-col">
+              <h2 className="mb-4 text-lg font-semibold text-slate-300">
+                Prochains patients
               </h2>
-              <div className="space-y-2">
-                {inProgress.map((entry) => (
+              <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto rounded-2xl border border-slate-800 bg-slate-900/50 p-4">
+                {waiting.slice(0, 8).map((entry, index) => (
                   <div
                     key={entry.id}
-                    className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900 p-3"
+                    className="flex items-center justify-between rounded-xl border border-slate-800 bg-slate-900 p-4"
                   >
-                    <Clock className="h-5 w-5 text-violet-400" />
+                    <div className="flex items-center gap-4">
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-800 text-lg font-bold text-slate-300">
+                        {index + 1}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="truncate text-lg font-semibold">
+                          {entry.patient.lastName} {entry.patient.firstName}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {formatWaitEstimate(index)}
+                        </p>
+                      </div>
+                    </div>
+                    {entry.priority === "HIGH" && (
+                      <span className="shrink-0 rounded-full bg-red-500/20 px-3 py-1 text-xs font-semibold text-red-400">
+                        Prioritaire
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {waiting.length === 0 && (
+                  <p className="py-10 text-center text-slate-500">
+                    Aucun patient en attente.
+                  </p>
+                )}
+              </div>
+            </section>
+          </motion.aside>
+        </div>
+
+        {/* En consultation */}
+        {inProgress.length > 0 && (
+          <motion.section
+            layout
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="shrink-0"
+          >
+            <h2 className="mb-3 text-lg font-semibold text-slate-400">
+              En consultation
+            </h2>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {inProgress.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-900 p-4"
+                >
+                  <Clock className="h-5 w-5 text-violet-400" />
+                  <div className="min-w-0">
                     <p className="truncate font-medium">
                       {entry.patient.lastName} {entry.patient.firstName}
                     </p>
+                    {entry.room && (
+                      <p className="text-xs text-slate-500">
+                        {entry.room.name}
+                      </p>
+                    )}
                   </div>
-                ))}
-              </div>
-            </section>
-          )}
-        </aside>
+                </div>
+              ))}
+            </div>
+          </motion.section>
+        )}
       </main>
 
       {loading && (
