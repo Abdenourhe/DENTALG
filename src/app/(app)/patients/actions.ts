@@ -15,6 +15,7 @@ import { nextNumber } from "@/lib/billing/numbering";
 import { logAudit } from "@/lib/audit";
 import { broadcastWaitingRoomUpdate } from "@/lib/waiting-room-events";
 import { AuditAction, Prisma } from "@prisma/client";
+import { z } from "zod";
 
 function prismaError(errors: Record<string, string[]>): {
   ok: false;
@@ -27,6 +28,52 @@ function normalizeOptional(value: string | undefined): string | null {
   return value === undefined || value === "" ? null : value;
 }
 
+async function findPotentialDuplicate(
+  clinicId: string,
+  data: z.infer<typeof patientSchema>,
+) {
+  const phone = normalizeOptional(data.phone);
+  const nationalId = normalizeOptional(data.nationalId);
+  const dateOfBirth = data.dateOfBirth ? new Date(data.dateOfBirth) : null;
+  const firstName = data.firstName.trim();
+  const lastName = data.lastName.trim();
+
+  const whereConditions: Prisma.PatientWhereInput[] = [
+    { clinicId, deletedAt: null },
+  ];
+
+  const orConditions: Prisma.PatientWhereInput[] = [];
+
+  if (phone) {
+    orConditions.push({ phone });
+  }
+
+  if (nationalId) {
+    orConditions.push({ nationalId });
+  }
+
+  if (firstName && lastName && dateOfBirth && !isNaN(dateOfBirth.getTime())) {
+    // Normalisation simple pour éviter les différences de casse / espaces.
+    orConditions.push({
+      firstName: { equals: firstName, mode: "insensitive" },
+      lastName: { equals: lastName, mode: "insensitive" },
+      dateOfBirth,
+    });
+  }
+
+  if (orConditions.length === 0) return null;
+
+  whereConditions.push({ OR: orConditions });
+
+  const duplicate = await prisma.patient.findFirst({
+    where: { AND: whereConditions },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, firstName: true, lastName: true, number: true },
+  });
+
+  return duplicate;
+}
+
 export async function createPatient(data: unknown) {
   await requireRole("patients:write");
   const ctx = await requireClinicContext();
@@ -37,8 +84,23 @@ export async function createPatient(data: unknown) {
   }
 
   try {
-    const number = await nextNumber(ctx.clinicId, "PATIENT", { pad: 4 });
     const d = parsed.data;
+
+    // Détection professionnelle des doublons avant attribution d'un numéro.
+    const duplicate = await findPotentialDuplicate(ctx.clinicId, d);
+    if (duplicate) {
+      return {
+        ok: false,
+        errors: {
+          global: [
+            `Un patient similaire existe déjà : ${duplicate.lastName} ${duplicate.firstName} (n° ${duplicate.number}).`,
+          ],
+        },
+        existingPatientId: duplicate.id,
+      } as const;
+    }
+
+    const number = await nextNumber(ctx.clinicId, "PATIENT", { pad: 4 });
 
     const { patient, entry } = await prisma.$transaction(async (tx) => {
       const patient = await tx.patient.create({

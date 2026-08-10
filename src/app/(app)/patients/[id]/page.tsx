@@ -17,6 +17,7 @@ import {
   AlertCircle,
   Activity,
   Fingerprint,
+  IdCard,
 } from "lucide-react";
 import { getPatient } from "../actions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -99,6 +100,12 @@ export default async function PatientDetailPage({ params }: Props) {
           <div className="flex flex-wrap gap-2">
             <Link href={`/patients/${id}/edit`}>
               <Button variant="secondary">Modifier</Button>
+            </Link>
+            <Link href={`/patients/${id}/card/print`} target="_blank">
+              <Button variant="secondary" className="gap-2">
+                <IdCard className="h-4 w-4" />
+                Carte patient
+              </Button>
             </Link>
             <Link href={`/appointments/new?patientId=${id}`}>
               <Button variant="secondary">Nouveau RDV</Button>

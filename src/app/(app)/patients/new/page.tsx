@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createPatient, listDentists, listRooms } from "../actions";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,9 @@ export default function NewPatientPage() {
   const [errors, setErrors] = useState<Record<string, string[]>>({});
   const [pending, setPending] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [existingPatientId, setExistingPatientId] = useState<string | null>(
+    null,
+  );
   const [addToWaitingRoom, setAddToWaitingRoom] = useState(false);
   const [dentists, setDentists] = useState<DentistOption[]>([]);
   const [rooms, setRooms] = useState<RoomOption[]>([]);
@@ -42,12 +46,19 @@ export default function NewPatientPage() {
     setPending(true);
     setErrors({});
     setSuccess(null);
+    setExistingPatientId(null);
 
     const data = Object.fromEntries(formData.entries());
     const res = await createPatient(data);
 
     if (!res.ok) {
       setErrors(res.errors as Record<string, string[]>);
+      if (
+        "existingPatientId" in res &&
+        typeof res.existingPatientId === "string"
+      ) {
+        setExistingPatientId(res.existingPatientId);
+      }
       setPending(false);
       return;
     }
@@ -76,6 +87,24 @@ export default function NewPatientPage() {
           </div>
         )}
       </div>
+
+      {existingPatientId && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <p className="font-medium">{errors.global?.[0]}</p>
+          <Link
+            href={`/patients/${existingPatientId}`}
+            className="mt-2 inline-block font-semibold underline hover:text-amber-900"
+          >
+            Voir la fiche existante →
+          </Link>
+        </div>
+      )}
+
+      {errors.global && !existingPatientId && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          {errors.global[0]}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Identité */}
