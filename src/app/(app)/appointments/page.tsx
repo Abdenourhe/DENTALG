@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import { prisma } from "@/lib/prisma";
+import { requireClinicContext } from "@/lib/tenant";
 import { listAppointments, getDentists } from "./actions";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,8 @@ export default async function AppointmentsPage({
 }: {
   searchParams: Promise<{ date?: string }>;
 }) {
+  const ctx = await requireClinicContext();
+
   const { date } = await searchParams;
   const currentDate = date ? new Date(date) : new Date();
   currentDate.setHours(0, 0, 0, 0);
@@ -90,6 +93,7 @@ export default async function AppointmentsPage({
     prisma.waitingRoomEntry.groupBy({
       by: ["status"],
       where: {
+        clinicId: ctx.clinicId,
         deletedAt: null,
         arrivedAt: { gte: todayStart, lt: todayEnd },
       },
