@@ -6,7 +6,7 @@ import { requireClinicContext } from "@/lib/tenant";
 import { Button } from "@/components/ui/button";
 import { Barcode } from "@/components/ui/barcode";
 import PrintButton from "./print-button";
-import { ArrowLeft, Phone, MapPin } from "lucide-react";
+import { ArrowLeft, Phone, MapPin, Mail } from "lucide-react";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -32,6 +32,7 @@ export default async function PatientCardPrintPage({ params }: Props) {
         name: true,
         logoUrl: true,
         phone: true,
+        email: true,
         address: true,
       },
     }),
@@ -78,148 +79,141 @@ export default async function PatientCardPrintPage({ params }: Props) {
       <div className="mx-auto flex max-w-5xl flex-wrap items-start justify-center gap-10 p-8 print:p-0">
         {/* FRONT */}
         <div
-          className="card relative overflow-hidden rounded-2xl bg-slate-900 text-white shadow-2xl print:shadow-none"
+          className="card relative overflow-hidden rounded-2xl bg-white shadow-2xl print:shadow-none"
           style={{ width: "86mm", height: "54mm" }}
         >
-          {/* Background pattern */}
-          <div
-            className="pointer-events-none absolute inset-0 opacity-10"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 20% 30%, #7c3aed 0%, transparent 40%), radial-gradient(circle at 80% 70%, #06b6d4 0%, transparent 40%)",
-            }}
-          />
-          <div
-            className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-primary-600/20 blur-2xl"
-            aria-hidden
-          />
+          {/* Top accent bar */}
+          <div className="h-2.5 bg-gradient-to-r from-primary-700 to-primary-500" />
 
-          <div className="relative flex h-full flex-col p-4">
+          <div className="flex h-[calc(100%-10px)] flex-col">
             {/* Header */}
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between px-4 pt-3">
               <div className="flex items-center gap-2.5">
                 {clinic?.logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={clinic.logoUrl}
                     alt={clinicName}
-                    className="h-9 w-9 rounded-lg bg-white object-contain p-0.5 shadow-sm"
+                    className="h-9 w-9 rounded-lg border border-slate-100 object-contain p-0.5"
                   />
                 ) : (
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-800 text-xs font-bold text-white shadow-sm">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-800 text-xs font-bold text-white">
                     {clinicName.slice(0, 2).toUpperCase()}
                   </div>
                 )}
                 <div>
-                  <p className="max-w-[120px] truncate text-xs font-bold leading-tight">
+                  <p className="max-w-[120px] truncate text-xs font-bold leading-tight text-slate-900">
                     {clinicName}
                   </p>
                   {doctorName && (
-                    <p className="text-[9px] text-slate-300">{doctorName}</p>
+                    <p className="text-[9px] text-slate-500">{doctorName}</p>
                   )}
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-[9px] font-medium uppercase tracking-wider text-slate-400">
+                <p className="text-[8px] font-semibold uppercase tracking-wider text-slate-400">
                   Dossier
                 </p>
-                <p className="text-sm font-bold text-primary-300">
+                <p className="text-sm font-bold text-primary-700">
                   {patient.number}
                 </p>
               </div>
             </div>
 
             {/* Patient */}
-            <div className="mt-4 flex-1">
+            <div className="flex-1 px-4 pt-4">
               <p className="text-[8px] font-semibold uppercase tracking-[0.15em] text-slate-400">
                 Patient / المريض
               </p>
-              <h1 className="mt-0.5 truncate text-xl font-bold leading-none tracking-tight">
+              <h1 className="mt-0.5 truncate text-[22px] font-bold leading-none tracking-tight text-slate-900">
                 {fullName}
               </h1>
               {patient.arabicName && (
                 <p
-                  className="mt-1 truncate text-base font-medium text-slate-300"
+                  className="mt-1 truncate text-base font-medium text-slate-600"
                   dir="rtl"
                 >
                   {patient.arabicName}
                 </p>
               )}
               {patient.dateOfBirth && (
-                <p className="mt-1 text-[10px] text-slate-400">
+                <p className="mt-1 text-[10px] text-slate-500">
                   Né(e) le{" "}
                   {new Date(patient.dateOfBirth).toLocaleDateString("fr-FR")}
                 </p>
               )}
             </div>
 
-            {/* Barcode footer */}
-            <div className="mt-auto flex items-end justify-between gap-3">
-              <div className="flex flex-col gap-0.5 text-[9px] text-slate-400">
-                {clinic?.phone && (
-                  <span className="flex items-center gap-1">
-                    <Phone className="h-2.5 w-2.5" />
-                    {clinic.phone}
-                  </span>
-                )}
-                {clinic?.address && (
-                  <span className="flex items-center gap-1">
-                    <MapPin className="h-2.5 w-2.5" />
-                    {clinic.address}
-                  </span>
-                )}
-              </div>
-              <div className="shrink-0 rounded-md bg-white p-1">
-                <Barcode
-                  value={patient.number}
-                  width={1.3}
-                  height={28}
-                  displayValue={true}
-                />
-              </div>
+            {/* Barcode strip at bottom */}
+            <div className="mt-auto flex items-center justify-center border-t border-slate-100 bg-slate-50 px-4 py-2">
+              <Barcode
+                value={patient.number}
+                width={1.5}
+                height={32}
+                displayValue={true}
+              />
             </div>
           </div>
         </div>
 
         {/* BACK */}
         <div
-          className="card relative overflow-hidden rounded-2xl bg-slate-900 text-white shadow-2xl print:shadow-none"
+          className="card relative overflow-hidden rounded-2xl bg-white shadow-2xl print:shadow-none"
           style={{ width: "86mm", height: "54mm" }}
         >
-          <div
-            className="pointer-events-none absolute inset-0 opacity-10"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 80% 20%, #7c3aed 0%, transparent 40%), radial-gradient(circle at 20% 80%, #06b6d4 0%, transparent 40%)",
-            }}
-          />
-          <div className="relative flex h-full flex-col items-center justify-center p-5 text-center">
-            <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
+          <div className="h-2.5 bg-gradient-to-r from-primary-700 to-primary-500" />
+
+          <div className="flex h-[calc(100%-10px)] flex-col p-4">
+            <div className="flex items-center gap-2.5">
               {clinic?.logoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={clinic.logoUrl}
                   alt={clinicName}
-                  className="h-6 w-6 rounded object-contain"
+                  className="h-8 w-8 rounded-lg border border-slate-100 object-contain p-0.5"
                 />
               ) : (
-                <span className="text-xs font-bold text-white">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-800 text-[10px] font-bold text-white">
                   {clinicName.slice(0, 2).toUpperCase()}
-                </span>
+                </div>
               )}
+              <p className="text-sm font-bold text-slate-900">{clinicName}</p>
             </div>
-            <p className="text-sm font-bold">{clinicName}</p>
-            <p className="mt-2 text-[10px] leading-relaxed text-slate-300">
-              Veuillez présenter cette carte à chaque visite.
-            </p>
-            <p className="text-[10px] leading-relaxed text-slate-300" dir="rtl">
-              يرجى إبراز هذه البطاقة في كل زيارة.
-            </p>
-            {patient.phone && (
-              <p className="mt-3 text-[10px] text-slate-400">
-                Tél. patient : {patient.phone}
+
+            <div className="mt-3 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                Coordonnées / تواصل
               </p>
-            )}
+              <div className="mt-2 space-y-1.5 text-[10px] text-slate-700">
+                {clinic?.address && (
+                  <p className="flex items-start gap-1.5">
+                    <MapPin className="mt-0.5 h-3 w-3 shrink-0 text-primary-600" />
+                    {clinic.address}
+                  </p>
+                )}
+                {clinic?.phone && (
+                  <p className="flex items-center gap-1.5">
+                    <Phone className="h-3 w-3 shrink-0 text-primary-600" />
+                    {clinic.phone}
+                  </p>
+                )}
+                {clinic?.email && (
+                  <p className="flex items-center gap-1.5">
+                    <Mail className="h-3 w-3 shrink-0 text-primary-600" />
+                    {clinic.email}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 pt-2 text-center">
+              <p className="text-[9px] text-slate-500">
+                Veuillez présenter cette carte à chaque visite.
+              </p>
+              <p className="text-[9px] text-slate-500" dir="rtl">
+                يرجى إبراز هذه البطاقة في كل زيارة.
+              </p>
+            </div>
           </div>
         </div>
       </div>
