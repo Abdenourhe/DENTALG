@@ -12,7 +12,10 @@ import { ScanBarcode, UserPlus } from "lucide-react";
 interface CheckInDialogProps {
   open: boolean;
   onClose: () => void;
-  patients: Pick<Patient, "id" | "firstName" | "lastName" | "number">[];
+  patients: Pick<
+    Patient,
+    "id" | "firstName" | "lastName" | "arabicName" | "number"
+  >[];
   dentists: Pick<User, "id" | "firstName" | "lastName">[];
   rooms: Pick<Room, "id" | "name">[];
 }

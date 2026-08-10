@@ -50,7 +50,10 @@ interface EntryWithRelations extends WaitingRoomEntry {
 
 interface WaitingRoomBoardProps {
   initialEntries: EntryWithRelations[];
-  patients: Pick<Patient, "id" | "firstName" | "lastName" | "number">[];
+  patients: Pick<
+    Patient,
+    "id" | "firstName" | "lastName" | "arabicName" | "number"
+  >[];
   dentists: Pick<User, "id" | "firstName" | "lastName">[];
   rooms: Pick<Room, "id" | "name">[];
 }

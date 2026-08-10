@@ -46,6 +46,7 @@ export async function createPatient(data: unknown) {
           number,
           firstName: d.firstName,
           lastName: d.lastName,
+          arabicName: normalizeOptional(d.arabicName),
           nationalId: normalizeOptional(d.nationalId),
           sex: normalizeOptional(d.sex),
           bloodGroup: normalizeOptional(d.bloodGroup),
@@ -175,6 +176,8 @@ export async function updatePatient(id: string, data: unknown) {
 
     if (d.firstName !== undefined) normalized.firstName = d.firstName;
     if (d.lastName !== undefined) normalized.lastName = d.lastName;
+    if (d.arabicName !== undefined)
+      normalized.arabicName = normalizeOptional(d.arabicName);
     if (d.nationalId !== undefined)
       normalized.nationalId = normalizeOptional(d.nationalId);
     if (d.sex !== undefined) normalized.sex = normalizeOptional(d.sex);

@@ -33,6 +33,7 @@ export const ar: Dictionary = {
     waitingRoom: "غرفة الانتظار",
     firstName: "الاسم",
     lastName: "اللقب",
+    arabicName: "الاسم بالعربية",
     nationalId: "رقم بطاقة التعريف الوطنية",
     sex: "الجنس",
     bloodGroup: "فصيلة الدم",

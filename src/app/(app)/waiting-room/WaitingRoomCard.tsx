@@ -111,6 +111,14 @@ export default function WaitingRoomCard({
               <h3 className="truncate font-semibold text-slate-900">
                 {entry.patient.lastName} {entry.patient.firstName}
               </h3>
+              {entry.patient.arabicName && (
+                <span
+                  className="truncate text-sm font-medium text-slate-600"
+                  dir="rtl"
+                >
+                  {entry.patient.arabicName}
+                </span>
+              )}
               {entry.priority === "HIGH" && (
                 <Star className="h-4 w-4 shrink-0 fill-red-500 text-red-500" />
               )}

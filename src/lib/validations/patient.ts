@@ -3,6 +3,7 @@ import { z } from "zod";
 export const patientSchema = z.object({
   firstName: z.string().min(1, "Prénom requis."),
   lastName: z.string().min(1, "Nom requis."),
+  arabicName: z.string().optional().or(z.literal("")),
   nationalId: z.string().optional().or(z.literal("")),
   sex: z.enum(["M", "F"]).optional().or(z.literal("")),
   bloodGroup: z

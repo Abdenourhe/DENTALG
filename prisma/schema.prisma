@@ -249,6 +249,7 @@ model Patient {
   number                String
   firstName             String
   lastName              String
+  arabicName            String?
   nationalId            String?
   sex                   String?
   bloodGroup            String?

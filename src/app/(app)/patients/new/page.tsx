@@ -100,6 +100,14 @@ export default function NewPatientPage() {
                 />
               </div>
 
+              <Input
+                name="arabicName"
+                label={t.patient.arabicName}
+                placeholder="مثال : أحمد"
+                error={errors.arabicName?.[0]}
+                dir="rtl"
+              />
+
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <Input
                   name="nationalId"

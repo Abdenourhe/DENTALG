@@ -13,7 +13,13 @@ export default async function WaitingRoomPage() {
     prisma.patient.findMany({
       where: { clinicId: ctx.clinicId, deletedAt: null, isActive: true },
       orderBy: { lastName: "asc" },
-      select: { id: true, firstName: true, lastName: true, number: true },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        arabicName: true,
+        number: true,
+      },
     }),
     prisma.user.findMany({
       where: {

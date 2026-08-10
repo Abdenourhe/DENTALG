@@ -31,6 +31,7 @@ export const fr = {
     waitingRoom: "Salle d’attente",
     firstName: "Prénom",
     lastName: "Nom",
+    arabicName: "Nom en arabe",
     nationalId: "N° carte nationale d’identité",
     sex: "Sexe",
     bloodGroup: "Groupe sanguin",
