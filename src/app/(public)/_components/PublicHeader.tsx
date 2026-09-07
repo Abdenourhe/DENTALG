@@ -23,10 +23,10 @@ export default function PublicHeader({ active }: PublicHeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3.5">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-2.5">
         <Link href="/" className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="DENTALG" className="h-7 w-auto" />
+          <img src="/logo.svg" alt="DENTALG" className="h-16 w-auto" />
         </Link>
 
         {/* Desktop nav */}

@@ -169,7 +169,9 @@ function FeatureSection({
             {feature.bullets.map((b) => (
               <li key={b} className="flex items-start gap-3">
                 <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-500" />
-                <span className="text-sm leading-relaxed text-slate-600">{b}</span>
+                <span className="text-sm leading-relaxed text-slate-600">
+                  {b}
+                </span>
               </li>
             ))}
           </ul>
@@ -187,7 +189,9 @@ function FeatureSection({
             <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400">
               <Icon className="mb-3 h-16 w-16 opacity-20" />
               <span className="text-sm font-medium">{feature.title}</span>
-              <span className="mt-1 text-xs text-slate-400">Capture à venir</span>
+              <span className="mt-1 text-xs text-slate-400">
+                Capture à venir
+              </span>
             </div>
             <div
               className={`pointer-events-none absolute -bottom-10 h-40 w-full bg-gradient-to-t ${
@@ -250,7 +254,8 @@ export default function FonctionnalitesPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="mt-6 text-3xl font-extrabold tracking-tight text-white sm:text-5xl"
           >
-            Un logiciel pensé pour la réalité d&apos;un cabinet dentaire algérien
+            Un logiciel pensé pour la réalité d&apos;un cabinet dentaire
+            algérien
           </motion.h1>
 
           <motion.p
@@ -342,7 +347,7 @@ export default function FonctionnalitesPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 sm:flex-row">
           <div className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="DENTALG" className="h-6 w-auto" />
+            <img src="/logo.svg" alt="DENTALG" className="h-12 w-auto" />
           </div>
           <p className="text-xs text-slate-400">
             © {new Date().getFullYear()} DENTALG. Tous droits réservés.

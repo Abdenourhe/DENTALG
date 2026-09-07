@@ -28,7 +28,7 @@ export default async function ClinicListingDetailPage({ params }: Props) {
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="DENTALG" className="h-6 w-auto" />
+            <img src="/logo.svg" alt="DENTALG" className="h-12 w-auto" />
           </Link>
           <Link
             href="/carrieres"

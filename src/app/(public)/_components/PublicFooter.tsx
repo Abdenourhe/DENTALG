@@ -7,7 +7,7 @@ export default function PublicFooter() {
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="DENTALG" className="h-6 w-auto" />
+            <img src="/logo.svg" alt="DENTALG" className="h-12 w-auto" />
             <p className="mt-4 text-sm leading-relaxed text-slate-500">
               Le SaaS de gestion conçu pour les cabinets dentaires en Algérie.
               Patients, rendez-vous, facturation et recrutement en un seul

@@ -12,11 +12,33 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://dentalg.dz";
+const title = "DENTALG — Gestion de cabinet dentaire";
+const description =
+  "SaaS multi-tenant de gestion de cabinets dentaires en Algérie : patients, rendez-vous, facturation et recrutement en un seul endroit.";
+
 export const metadata: Metadata = {
-  title: "DENTALG — Gestion de cabinet dentaire",
-  description: "SaaS multi-tenant de gestion de cabinets dentaires en Algérie.",
+  metadataBase: new URL(appUrl),
+  title: {
+    default: title,
+    template: "%s · DENTALG",
+  },
+  description,
   icons: {
     icon: "/favicon.svg",
+  },
+  openGraph: {
+    title,
+    description,
+    url: appUrl,
+    siteName: "DENTALG",
+    locale: "fr_DZ",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title,
+    description,
   },
 };
 

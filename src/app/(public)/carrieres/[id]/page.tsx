@@ -34,7 +34,7 @@ export default async function JobOfferDetailPage({ params }: Props) {
         <div className="mx-auto flex max-w-4xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/logo.svg" alt="DENTALG" className="h-6 w-auto" />
+            <img src="/logo.svg" alt="DENTALG" className="h-12 w-auto" />
           </Link>
           <Link
             href="/carrieres"
@@ -209,7 +209,7 @@ export default async function JobOfferDetailPage({ params }: Props) {
       <footer className="mt-auto border-t border-slate-200 bg-white py-6">
         <div className="mx-auto flex max-w-4xl flex-col items-center justify-between gap-3 px-6 sm:flex-row">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo.svg" alt="DENTALG" className="h-5 w-auto" />
+          <img src="/logo.svg" alt="DENTALG" className="h-9 w-auto" />
           <p className="text-xs text-slate-400">
             © {new Date().getFullYear()} DENTALG
           </p>
