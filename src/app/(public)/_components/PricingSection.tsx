@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Sparkles } from "lucide-react";
 
@@ -61,7 +61,7 @@ export default function PricingSection({ plans }: PricingSectionProps) {
                     Le plus choisi
                   </div>
                 )}
-                <CardHeader className="pb-2 pt-6 text-center">
+                <div className="flex flex-col items-center px-6 pb-2 pt-6 text-center">
                   <h3 className="text-lg font-bold text-slate-900">{p.name}</h3>
                   {p.description && (
                     <p className="mt-1 text-sm text-slate-500">
@@ -80,7 +80,7 @@ export default function PricingSection({ plans }: PricingSectionProps) {
                       <span className="text-sm text-slate-500">/mois</span>
                     )}
                   </div>
-                </CardHeader>
+                </div>
                 <CardContent className="flex flex-1 flex-col px-6 pb-6">
                   <ul className="flex-1 space-y-3">
                     {p.features.length === 0 ? (
