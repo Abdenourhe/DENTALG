@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://dentalg.dz";
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://dentalg.dz";
 const title = "DENTALG — Gestion de cabinet dentaire";
 const description =
   "SaaS multi-tenant de gestion de cabinets dentaires en Algérie : patients, rendez-vous, facturation et recrutement en un seul endroit.";
