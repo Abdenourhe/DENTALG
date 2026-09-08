@@ -839,3 +839,93 @@ export async function getSuperAdminStats() {
     return defaults;
   }
 }
+
+// ===================================================================
+// Testimonials (avis des cabinets — page d'accueil)
+// ===================================================================
+
+export async function listTestimonials() {
+  await requirePlatformAdmin();
+  return prisma.testimonial.findMany({
+    where: { deletedAt: null },
+    orderBy: { createdAt: "desc" },
+    include: { clinic: { select: { name: true } } },
+  });
+}
+
+export async function toggleTestimonialVisibility(id: string) {
+  const admin = await requirePlatformAdmin();
+
+  const existing = await prisma.testimonial.findFirst({
+    where: { id, deletedAt: null },
+  });
+  if (!existing) {
+    return {
+      ok: false,
+      errors: { global: ["Témoignage introuvable."] },
+    } as const;
+  }
+
+  const updated = await prisma.testimonial.update({
+    where: { id },
+    data: { isPublished: !existing.isPublished },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      clinicId: existing.clinicId,
+      userId: admin.userId,
+      action: "UPDATE",
+      entityType: "Testimonial",
+      entityId: existing.id,
+      metadata: { isPublished: updated.isPublished },
+    },
+  });
+
+  revalidatePath("/superadmin/testimonials");
+  revalidatePath("/");
+  return { ok: true, testimonial: updated } as const;
+}
+
+export async function toggleTestimonialVisibilityFromForm(formData: FormData) {
+  const id = formData.get("id") as string;
+  await toggleTestimonialVisibility(id);
+}
+
+export async function deleteTestimonial(id: string) {
+  const admin = await requirePlatformAdmin();
+
+  const existing = await prisma.testimonial.findFirst({
+    where: { id, deletedAt: null },
+  });
+  if (!existing) {
+    return {
+      ok: false,
+      errors: { global: ["Témoignage introuvable."] },
+    } as const;
+  }
+
+  await prisma.testimonial.update({
+    where: { id },
+    data: { deletedAt: new Date(), isPublished: false },
+  });
+
+  await prisma.auditLog.create({
+    data: {
+      clinicId: existing.clinicId,
+      userId: admin.userId,
+      action: "DELETE",
+      entityType: "Testimonial",
+      entityId: existing.id,
+    },
+  });
+
+  revalidatePath("/superadmin/testimonials");
+  revalidatePath("/");
+  return { ok: true } as const;
+}
+
+export async function deleteTestimonialFromForm(formData: FormData) {
+  const id = formData.get("id") as string;
+  await deleteTestimonial(id);
+}

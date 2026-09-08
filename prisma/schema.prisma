@@ -183,6 +183,7 @@ model Clinic {
   clinicListings       ClinicListing[]
   equipmentListings    EquipmentListing[]
   rooms                Room[]
+  testimonials         Testimonial[]
 }
 
 model User {
@@ -225,6 +226,7 @@ model User {
   labResults           LabResult[]
   supportTickets       SupportTicket[]
   userRequestsCreated  UserRequest[]
+  testimonials         Testimonial[]
 
   @@index([clinicId])
   @@index([email])
@@ -560,6 +562,26 @@ model Room {
 
   @@index([clinicId])
   @@index([clinicId, order])
+}
+
+model Testimonial {
+  id          String    @id @default(cuid())
+  clinicId    String
+  clinic      Clinic    @relation(fields: [clinicId], references: [id])
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  authorName  String
+  authorRole  String
+  city        String?
+  quote       String
+  rating      Int       @default(5)
+  isPublished Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([clinicId])
+  @@index([isPublished])
 }
 
 model Quote {

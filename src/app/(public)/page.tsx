@@ -2,8 +2,10 @@ import PublicHeader from "./_components/PublicHeader";
 import PublicFooter from "./_components/PublicFooter";
 import AnimatedHero from "./_components/AnimatedHero";
 import TrustBar from "./_components/TrustBar";
+import PartnersBar from "./_components/PartnersBar";
 import AnimatedFeatures from "./_components/AnimatedFeatures";
 import HowItWorks from "./_components/HowItWorks";
+import TestimonialsSection from "./_components/TestimonialsSection";
 import LandingJobOffers from "./_components/LandingJobOffers";
 import PricingSection from "./_components/PricingSection";
 import FAQSection from "./_components/FAQSection";
@@ -22,8 +24,10 @@ export default async function HomePage() {
       <PublicHeader active="home" />
       <AnimatedHero stats={stats} />
       <TrustBar />
+      <PartnersBar />
       <AnimatedFeatures />
       <HowItWorks />
+      <TestimonialsSection />
       <LandingJobOffers />
       <PricingSection plans={plans} />
       <FAQSection />

@@ -21,6 +21,7 @@ import {
   Settings,
   Megaphone,
   DoorOpen,
+  MessageSquareQuote,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FeatureKey } from "@/lib/features";
@@ -90,6 +91,12 @@ const allNavItems = [
     href: "/messages",
     label: "Messages",
     icon: Megaphone,
+    feature: null as FeatureKey | null,
+  },
+  {
+    href: "/settings/testimonials",
+    label: "Mon témoignage",
+    icon: MessageSquareQuote,
     feature: null as FeatureKey | null,
   },
   {

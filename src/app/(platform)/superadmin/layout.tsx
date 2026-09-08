@@ -9,6 +9,7 @@ import {
   UserPlus,
   Store,
   Users,
+  MessageSquareQuote,
 } from "lucide-react";
 import { SidebarLogout } from "@/components/sidebar-logout";
 
@@ -24,6 +25,11 @@ const navItems = [
   { href: "/superadmin/messages", label: "Messagerie", icon: MessageSquare },
   { href: "/superadmin/tickets", label: "Tickets support", icon: Ticket },
   { href: "/superadmin/requests", label: "Demandes profils", icon: UserPlus },
+  {
+    href: "/superadmin/testimonials",
+    label: "Témoignages",
+    icon: MessageSquareQuote,
+  },
 ];
 
 export default async function SuperAdminLayout({
