@@ -7,6 +7,7 @@ import AnimatedFeatures from "./_components/AnimatedFeatures";
 import HowItWorks from "./_components/HowItWorks";
 import TestimonialsSection from "./_components/TestimonialsSection";
 import LandingJobOffers from "./_components/LandingJobOffers";
+import LandingListings from "./_components/LandingListings";
 import PricingSection from "./_components/PricingSection";
 import FAQSection from "./_components/FAQSection";
 import AnimatedCTA from "./_components/AnimatedCTA";
@@ -29,6 +30,7 @@ export default async function HomePage() {
       <HowItWorks />
       <TestimonialsSection />
       <LandingJobOffers />
+      <LandingListings />
       <PricingSection plans={plans} />
       <FAQSection />
       <AnimatedCTA />
