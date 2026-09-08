@@ -3,7 +3,12 @@ import { auth } from "@/auth";
 import PublicHeader from "../_components/PublicHeader";
 import PublicFooter from "../_components/PublicFooter";
 import JobOffersSection from "../_components/JobOffersSection";
+import ListingsGrid from "../_components/ListingsGrid";
 import { listPublicJobOffers } from "@/lib/actions/job-offers";
+import {
+  listPublicClinicListings,
+  listPublicEquipmentListings,
+} from "@/lib/actions/carrieres-listings";
 import { Button } from "@/components/ui/button";
 import {
   Briefcase,
@@ -13,15 +18,57 @@ import {
   ArrowRight,
   Building2,
   Wrench,
+  Store,
 } from "lucide-react";
 
 function isStageOffer(title: string) {
   return /stage|internship|stagiaire/i.test(title);
 }
 
-export default async function CarrieresPublicPage() {
+function Tabs({ activeTab }: { activeTab: string }) {
+  const tabs = [
+    { id: "jobs", label: "Offres d'emploi", icon: Briefcase },
+    { id: "clinics", label: "Cabinets à vendre", icon: Store },
+    { id: "equipment", label: "Matériel", icon: Wrench },
+  ];
+
+  return (
+    <div className="flex gap-2 border-b border-slate-200">
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        const isActive = activeTab === tab.id;
+        return (
+          <Link
+            key={tab.id}
+            href={`/carrieres?tab=${tab.id}`}
+            className={`inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+              isActive
+                ? "border-primary text-primary"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {tab.label}
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+export default async function CarrieresPublicPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const session = await auth();
-  const offers = await listPublicJobOffers();
+  const { tab = "jobs" } = await searchParams;
+
+  const [offers, clinicListings, equipmentListings] = await Promise.all([
+    listPublicJobOffers(),
+    listPublicClinicListings(),
+    listPublicEquipmentListings(),
+  ]);
 
   const stageCount = offers.filter((o) => isStageOffer(o.title)).length;
   const emploiCount = offers.length - stageCount;
@@ -94,73 +141,87 @@ export default async function CarrieresPublicPage() {
         </div>
       </section>
 
-      {/* Categories teaser */}
-      <section className="border-b border-slate-200 bg-white px-6 py-8">
+      <section className="border-b border-slate-200 bg-white px-6">
         <div className="mx-auto max-w-6xl">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="flex items-start gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
-              <div className="rounded-lg bg-blue-100 p-2.5 text-blue-600">
-                <Stethoscope className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-slate-900">Emplois</h3>
-                <p className="text-sm text-slate-500">
-                  Dentistes, assistants et secrétaires.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
-              <div className="rounded-lg bg-purple-100 p-2.5 text-purple-600">
-                <GraduationCap className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-slate-900">Stages</h3>
-                <p className="text-sm text-slate-500">
-                  Opportunités pour étudiants en dentisterie.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-4 rounded-xl border border-slate-100 bg-slate-50 p-4">
-              <div className="rounded-lg bg-amber-100 p-2.5 text-amber-600">
-                <Wrench className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-slate-900">Matériel</h3>
-                <p className="text-sm text-slate-500">
-                  Équipements et fournitures dentaires.
-                </p>
-              </div>
-            </div>
-          </div>
+          <Tabs activeTab={tab} />
         </div>
       </section>
 
       <main className="mx-auto w-full max-w-6xl px-6 py-12">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-slate-900">
-              Offres récentes
-            </h2>
-            <p className="text-sm text-slate-500">
-              Découvrez les dernières opportunités publiées par les cabinets.
-            </p>
-          </div>
-          {!session?.user?.clinicId && (
-            <Link
-              href="/login"
-              className="hidden items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-700 sm:inline-flex"
-            >
-              Espace recruteur
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          )}
-        </div>
+        {tab === "clinics" && (
+          <>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-slate-900">
+                Cabinets à vendre
+              </h2>
+              <p className="text-sm text-slate-500">
+                {clinicListings.length} annonce
+                {clinicListings.length > 1 ? "s" : ""} publiée
+                {clinicListings.length > 1 ? "s" : ""} par des cabinets.
+              </p>
+            </div>
+            <ListingsGrid
+              listings={clinicListings.map((item) => ({
+                ...item,
+                kind: "clinic" as const,
+              }))}
+              emptyMessage="Aucun cabinet à vendre pour le moment."
+            />
+          </>
+        )}
 
-        <JobOffersSection
-          offers={offers}
-          variant="list"
-          emptyMessage="Aucune offre d'emploi ou de stage pour le moment. Revenez bientôt ou publiez la vôtre."
-        />
+        {tab === "equipment" && (
+          <>
+            <div className="mb-6">
+              <h2 className="text-xl font-bold text-slate-900">
+                Matériel dentaire
+              </h2>
+              <p className="text-sm text-slate-500">
+                {equipmentListings.length} annonce
+                {equipmentListings.length > 1 ? "s" : ""} de matériel
+                d&apos;occasion ou neuf.
+              </p>
+            </div>
+            <ListingsGrid
+              listings={equipmentListings.map((item) => ({
+                ...item,
+                kind: "equipment" as const,
+              }))}
+              emptyMessage="Aucun matériel en vente pour le moment."
+            />
+          </>
+        )}
+
+        {(tab === "jobs" || !tab) && (
+          <>
+            <div className="mb-6 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-slate-900">
+                  Offres récentes
+                </h2>
+                <p className="text-sm text-slate-500">
+                  Découvrez les dernières opportunités publiées par les
+                  cabinets.
+                </p>
+              </div>
+              {!session?.user?.clinicId && (
+                <Link
+                  href="/login"
+                  className="hidden items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-700 sm:inline-flex"
+                >
+                  Espace recruteur
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
+            </div>
+
+            <JobOffersSection
+              offers={offers}
+              variant="list"
+              emptyMessage="Aucune offre d'emploi ou de stage pour le moment. Revenez bientôt ou publiez la vôtre."
+            />
+          </>
+        )}
       </main>
 
       <PublicFooter />
