@@ -159,12 +159,23 @@ export default async function UsersPage() {
                             </div>
                           </td>
                           <td className="py-3.5">
-                            <span
-                              className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${config.color}`}
-                            >
-                              <RoleIcon className="h-3 w-3" />
-                              {config.label}
-                            </span>
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ${config.color}`}
+                              >
+                                <RoleIcon className="h-3 w-3" />
+                                {config.label}
+                              </span>
+                              {user.role === Role.OWNER && (
+                                <span
+                                  className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ring-1 text-emerald-600 bg-emerald-50 ring-emerald-200"
+                                  title="Le propriétaire apparaît aussi comme praticien dans les rendez-vous, la salle d'attente et les dossiers patients."
+                                >
+                                  <Stethoscope className="h-3 w-3" />
+                                  Dentiste
+                                </span>
+                              )}
+                            </div>
                           </td>
                           <td className="py-3.5">
                             <Badge
