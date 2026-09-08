@@ -8,17 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { createTestimonial } from "@/lib/actions/testimonials";
 import { Testimonial } from "@prisma/client";
-import { Star, Send, CheckCircle2, Clock } from "lucide-react";
+import { Star, Send, CheckCircle2, Clock, UserCircle2 } from "lucide-react";
 
 interface TestimonialFormProps {
   defaultName: string;
   defaultRole: string;
+  defaultCity: string;
   existingTestimonials: Testimonial[];
 }
 
 export default function TestimonialForm({
   defaultName,
   defaultRole,
+  defaultCity,
   existingTestimonials,
 }: TestimonialFormProps) {
   const [testimonials, setTestimonials] = useState(existingTestimonials);
@@ -62,6 +64,18 @@ export default function TestimonialForm({
         </CardHeader>
         <CardContent className="space-y-4 p-6">
           <form action={handleSubmit} className="space-y-4">
+            <div className="flex items-center gap-3 rounded-lg bg-slate-50 px-4 py-3 ring-1 ring-slate-200">
+              <UserCircle2 className="h-8 w-8 shrink-0 text-slate-400" />
+              <div>
+                <p className="text-sm font-semibold text-slate-900">
+                  {defaultName}
+                </p>
+                <p className="text-xs text-slate-500">{defaultRole}</p>
+              </div>
+            </div>
+            <input type="hidden" name="authorName" value={defaultName} />
+            <input type="hidden" name="authorRole" value={defaultRole} />
+
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700">
                 Note
@@ -89,27 +103,11 @@ export default function TestimonialForm({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Input
-                name="authorName"
-                label="Votre nom"
-                defaultValue={defaultName}
-                error={errors.authorName?.[0]}
-                disabled={pending}
-              />
-              <Input
-                name="authorRole"
-                label="Votre rôle"
-                defaultValue={defaultRole}
-                error={errors.authorRole?.[0]}
-                disabled={pending}
-              />
-            </div>
-
             <Input
               name="city"
               label="Ville (optionnel)"
               placeholder="Ex : Alger, Oran..."
+              defaultValue={defaultCity}
               error={errors.city?.[0]}
               disabled={pending}
             />

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { notFound } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { listMyTestimonials } from "@/lib/actions/testimonials";
 import TestimonialForm from "./TestimonialForm";
 import { MessageSquareQuote } from "lucide-react";
@@ -15,7 +16,13 @@ export default async function TestimonialsSettingsPage() {
   const session = await auth();
   if (!session?.user?.clinicId) notFound();
 
-  const myTestimonials = await listMyTestimonials();
+  const [myTestimonials, clinic] = await Promise.all([
+    listMyTestimonials(),
+    prisma.clinic.findUnique({
+      where: { id: session.user.clinicId },
+      select: { city: true },
+    }),
+  ]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -34,6 +41,7 @@ export default async function TestimonialsSettingsPage() {
       <TestimonialForm
         defaultName={session.user.name ?? ""}
         defaultRole={ROLE_LABELS[session.user.role] ?? ""}
+        defaultCity={clinic?.city ?? ""}
         existingTestimonials={myTestimonials}
       />
     </div>
