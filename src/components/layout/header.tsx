@@ -29,7 +29,7 @@ export function Header({ clinicName, clinicLogoUrl }: HeaderProps) {
       initial={{ opacity: 0, y: -8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="flex h-16 items-center justify-between border-b border-slate-200/80 bg-white/80 px-6 backdrop-blur-md"
+      className="flex h-24 items-center justify-between border-b border-slate-200/80 bg-white/80 px-6 backdrop-blur-md"
     >
       <div className="flex items-center gap-3">
         {clinicLogoUrl && (

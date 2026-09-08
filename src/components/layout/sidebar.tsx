@@ -199,22 +199,22 @@ export function Sidebar({ clinicLogoUrl }: SidebarProps) {
   return (
     <aside className="flex h-screen w-64 flex-col border-r border-slate-200/80 bg-white">
       {/* Logo */}
-      <div className="flex h-16 items-center justify-center border-b border-slate-200/80 px-4">
+      <div className="flex h-24 items-center justify-center border-b border-slate-200/80 px-4">
         <Link href="/dashboard" className="flex items-center justify-center">
           {clinicLogoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={clinicLogoUrl}
               alt="Logo cabinet"
-              className="h-10 w-auto max-w-[160px] object-contain transition-transform duration-300 hover:scale-105"
+              className="h-16 w-auto max-w-[200px] object-contain transition-transform duration-300 hover:scale-105"
             />
           ) : (
             <Image
               src="/logo.svg"
               alt="DENTALG"
-              width={160}
-              height={40}
-              className="h-10 w-auto object-contain transition-transform duration-300 hover:scale-105"
+              width={200}
+              height={64}
+              className="h-16 w-auto object-contain transition-transform duration-300 hover:scale-105"
             />
           )}
         </Link>
