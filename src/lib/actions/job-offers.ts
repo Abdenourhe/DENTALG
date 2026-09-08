@@ -186,3 +186,64 @@ export async function deleteJobOffer(id: string) {
   revalidatePath("/carrieres");
   return { ok: true } as const;
 }
+
+// ------------------------------------------------------------------
+// Job applications — candidates who applied to the clinic's offers
+// ------------------------------------------------------------------
+
+export async function listJobApplications(jobOfferId: string) {
+  await requireRole("patients:read");
+  const ctx = await requireClinicContext();
+
+  const offer = await prisma.jobOffer.findFirst({
+    where: { id: jobOfferId, clinicId: ctx.clinicId, deletedAt: null },
+  });
+  if (!offer) return null;
+
+  const applications = await prisma.jobApplication.findMany({
+    where: { jobOfferId, clinicId: ctx.clinicId },
+    orderBy: { createdAt: "desc" },
+    include: { candidateProfile: true },
+  });
+
+  return { offer, applications };
+}
+
+export async function updateApplicationStatus(
+  applicationId: string,
+  status: string,
+) {
+  await requireRole("patients:write");
+  const ctx = await requireClinicContext();
+
+  const existing = await prisma.jobApplication.findFirst({
+    where: { id: applicationId, clinicId: ctx.clinicId },
+  });
+  if (!existing)
+    return {
+      ok: false,
+      errors: { global: ["Candidature introuvable."] },
+    } as const;
+
+  const validStatuses = ["PENDING", "REVIEWING", "ACCEPTED", "REJECTED"];
+  if (!validStatuses.includes(status)) {
+    return { ok: false, errors: { global: ["Statut invalide."] } } as const;
+  }
+
+  const application = await prisma.jobApplication.update({
+    where: { id: applicationId },
+    data: {
+      status: status as "PENDING" | "REVIEWING" | "ACCEPTED" | "REJECTED",
+      reviewedById: ctx.userId,
+    },
+  });
+
+  revalidatePath(`/carrieres/manage/${existing.jobOfferId}/applications`);
+  return { ok: true, application } as const;
+}
+
+export async function updateApplicationStatusFromForm(formData: FormData) {
+  const applicationId = formData.get("applicationId") as string;
+  const status = formData.get("status") as string;
+  await updateApplicationStatus(applicationId, status);
+}

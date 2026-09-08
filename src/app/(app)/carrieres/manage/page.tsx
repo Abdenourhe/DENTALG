@@ -18,11 +18,7 @@ import {
   Store,
   Wrench,
 } from "lucide-react";
-import {
-  listJobOffers,
-  publishJobOffer,
-  deleteJobOffer,
-} from "../actions";
+import { listJobOffers, publishJobOffer, deleteJobOffer } from "../actions";
 import {
   listClinicListings,
   createClinicListing,
@@ -100,61 +96,142 @@ async function JobsSection() {
           >
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Titre *</label>
-                <input name="title" type="text" required placeholder="Ex: Assistant(e) dentaire" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                  Titre *
+                </label>
+                <input
+                  name="title"
+                  type="text"
+                  required
+                  placeholder="Ex: Assistant(e) dentaire"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                />
               </div>
               <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700">Lieu</label>
-                <input name="location" type="text" placeholder="Ex: Alger" className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                  Lieu
+                </label>
+                <input
+                  name="location"
+                  type="text"
+                  placeholder="Ex: Alger"
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                />
               </div>
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-slate-700">Description *</label>
-              <textarea name="description" rows={3} required className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+              <label className="mb-1.5 block text-sm font-medium text-slate-700">
+                Description *
+              </label>
+              <textarea
+                name="description"
+                rows={3}
+                required
+                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+              />
             </div>
-            <Button type="submit"><Plus className="mr-2 h-4 w-4" />Créer</Button>
+            <Button type="submit">
+              <Plus className="mr-2 h-4 w-4" />
+              Créer
+            </Button>
           </form>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader className="border-b px-6 py-4">
-          <CardTitle className="text-base font-semibold">Mes offres ({offers.length})</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            Mes offres ({offers.length})
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
-                <tr><th className="px-6 py-3">Titre</th><th className="px-6 py-3">Statut</th><th className="px-6 py-3 text-center">Candidatures</th><th className="px-6 py-3 text-right">Actions</th></tr>
+                <tr>
+                  <th className="px-6 py-3">Titre</th>
+                  <th className="px-6 py-3">Statut</th>
+                  <th className="px-6 py-3 text-center">Candidatures</th>
+                  <th className="px-6 py-3 text-right">Actions</th>
+                </tr>
               </thead>
               <tbody className="divide-y">
                 {offers.map((offer) => (
                   <tr key={offer.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 font-semibold text-slate-900">{offer.title}</td>
+                    <td className="px-6 py-4 font-semibold text-slate-900">
+                      {offer.title}
+                    </td>
                     <td className="px-6 py-4">
                       {offer.status === "PUBLISHED" ? (
-                        <Badge variant="success"><CheckCircle2 className="mr-1 h-3 w-3" />Publiée</Badge>
+                        <Badge variant="success">
+                          <CheckCircle2 className="mr-1 h-3 w-3" />
+                          Publiée
+                        </Badge>
                       ) : (
-                        <Badge variant="warning"><Clock className="mr-1 h-3 w-3" />Brouillon</Badge>
+                        <Badge variant="warning">
+                          <Clock className="mr-1 h-3 w-3" />
+                          Brouillon
+                        </Badge>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-center"><Users className="inline h-3.5 w-3.5" /> {offer._count.applications}</td>
+                    <td className="px-6 py-4 text-center">
+                      <Link
+                        href={`/carrieres/manage/${offer.id}/applications`}
+                        className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-slate-700 transition-colors hover:bg-slate-100 hover:text-primary"
+                      >
+                        <Users className="h-3.5 w-3.5" />{" "}
+                        {offer._count.applications}
+                      </Link>
+                    </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         {offer.status !== "PUBLISHED" && (
-                          <form action={async () => { "use server"; await publishJobOffer(offer.id); }}>
-                            <button type="submit" className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200"><Send className="h-3 w-3" /></button>
+                          <form
+                            action={async () => {
+                              "use server";
+                              await publishJobOffer(offer.id);
+                            }}
+                          >
+                            <button
+                              type="submit"
+                              className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200"
+                            >
+                              <Send className="h-3 w-3" />
+                            </button>
                           </form>
                         )}
-                        <Link href={`/carrieres/${offer.id}`} target="_blank"><button className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200"><Eye className="h-3 w-3" /></button></Link>
-                        <form action={async () => { "use server"; await deleteJobOffer(offer.id); }}>
-                          <button type="submit" className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs text-red-700 ring-1 ring-red-200"><Trash2 className="h-3 w-3" /></button>
+                        <Link href={`/carrieres/${offer.id}`} target="_blank">
+                          <button className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200">
+                            <Eye className="h-3 w-3" />
+                          </button>
+                        </Link>
+                        <form
+                          action={async () => {
+                            "use server";
+                            await deleteJobOffer(offer.id);
+                          }}
+                        >
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs text-red-700 ring-1 ring-red-200"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         </form>
                       </div>
                     </td>
                   </tr>
                 ))}
-                {offers.length === 0 && <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400">Aucune offre.</td></tr>}
+                {offers.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-12 text-center text-slate-400"
+                    >
+                      Aucune offre.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -184,38 +261,89 @@ async function ClinicsSection() {
 
       <Card>
         <CardHeader className="border-b px-6 py-4">
-          <CardTitle className="text-base font-semibold">Mes cabinets ({listings.length})</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            Mes cabinets ({listings.length})
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
-                <tr><th className="px-6 py-3">Titre</th><th className="px-6 py-3">Prix</th><th className="px-6 py-3">Statut</th><th className="px-6 py-3 text-right">Actions</th></tr>
+                <tr>
+                  <th className="px-6 py-3">Titre</th>
+                  <th className="px-6 py-3">Prix</th>
+                  <th className="px-6 py-3">Statut</th>
+                  <th className="px-6 py-3 text-right">Actions</th>
+                </tr>
               </thead>
               <tbody className="divide-y">
                 {listings.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 font-semibold text-slate-900">{item.title}</td>
-                    <td className="px-6 py-4 text-sm">{formatDA(item.price)}</td>
+                    <td className="px-6 py-4 font-semibold text-slate-900">
+                      {item.title}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {formatDA(item.price)}
+                    </td>
                     <td className="px-6 py-4">
-                      {item.status === "PUBLISHED" ? <Badge variant="success">Publié</Badge> : <Badge variant="warning">Brouillon</Badge>}
+                      {item.status === "PUBLISHED" ? (
+                        <Badge variant="success">Publié</Badge>
+                      ) : (
+                        <Badge variant="warning">Brouillon</Badge>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         {item.status !== "PUBLISHED" && (
-                          <form action={async () => { "use server"; await publishClinicListing(item.id); }}>
-                            <button type="submit" className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200"><Send className="h-3 w-3" /></button>
+                          <form
+                            action={async () => {
+                              "use server";
+                              await publishClinicListing(item.id);
+                            }}
+                          >
+                            <button
+                              type="submit"
+                              className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200"
+                            >
+                              <Send className="h-3 w-3" />
+                            </button>
                           </form>
                         )}
-                        <Link href={`/carrieres/clinics/${item.id}`} target="_blank"><button className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200"><Eye className="h-3 w-3" /></button></Link>
-                        <form action={async () => { "use server"; await deleteClinicListing(item.id); }}>
-                          <button type="submit" className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs text-red-700 ring-1 ring-red-200"><Trash2 className="h-3 w-3" /></button>
+                        <Link
+                          href={`/carrieres/clinics/${item.id}`}
+                          target="_blank"
+                        >
+                          <button className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200">
+                            <Eye className="h-3 w-3" />
+                          </button>
+                        </Link>
+                        <form
+                          action={async () => {
+                            "use server";
+                            await deleteClinicListing(item.id);
+                          }}
+                        >
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs text-red-700 ring-1 ring-red-200"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         </form>
                       </div>
                     </td>
                   </tr>
                 ))}
-                {listings.length === 0 && <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400">Aucun cabinet à vendre.</td></tr>}
+                {listings.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-12 text-center text-slate-400"
+                    >
+                      Aucun cabinet à vendre.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -245,38 +373,89 @@ async function EquipmentSection() {
 
       <Card>
         <CardHeader className="border-b px-6 py-4">
-          <CardTitle className="text-base font-semibold">Mon matériel ({listings.length})</CardTitle>
+          <CardTitle className="text-base font-semibold">
+            Mon matériel ({listings.length})
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
-                <tr><th className="px-6 py-3">Titre</th><th className="px-6 py-3">Prix</th><th className="px-6 py-3">Statut</th><th className="px-6 py-3 text-right">Actions</th></tr>
+                <tr>
+                  <th className="px-6 py-3">Titre</th>
+                  <th className="px-6 py-3">Prix</th>
+                  <th className="px-6 py-3">Statut</th>
+                  <th className="px-6 py-3 text-right">Actions</th>
+                </tr>
               </thead>
               <tbody className="divide-y">
                 {listings.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50">
-                    <td className="px-6 py-4 font-semibold text-slate-900">{item.title}</td>
-                    <td className="px-6 py-4 text-sm">{formatDA(item.price)}</td>
+                    <td className="px-6 py-4 font-semibold text-slate-900">
+                      {item.title}
+                    </td>
+                    <td className="px-6 py-4 text-sm">
+                      {formatDA(item.price)}
+                    </td>
                     <td className="px-6 py-4">
-                      {item.status === "PUBLISHED" ? <Badge variant="success">Publié</Badge> : <Badge variant="warning">Brouillon</Badge>}
+                      {item.status === "PUBLISHED" ? (
+                        <Badge variant="success">Publié</Badge>
+                      ) : (
+                        <Badge variant="warning">Brouillon</Badge>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex justify-end gap-2">
                         {item.status !== "PUBLISHED" && (
-                          <form action={async () => { "use server"; await publishEquipmentListing(item.id); }}>
-                            <button type="submit" className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200"><Send className="h-3 w-3" /></button>
+                          <form
+                            action={async () => {
+                              "use server";
+                              await publishEquipmentListing(item.id);
+                            }}
+                          >
+                            <button
+                              type="submit"
+                              className="rounded-lg bg-emerald-50 px-2.5 py-1.5 text-xs font-medium text-emerald-700 ring-1 ring-emerald-200"
+                            >
+                              <Send className="h-3 w-3" />
+                            </button>
                           </form>
                         )}
-                        <Link href={`/carrieres/equipment/${item.id}`} target="_blank"><button className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200"><Eye className="h-3 w-3" /></button></Link>
-                        <form action={async () => { "use server"; await deleteEquipmentListing(item.id); }}>
-                          <button type="submit" className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs text-red-700 ring-1 ring-red-200"><Trash2 className="h-3 w-3" /></button>
+                        <Link
+                          href={`/carrieres/equipment/${item.id}`}
+                          target="_blank"
+                        >
+                          <button className="rounded-lg bg-slate-50 px-2.5 py-1.5 text-xs text-slate-600 ring-1 ring-slate-200">
+                            <Eye className="h-3 w-3" />
+                          </button>
+                        </Link>
+                        <form
+                          action={async () => {
+                            "use server";
+                            await deleteEquipmentListing(item.id);
+                          }}
+                        >
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-red-50 px-2.5 py-1.5 text-xs text-red-700 ring-1 ring-red-200"
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
                         </form>
                       </div>
                     </td>
                   </tr>
                 ))}
-                {listings.length === 0 && <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400">Aucun matériel en vente.</td></tr>}
+                {listings.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-6 py-12 text-center text-slate-400"
+                    >
+                      Aucun matériel en vente.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

@@ -96,7 +96,7 @@ const allNavItems = [
     label: "Carrière",
     icon: Briefcase,
     feature: "JOB_OFFERS" as FeatureKey,
-    permission: "patients:write",
+    permission: "patients:read",
   },
   {
     href: "/messages",
