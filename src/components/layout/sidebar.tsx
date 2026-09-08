@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FeatureKey } from "@/lib/features";
+import { PERMISSIONS } from "@/lib/permissions";
 
 const allNavItems = [
   {
@@ -32,84 +33,98 @@ const allNavItems = [
     label: "Tableau de bord",
     icon: LayoutDashboard,
     feature: null as FeatureKey | null,
+    permission: null as string | null,
   },
   {
     href: "/patients",
     label: "Patients",
     icon: Users,
     feature: null as FeatureKey | null,
+    permission: "patients:read",
   },
   {
     href: "/patients/new",
     label: "Nouveau patient",
     icon: UserPlus,
     feature: null as FeatureKey | null,
+    permission: "patients:write",
   },
   {
     href: "/appointments",
     label: "Rendez-vous",
     icon: CalendarDays,
     feature: null as FeatureKey | null,
+    permission: "appointments:read",
   },
   {
     href: "/waiting-room",
     label: "Salle d’attente",
     icon: Clock,
     feature: null as FeatureKey | null,
+    permission: "waiting_room:read",
   },
   {
     href: "/procedures",
     label: "Actes",
     icon: Stethoscope,
     feature: null as FeatureKey | null,
+    permission: "procedures:manage",
   },
   {
     href: "/billing",
     label: "Facturation",
     icon: CreditCard,
     feature: "INVOICING" as FeatureKey,
+    permission: "billing:read",
   },
   {
     href: "/prescriptions",
     label: "Ordonnances",
     icon: FileText,
     feature: "PRESCRIPTIONS" as FeatureKey,
+    permission: "prescriptions:read",
   },
   {
     href: "/lab",
     label: "Labo",
     icon: FlaskConical,
     feature: "LAB_ORDERS" as FeatureKey,
+    permission: "lab:read",
   },
   {
     href: "/carrieres/manage",
     label: "Carrière",
     icon: Briefcase,
     feature: "JOB_OFFERS" as FeatureKey,
+    permission: "patients:write",
   },
   {
     href: "/messages",
     label: "Messages",
     icon: Megaphone,
     feature: null as FeatureKey | null,
+    permission: null as string | null,
   },
   {
     href: "/settings/testimonials",
     label: "Mon témoignage",
     icon: MessageSquareQuote,
     feature: null as FeatureKey | null,
+    permission: "testimonials:write",
   },
   {
     href: "/users",
     label: "Utilisateurs",
     icon: UserCog,
     feature: null as FeatureKey | null,
+    permission: "users:manage",
   },
   {
     href: "/settings/features",
     label: "Fonctionnalités",
     icon: Settings,
     feature: null as FeatureKey | null,
+    permission: null as string | null,
     ownerOnly: true,
   },
   {
@@ -117,6 +132,7 @@ const allNavItems = [
     label: "Salles",
     icon: DoorOpen,
     feature: null as FeatureKey | null,
+    permission: null as string | null,
     ownerOnly: true,
   },
 ];
@@ -161,6 +177,12 @@ export function Sidebar({ clinicLogoUrl }: SidebarProps) {
   const navItems = allNavItems.filter((item) => {
     if (item.ownerOnly && !isOwner) return false;
     if (item.feature && !enabledFeatures.includes(item.feature)) return false;
+    if (
+      item.permission &&
+      role &&
+      !PERMISSIONS[item.permission]?.includes(role)
+    )
+      return false;
     return true;
   });
 
